@@ -1,0 +1,8 @@
+*.pyc
+.vscode/
+.DS_Store
+isp_tool_daemon.tar.gz
+isp_daemon_tool/isp_tool_daemon
+isp_daemon_tool/isp_tool_daemon_ctrl
+isp_daemon_tool/install
+isp_daemon_tool/tmp

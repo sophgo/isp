@@ -1,0 +1,26 @@
+    "DEVICE": {
+        "FULL_NAME": "cv186x",
+        "CODE_NAME": "cv186x",
+        "SDK_VERSION": "20240407",
+        "GENERATOR_VERSION": "(NULL,NULL)",
+        "ISP_VERSION": "(NULL,NULL)",
+        "ISP_BRANCH": "master",
+        "COMM_PROTOCOL": "1.0",
+        "ROUTES": {
+            "ROUTE": [
+                {
+                    "ID": "Route 0",
+                    "NUMBER": 0,
+                    "DEFAULT": true
+                }
+            ]
+        },
+        "PARAMETERS": {
+            "PARAM": [
+                {
+                    "KEY": "Vendor",
+                    "VALUE": "CVITEK"
+                }
+            ]
+        }
+    },
