@@ -186,6 +186,12 @@ static void *get_sensor_obj(int pipe)
 		pstSnsObj = &stSnsOs04e10_Obj;
 		break;
 #endif
+#if defined(SENSOR_OV_OS08B10)
+	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT:
+	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT_WDR2TO1:
+		pstSnsObj = &stSnsOs08b10_Obj;
+		break;
+#endif
 #if defined(SENSOR_OV_OS08A20)
 	case V4L2_OV_OS08A20_MIPI_4M_30FPS_10BIT:
 	case V4L2_OV_OS08A20_MIPI_4M_30FPS_10BIT_WDR2TO1:
@@ -617,6 +623,8 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_SONY_IMX412_MIPI_12M_30FPS_12BIT:
 	case V4L2_SONY_IMX585_MIPI_8M_30FPS_12BIT:
 	case V4L2_OV_OS04A10_MIPI_4M_1440P_30FPS_12BIT:
+	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT:
+	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT_WDR2TO1:
 		pstPubAttr->f32FrameRate = 30;
 		break;
 	case V4L2_OV_OS04E10_MIPI_4M_30FPS_2L_10BIT_WDR2TO1:

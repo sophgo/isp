@@ -914,7 +914,8 @@ static CVI_S32 dump_smooth_raw(VI_PIPE ViPipe, const RAW_DUMP_INFO_S *pstRawDump
 			CVI_SYS_Munmap((void *)stVideoFrameFullStart[i].stVFrame.pu8VirAddr[0],
 				stVideoFrameFullStart[i].stVFrame.u32Length[0]);
 		}
-		CVI_VI_PutSmoothRawDump(ViPipe, stVideoFrameFullStart);
+		// has stopped smooth raw dump, so cannot put!
+		//CVI_VI_PutSmoothRawDump(ViPipe, stVideoFrameFullStart);
 
 		fclose(output);
 	}
@@ -970,7 +971,8 @@ static CVI_S32 dump_smooth_raw(VI_PIPE ViPipe, const RAW_DUMP_INFO_S *pstRawDump
 			CVI_SYS_Munmap((void *)stVideoFrameFullStart[i].stVFrame.pu8VirAddr[0],
 				stVideoFrameFullStart[i].stVFrame.u32Length[0]);
 		}
-		CVI_VI_PutSmoothRawDump(ViPipe, stVideoFrameFullStart);
+		// has stopped smooth raw dump, so cannot put!
+		//CVI_VI_PutSmoothRawDump(ViPipe, stVideoFrameFullStart);
 	}
 
 	if (pFullVbPhyAddrList != NULL) {

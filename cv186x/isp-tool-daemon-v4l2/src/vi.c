@@ -92,6 +92,7 @@ static int dis_info_proc(int pipe, VideoBuffer *pbuf)
 	bm_device_mem_t dev_mem[MAX_IMAGE_CHANNEL];
 	ISP_DIS_ATTR_S stDisAttr;
 	unsigned char delayCnt = 0;
+	uint64_t dev_addr[2];
 
 	unsigned int image_w = pbuf->width;
 	unsigned int image_h = pbuf->height;
@@ -100,7 +101,11 @@ static int dis_info_proc(int pipe, VideoBuffer *pbuf)
 
 	if (stDisAttr.enable || stDisAttr.stillCrop) {
 		while (g_disInfo[pipe].info.frm_num < pv4l2->sequence) {
-			if (delayCnt++ > 4) break;
+			if (delayCnt++ > 4) {
+				printf("Warning DIS frame nun not match, frm_num : %d v4l2 : %d\n",
+					g_disInfo[pipe].info.frm_num, pv4l2->sequence);
+				break;
+			}
 			usleep(5 * 1000);
 		}
 
@@ -116,6 +121,8 @@ static int dis_info_proc(int pipe, VideoBuffer *pbuf)
 		g_disInfo[pipe].frame_phy_addr = pbuf->phy_addr;
 
 		DIS_PRIVATE *pimg = (DIS_PRIVATE*)src.image_private;
+		dev_addr[0] =  pimg->data[0].u.device.device_addr;
+		dev_addr[1] =  pimg->data[1].u.device.device_addr;
 		pimg->data[0].u.device.device_addr = pbuf->phy_addr;
 		pimg->data[1].u.device.device_addr = pbuf->phy_addr + pimg->data[0].size;
 
@@ -126,6 +133,8 @@ static int dis_info_proc(int pipe, VideoBuffer *pbuf)
 		bm_image_get_device_mem(g_disInfo[pipe].dst_image,dev_mem);
 		pbuf->phy_addr = dev_mem[0].u.device.device_addr;
 
+		pimg->data[0].u.device.device_addr = dev_addr[0];
+		pimg->data[1].u.device.device_addr = dev_addr[1];
 		bm_image_destroy(&src);
 		bm_dev_free(handle);
 	}
@@ -410,7 +419,7 @@ int start_vi(RTSP_CFG *p_rtsp_cfg)
 		CVI_ISP_V4L2_Init(pipe, ViCtx[pipe].vi_fd);
 
 		if (p_rtsp_cfg->pa_video_src_cfg[pipe].enable_teaisp_bnr) {
-			CVI_TEAISP_SetMode(pipe, TEAISP_RAW_MODE);
+			CVI_TEAISP_SetMode(pipe, TEAISP_BEFORE_FE_RAW_MODE); // TODO: mason.zou
 			init_teaisp_bnr(pipe, p_rtsp_cfg->pa_video_src_cfg[pipe].bnr_model_list);
 		}
 	}

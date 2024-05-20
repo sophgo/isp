@@ -42,6 +42,8 @@
 #include "isp_ccm_ctrl.h"
 #include "isp_ynr_ctrl.h"
 #include "isp_rgbir_ctrl.h"
+#include "isp_lblc_ctrl.h"
+#include "teaisp_pq_ctrl.h"
 
 #include "teaisp_bnr_ctrl.h"
 
@@ -207,7 +209,7 @@ struct isp_ca2_shared_buffer {
 
 struct isp_clut_shared_buffer {
 	ISP_CLUT_ATTR_S stCLUTAttr;
-	ISP_CLUT_SATURATION_ATTR_S stClutSaturationAttr;
+	ISP_CLUT_HSL_ATTR_S stClutHslAttr;
 	struct isp_clut_ctrl_runtime runtime;
 };
 
@@ -246,10 +248,21 @@ struct isp_rgbir_shared_buffer {
 	struct isp_rgbir_ctrl_runtime runtime;
 };
 
+struct isp_lblc_shared_buffer {
+	ISP_LBLC_ATTR_S stLblcAttr;
+	ISP_LBLC_LUT_ATTR_S stLblcLutAttr;
+	struct isp_lblc_ctrl_runtime runtime;
+};
+
 struct teaisp_bnr_shared_buffer {
 	TEAISP_BNR_ATTR_S stBNRAttr;
 	TEAISP_BNR_NP_S stNPAttr;
 	struct teaisp_bnr_ctrl_runtime runtime;
+};
+
+struct teaisp_pq_shared_buffer {
+	TEAISP_PQ_ATTR_S stTEAISPPQAttr;
+	struct teaisp_pq_ctrl_runtime runtime;
 };
 
 CVI_S32 isp_mgr_buf_init(VI_PIPE ViPipe, CVI_U64 u64PhyAddr);

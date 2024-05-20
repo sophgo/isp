@@ -24,6 +24,8 @@ typedef struct {
 
 	// Pre-Raw
 	ISP_BLACK_LEVEL_ATTR_S blc;
+	ISP_LBLC_ATTR_S lblc;
+	ISP_LBLC_LUT_ATTR_S lblcLut;
 	ISP_RGBIR_ATTR_S rgbir;
 	ISP_DP_DYNAMIC_ATTR_S dpc_dynamic;
 	ISP_DP_STATIC_ATTR_S dpc_static;
@@ -54,7 +56,7 @@ typedef struct {
 	ISP_AUTO_GAMMA_ATTR_S autoGamma;
 	ISP_DEHAZE_ATTR_S dehaze;
 	ISP_CLUT_ATTR_S clut;
-	ISP_CLUT_SATURATION_ATTR_S clut_saturation;
+	ISP_CLUT_HSL_ATTR_S clut_hsl;
 	ISP_CSC_ATTR_S csc;
 	ISP_VC_ATTR_S vc_motion;
 
@@ -83,6 +85,8 @@ typedef struct {
 	// TEAISP
 	TEAISP_BNR_ATTR_S teaisp_bnr;
 	TEAISP_BNR_NP_S teaisp_bnr_np;
+
+	TEAISP_PQ_ATTR_S teaisp_pq;
 
 	// other
 	ISP_CMOS_NOISE_CALIBRATION_S np;

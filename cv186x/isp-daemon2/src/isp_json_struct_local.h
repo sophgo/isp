@@ -25,6 +25,8 @@
 // ISP Pre-RAW
 // -----------------------------------------------------------------------------
 void ISP_BLACK_LEVEL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_BLACK_LEVEL_ATTR_S *data);
+void ISP_LBLC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_ATTR_S *data);
+void ISP_LBLC_LUT_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_LUT_ATTR_S *data);
 void ISP_RGBIR_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_RGBIR_ATTR_S *data);
 void ISP_DP_DYNAMIC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_DP_DYNAMIC_ATTR_S *data);
 void ISP_DP_STATIC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_DP_STATIC_ATTR_S *data);
@@ -58,7 +60,7 @@ void ISP_GAMMA_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_GAMMA_ATTR_S *d
 void ISP_AUTO_GAMMA_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AUTO_GAMMA_ATTR_S *data);
 void ISP_DEHAZE_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_DEHAZE_ATTR_S *data);
 void ISP_CLUT_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_ATTR_S *data);
-void ISP_CLUT_SATURATION_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_SATURATION_ATTR_S *data);
+void ISP_CLUT_HSL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_HSL_ATTR_S *data);
 void ISP_CSC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CSC_ATTR_S *data);
 void ISP_VC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_VC_ATTR_S *data);
 
@@ -91,6 +93,8 @@ void ISP_YCONTRAST_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_YCONTRAST_A
 // -----------------------------------------------------------------------------
 void TEAISP_BNR_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_ATTR_S *data);
 void TEAISP_BNR_NP_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_NP_S *data);
+
+void TEAISP_PQ_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_ATTR_S *data);
 
 // -----------------------------------------------------------------------------
 // ISP Other

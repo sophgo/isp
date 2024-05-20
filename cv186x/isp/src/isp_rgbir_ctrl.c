@@ -245,41 +245,64 @@ static CVI_S32 isp_rgbir_ctrl_postprocess(VI_PIPE ViPipe)
 	};
 
 	const ISP_RGBIR_ATTR_S *rgbir_attr = NULL;
+	ISP_CTX_S *pstIspCtx = NULL;
 
+	ISP_GET_CTX(ViPipe, pstIspCtx);
 	isp_rgbir_ctrl_get_rgbir_attr(ViPipe, &rgbir_attr);
 
 	CVI_BOOL is_postprocess_update = ((runtime->postprocess_updated == CVI_TRUE) || (IS_MULTI_CAM()));
+	CVI_BOOL isRgbIrSns = (pstIspCtx->enBayer >= BAYER_GRGBI && pstIspCtx->enBayer <= BAYER_IGBGR) ? CVI_TRUE : CVI_FALSE;
 
 	rgbir_cfg_0->inst = 0;
 
 	if (is_postprocess_update == CVI_FALSE) {
 		rgbir_cfg_0->update = 0;
 	} else {
+		CVI_BOOL enable = rgbir_attr->Enable && !runtime->is_module_bypass;
+
 		rgbir_cfg_0->update = 1;
-		rgbir_cfg_0->enable = rgbir_attr->Enable && !runtime->is_module_bypass;
-		rgbir_cfg_0->comp_enable = rgbir_attr->bLumaCompEnable;
+		if (isRgbIrSns) {
+			rgbir_cfg_0->enable = 1;
+			if (enable) {
+				rgbir_cfg_0->comp_enable = rgbir_attr->bLumaCompEnable;
+			} else {
+				rgbir_cfg_0->comp_enable = 0;
+			}
+		} else {
+			rgbir_cfg_0->enable = 0;
+			rgbir_cfg_0->comp_enable = 0;
+		}
 
 		struct cvi_isp_rgbir_tun_cfg *rgbir_tun_cfg = &rgbir_cfg_0->rgbir_cfg;
 
-		rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_GAIN = runtime->rgbir_attr.u16RecGbrGain;
-		rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_OFFSET = runtime->rgbir_attr.u16RecGbrOffset;
-		rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_GAIN = runtime->rgbir_attr.u16RecGirGain;
-		rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_OFFSET = runtime->rgbir_attr.u16RecGirOffset;
-		rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_GAIN = runtime->rgbir_attr.u16RecRgGain;
-		rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_OFFSET = runtime->rgbir_attr.u16RecRgOffset;
-		rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_GAIN = runtime->rgbir_attr.u16RecBgGain;
-		rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_OFFSET = runtime->rgbir_attr.u16RecBgOffset;
+		if (isRgbIrSns && !enable) {
+			rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_GAIN = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_OFFSET = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_GAIN = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_OFFSET = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_GAIN = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_OFFSET = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_GAIN = 0;
+			rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_OFFSET = 0;
+		} else {
+			rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_GAIN = runtime->rgbir_attr.u16RecGbrGain;
+			rgbir_tun_cfg->GAIN_OFFSET_1.bits.RGBIR2RGGB_REC_GBR_OFFSET = runtime->rgbir_attr.u16RecGbrOffset;
+			rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_GAIN = runtime->rgbir_attr.u16RecGirGain;
+			rgbir_tun_cfg->GAIN_OFFSET_2.bits.RGBIR2RGGB_REC_GIR_OFFSET = runtime->rgbir_attr.u16RecGirOffset;
+			rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_GAIN = runtime->rgbir_attr.u16RecRgGain;
+			rgbir_tun_cfg->GAIN_OFFSET_3.bits.RGBIR2RGGB_REC_RG_OFFSET = runtime->rgbir_attr.u16RecRgOffset;
+			rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_GAIN = runtime->rgbir_attr.u16RecBgGain;
+			rgbir_tun_cfg->GAIN_OFFSET_4.bits.RGBIR2RGGB_REC_BG_OFFSET = runtime->rgbir_attr.u16RecBgOffset;
+		}
 		rgbir_tun_cfg->COMP_GAIN.bits.RGBIR2RGGB_G_COMP_GAIN = rgbir_attr->u8GCompGain;
 		rgbir_tun_cfg->COMP_GAIN.bits.RGBIR2RGGB_R_COMP_GAIN = rgbir_attr->u8RCompGain;
 		rgbir_tun_cfg->COMP_GAIN.bits.RGBIR2RGGB_B_COMP_GAIN = rgbir_attr->u8BCompGain;
 	}
 
-	ISP_CTX_S *pstIspCtx = NULL;
 	struct cvi_vip_isp_rgbir_config *rgbir_cfg_1 = {
 		&(pre_be_addr->tun_cfg[tun_idx].rgbir_cfg[1]),
 	};
 
-	ISP_GET_CTX(ViPipe, pstIspCtx);
 	if (IS_2to1_WDR_MODE(pstIspCtx->u8SnsWDRMode)) {
 		if (is_postprocess_update == CVI_FALSE) {
 			rgbir_cfg_1->update = 0;
@@ -388,6 +411,17 @@ CVI_S32 isp_rgbir_ctrl_set_rgbir_attr(VI_PIPE ViPipe, const ISP_RGBIR_ATTR_S *ps
 	ret = isp_rgbir_ctrl_check_rgbir_attr_valid(pstRgbirAttr);
 	if (ret != CVI_SUCCESS)
 		return ret;
+
+	ISP_CTX_S *pstIspCtx = NULL;
+
+	ISP_GET_CTX(ViPipe, pstIspCtx);
+
+	CVI_BOOL isRgbIrSns = (pstIspCtx->enBayer >= BAYER_GRGBI && pstIspCtx->enBayer <= BAYER_IGBGR) ? CVI_TRUE : CVI_FALSE;
+
+	if (!isRgbIrSns && pstRgbirAttr->Enable) {
+		ISP_LOG_ERR("Sensor(%d) isn't rgbir sensor, cann't enable rgbir module!\n", ViPipe);
+		return CVI_FAILURE;
+	}
 
 	const ISP_RGBIR_ATTR_S *p = CVI_NULL;
 

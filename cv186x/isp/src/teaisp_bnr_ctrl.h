@@ -27,6 +27,10 @@ struct teaisp_bnr_config {
 	CVI_U32 filter_motion_str_2d;
 	CVI_U32 filter_static_str_2d;
 	CVI_U32 filter_str_3d;
+	CVI_U16 lblcOffsetR[ISP_LBLC_GRID_POINTS];
+	CVI_U16 lblcOffsetGr[ISP_LBLC_GRID_POINTS];
+	CVI_U16 lblcOffsetGb[ISP_LBLC_GRID_POINTS];
+	CVI_U16 lblcOffsetB[ISP_LBLC_GRID_POINTS];
 };
 
 struct teaisp_bnr_ctrl_runtime {

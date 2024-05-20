@@ -17,6 +17,7 @@
 
 static const struct isp_module_ctrl *mod[ISP_IQ_BLOCK_MAX] = {
 	[ISP_IQ_BLOCK_BLC] = &blc_mod,
+	[ISP_IQ_BLOCK_LBLC] = &lblc_mod,
 	[ISP_IQ_BLOCK_TEAISP_BNR] = &teaisp_bnr_mod,
 	[ISP_IQ_BLOCK_RGBIR] = &rgbir_mod,
 	[ISP_IQ_BLOCK_DPC] = &dpc_mod,
@@ -48,6 +49,7 @@ static const struct isp_module_ctrl *mod[ISP_IQ_BLOCK_MAX] = {
 	[ISP_IQ_BLOCK_YEE] = &sharpen_mod,
 	[ISP_IQ_BLOCK_YCONTRAST] = &ycontrast_mod,
 	[ISP_IQ_BLOCK_MONO] = &mono_mod,
+	[ISP_IQ_BLOCK_TEAISP_PQ] = &teaisp_pq_mod,
 };
 #define MAX_ALGO_RESULT_QUEUE_NUM 10
 // #define ISP_DGAIN_APPLY_DELAY 3        // When ae Set ISP Dgain. Need count 3 frame to apply to ISP.

@@ -24,11 +24,18 @@
 #include "cvi_isp.h"
 
 typedef struct _STITCH_CALIBRATION_INFO {
-	CVI_BOOL bIsMainPipe;
+	CVI_U8 u8Group;
 	CVI_U16 centerLuma;
 	CVI_U16 rGain;
 	CVI_U16 bGain;
 } STITCH_CALIBRATION_INFO;
+
+struct STITCH_STATISTICS_S {
+	ISP_FE_AE_STAT_3_S AeStats;
+	CVI_U16 statsR[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
+	CVI_U16 statsG[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
+	CVI_U16 statsB[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
+};
 
 ISP_LIB_INFO_S aeAlgoLibReg[VI_MAX_PIPE_NUM * MAX_REGISTER_ALG_LIB_NUM] = { 0 };
 ISP_LIB_INFO_S awbAlgoLibReg[VI_MAX_PIPE_NUM * MAX_REGISTER_ALG_LIB_NUM] = { 0 };
@@ -474,12 +481,10 @@ CVI_S32 isp_3aLib_stitch_calibration(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pAttr, C
 	CVI_U16 RGain = 0, BGain = 0, pixelR, pixelG, pixelB;
 	CVI_U8 centerRowStart, centerRowEnd, centerColumnStart, centerColumnEnd;
 	CVI_U64 u64TotalPixelSumR = 0, u64TotalPixelSumB = 0;
-	VI_PIPE maxPipe = 0;
+	VI_PIPE maxPipe = ViPipe;
 
 	isp_sts_ctrl_get_ae_sts(ViPipe, &ae_sts);
 	isp_sts_ctrl_get_awb_sts(ViPipe, ISP_CHANNEL_LE, &awb_sts);
-
-	stitchCalibInfo[ViPipe].bIsMainPipe = pAttr->bMainPipe;
 
 	memcpy(&aeLumaStat, &ae_sts->aeStat3[0], sizeof(ISP_FE_AE_STAT_3_S));
 	memcpy(&wbStat, awb_sts, sizeof(ISP_WB_STATISTICS_S));
@@ -527,15 +532,18 @@ CVI_S32 isp_3aLib_stitch_calibration(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pAttr, C
 
 	stitchCalibInfo[ViPipe].rGain = u64TotalPixelSumR / centerCnt;
 	stitchCalibInfo[ViPipe].bGain = u64TotalPixelSumB / centerCnt;
+	stitchCalibInfo[ViPipe].u8Group = pAttr[ViPipe].u8Group;
 
 	for (i = 1; i < chnNum; i++) {
-		if (stitchCalibInfo[i].centerLuma > stitchCalibInfo[maxPipe].centerLuma) {
+		if (stitchCalibInfo[i].centerLuma > stitchCalibInfo[maxPipe].centerLuma &&
+			stitchCalibInfo[i].u8Group == pAttr[ViPipe].u8Group) {
 			maxPipe = i;
 		}
 	}
 
 	for (i = 0; i < chnNum; i++) {
-		if(stitchCalibInfo[i].centerLuma != 0) {
+		if (stitchCalibInfo[i].centerLuma != 0 &&
+			stitchCalibInfo[i].u8Group == pAttr[ViPipe].u8Group) {
 			pAttr[i].u32CalibLumaRatio = stitchCalibInfo[maxPipe].centerLuma * STITCH_GAIN_BASE/
 										stitchCalibInfo[i].centerLuma;
 			pAttr[i].u32CalibRGainRatio = stitchCalibInfo[i].rGain * STITCH_GAIN_BASE/
@@ -547,6 +555,7 @@ CVI_S32 isp_3aLib_stitch_calibration(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pAttr, C
 			pAttr[i].u32CalibRGainRatio = STITCH_GAIN_BASE;
 			pAttr[i].u32CalibBGainRatio = STITCH_GAIN_BASE;
 		}
+		pAttr[i].u8Group = stitchCalibInfo[i].u8Group;
 	}
 
 	return CVI_SUCCESS;
@@ -554,64 +563,104 @@ CVI_S32 isp_3aLib_stitch_calibration(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pAttr, C
 
 CVI_S32 isp_3aLib_stitch_ctrl(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 {
-#define AE_LE (0)
-
 	ISP_CTX_S *pstIspCtx = NULL;
-	static ISP_FE_AE_STAT_3_S preFEAeStat;
-	static CVI_U16 preFEAwbStatR[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
-	static CVI_U16 preFEAwbStatG[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
-	static CVI_U16 preFEAwbStatB[ISP_CHANNEL_MAX_NUM][AWB_ZONE_NUM];
-	static CVI_U8 preAeSave[VI_MAX_DEV_NUM], preAwbSave[VI_MAX_DEV_NUM];
+	static struct STITCH_STATISTICS_S stStats[MAX_STITCH_GROUP];
+	static CVI_U8 preAeSave[VI_MAX_PIPE_NUM][2];
+	static CVI_U8 preAwbSave[VI_MAX_PIPE_NUM][2];
+	ISP_FE_AE_STAT_3_S *preAeStats;
+	CVI_U16 *preStatsR, *preStatsG, *preStatsB, *tmpVal;
 	ISP_FE_AE_STAT_3_S *tmpFEAeStat;
 	ISP_AWB_STAT_RESULT_S *tmpFEAwbStat;
-	CVI_U8 row, column, i, chn, columnStart, baseNum, chnNum = 4;
-	CVI_U16 columnIdx = 0;
+	CVI_U8 row, column, columnR, i, columnStart;
+	CVI_U8 remainder, baseNum, num;
+	CVI_U16 columnIdx = 0, saveCnt = 0;
+	CVI_U32 ValueR = 0, ValueGr = 0, ValueGb = 0, ValueB = 0;
 
 	ISP_GET_CTX(ViPipe, pstIspCtx);
 	CVI_U8 ispChnMax = (pstIspCtx->u8SnsWDRMode) ? 2 : 1;
+	CVI_U8 stitchGrp = pstIspCtx->stStitchAttr.u8Group;
+	CVI_U8 combNum = pstIspCtx->stStitchAttr.u8CombChnSum;
 
-	if (!pstIspCtx->stStitchAttr.enable) {
+	if (!pstIspCtx->stStitchAttr.enable || !pstIspCtx->stStitchAttr.bCombineSts)
 		return CVI_SUCCESS;
-	}
 
-	baseNum = pstIspCtx->stStitchAttr.bMainPipe ? 0 : 1;
+	preAeStats = &stStats[stitchGrp].AeStats;
+	baseNum = pstIspCtx->stStitchAttr.u8CombChn;
 	if (type == AAA_TYPE_AE) {
-		preAeSave[ViPipe] = 1;
-		columnStart = pstIspCtx->stStitchAttr.bMainPipe ? 0 : AE_ZONE_COLUMN / 2; // !!!
+		preAeSave[ViPipe][0] = stitchGrp;
+		preAeSave[ViPipe][1] = 1;
+		columnStart = (AE_ZONE_COLUMN / combNum) * pstIspCtx->stStitchAttr.u8CombChn;
+		remainder = AE_ZONE_COLUMN % combNum;
+
 		tmpFEAeStat = aeAlgoInfo[ViPipe].pstFEAeStat3[0];
 		for (i = 0; i < ispChnMax; ++i) {
 			for (row = 0; row < AE_ZONE_ROW; row++) {
-				for (column = 0; column < AE_ZONE_COLUMN / 2; column++) {
-					for (chn = 0; chn < chnNum; chn++) {
-						preFEAeStat.au16ZoneAvg[i][row][column + columnStart][chn] =
-						(tmpFEAeStat[0].au16ZoneAvg[i][row][2 * column + baseNum][chn] +
-						tmpFEAeStat[0].au16ZoneAvg[i][row][2 * column + 1 + baseNum][chn]) / 2;
+				for (column = 0; column < AE_ZONE_COLUMN / combNum; column++) {
+					ValueR = ValueGr = ValueGb = ValueB = 0;
+					for (num = 0; num < combNum; num++) {
+						tmpVal = tmpFEAeStat[0].au16ZoneAvg[i][row][combNum * column + num];
+						ValueR += tmpVal[0];
+						ValueGr += tmpVal[1];
+						ValueGb += tmpVal[2];
+						ValueB += tmpVal[3];
+					}
+					tmpVal = preAeStats->au16ZoneAvg[i][row][column + columnStart];
+					tmpVal[0] = ValueR / combNum;
+					tmpVal[1] = ValueGr / combNum;
+					tmpVal[2] = ValueGb / combNum;
+					tmpVal[3] = ValueB / combNum;
+				}
+				if (pstIspCtx->stStitchAttr.bMainPipe && remainder != 0) {
+					for (columnR = AE_ZONE_COLUMN - remainder;
+								columnR < AE_ZONE_COLUMN; columnR++) {
+						memcpy(preAeStats->au16ZoneAvg[i][row][columnR],
+						tmpFEAeStat[0].au16ZoneAvg[i][row][columnR], sizeof(CVI_U16) * 4);
 					}
 				}
 			}
 		}
-		if (preAeSave[0] == 1 && preAeSave[1] == 1) {
-			memcpy(aeAlgoInfo[ViPipe].pstFEAeStat3[0], &preFEAeStat, sizeof(ISP_FE_AE_STAT_3_S));
+
+		for (i = 0; i < VI_MAX_PIPE_NUM; i++) {
+			if (preAeSave[i][0] == stitchGrp && preAeSave[i][1] == 1)
+				saveCnt++;
 		}
+		if (saveCnt == combNum)
+			memcpy(aeAlgoInfo[ViPipe].pstFEAeStat3[0], preAeStats, sizeof(ISP_FE_AE_STAT_3_S));
 	} else if (type == AAA_TYPE_AWB) {
-		preAwbSave[ViPipe] = 1;
+		preAwbSave[ViPipe][0] = stitchGrp;
+		preAwbSave[ViPipe][1] = 1;
+		remainder = AWB_ZONE_ORIG_COLUMN % combNum;
+
 		for (i = 0; i < ispChnMax; ++i) {
 			tmpFEAwbStat = &awbAlgoInfo[ViPipe].stAwbStat2[i];
+			preStatsR = stStats[stitchGrp].statsR[i];
+			preStatsG = stStats[stitchGrp].statsG[i];
+			preStatsB = stStats[stitchGrp].statsB[i];
 			for (row = 0; row < AWB_ZONE_ORIG_ROW; row++) {
-				for (column = 0; column < AWB_ZONE_ORIG_COLUMN / 2; column++) {
-					columnIdx = row * AWB_ZONE_ORIG_COLUMN +  2 * column + baseNum;
-					preFEAwbStatR[i][columnIdx] = tmpFEAwbStat->pau16ZoneAvgR[columnIdx];
-					preFEAwbStatG[i][columnIdx] = tmpFEAwbStat->pau16ZoneAvgG[columnIdx];
-					preFEAwbStatB[i][columnIdx] = tmpFEAwbStat->pau16ZoneAvgB[columnIdx];
+				for (column = 0; column < AWB_ZONE_ORIG_COLUMN / combNum; column++) {
+					columnIdx = row * AWB_ZONE_ORIG_COLUMN +  combNum * column + baseNum;
+					preStatsR[columnIdx] = tmpFEAwbStat->pau16ZoneAvgR[columnIdx];
+					preStatsG[columnIdx] = tmpFEAwbStat->pau16ZoneAvgG[columnIdx];
+					preStatsB[columnIdx] = tmpFEAwbStat->pau16ZoneAvgB[columnIdx];
+				}
+				if (pstIspCtx->stStitchAttr.bMainPipe && remainder != 0) {
+					for (columnR = AWB_ZONE_ORIG_COLUMN - remainder;
+								columnR < AWB_ZONE_ORIG_COLUMN; columnR++) {
+						columnIdx = row * AWB_ZONE_ORIG_COLUMN +  columnR;
+						preStatsR[columnIdx] = tmpFEAwbStat->pau16ZoneAvgR[columnIdx];
+						preStatsG[columnIdx] = tmpFEAwbStat->pau16ZoneAvgG[columnIdx];
+						preStatsB[columnIdx] = tmpFEAwbStat->pau16ZoneAvgB[columnIdx];
+					}
 				}
 			}
-			if (preAwbSave[0] == 1 && preAwbSave[1] == 1) {
-				memcpy(awbAlgoInfo[ViPipe].stAwbStat2[i].pau16ZoneAvgR, preFEAwbStatR[i],
-					AWB_ZONE_NUM * sizeof(CVI_U16));
-				memcpy(awbAlgoInfo[ViPipe].stAwbStat2[i].pau16ZoneAvgG, preFEAwbStatG[i],
-					AWB_ZONE_NUM * sizeof(CVI_U16));
-				memcpy(awbAlgoInfo[ViPipe].stAwbStat2[i].pau16ZoneAvgB, preFEAwbStatB[i],
-					AWB_ZONE_NUM * sizeof(CVI_U16));
+			for (i = 0; i < VI_MAX_PIPE_NUM; i++) {
+				if (preAwbSave[i][0] == stitchGrp && preAwbSave[i][1] == 1)
+					saveCnt++;
+			}
+			if (saveCnt == combNum) {
+				memcpy(tmpFEAwbStat->pau16ZoneAvgR, preStatsR, AWB_ZONE_NUM * sizeof(CVI_U16));
+				memcpy(tmpFEAwbStat->pau16ZoneAvgG, preStatsG, AWB_ZONE_NUM * sizeof(CVI_U16));
+				memcpy(tmpFEAwbStat->pau16ZoneAvgB, preStatsB, AWB_ZONE_NUM * sizeof(CVI_U16));
 			}
 		}
 	}
@@ -632,8 +681,9 @@ CVI_S32 isp_3aLib_run(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 	ISP_AE_RESULT_S stAeResult;
 	ISP_AWB_RESULT_S stAwbResult;
 	ISP_AF_RESULT_S stAfResult;
-	CVI_U8 bMainPipeOk;
+	CVI_U8 bMainPipeOk = 0;
 	VI_PIPE mainPipe = VI_MAX_PIPE_NUM, i;
+	CVI_U32 tmpRatio, lumaRatio;
 
 	ISP_GET_CTX(ViPipe, pstIspCtx);
 
@@ -666,7 +716,8 @@ CVI_S32 isp_3aLib_run(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 
 	if (pstIspCtx->stStitchAttr.enable && !pstIspCtx->stStitchAttr.bMainPipe) {
 		for (i = 0; i < VI_MAX_PIPE_NUM; i++) {
-			if (g_astIspCtx[i]->stStitchAttr.bMainPipe) {
+			if (g_astIspCtx[i]->stStitchAttr.bMainPipe &&
+				g_astIspCtx[i]->stStitchAttr.u8Group == pstIspCtx->stStitchAttr.u8Group) {
 				mainPipe = i;
 				break;
 			}
@@ -686,14 +737,6 @@ CVI_S32 isp_3aLib_run(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 			if (pstIspCtx->stStitchAttr.enable && !pstIspCtx->stStitchAttr.bMainPipe && bMainPipeOk) {
 				memcpy(&(pstIspCtx->stAeResult), &(g_astIspCtx[mainPipe]->stAeResult),
 							sizeof(ISP_AE_RESULT_S));
-				if (pstIspCtx->stStitchAttr.CalibEnable) {
-					ISP_AE_RESULT_S *tmp = &pstIspCtx->stAeResult;
-
-					tmp->u32IspDgain = stAeResult.u32IspDgain *
-						pstIspCtx->stStitchAttr.u32CalibLumaRatio / 1024;
-					tmp->u32IspDgainSF = stAeResult.u32IspDgainSF *
-						pstIspCtx->stStitchAttr.u32CalibLumaRatio / 1024;
-				}
 			} else {
 				memcpy(&(pstIspCtx->stAeResult), &stAeResult, sizeof(ISP_AE_RESULT_S));
 			}
@@ -714,18 +757,29 @@ CVI_S32 isp_3aLib_run(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 			if (pstIspCtx->stStitchAttr.enable && !pstIspCtx->stStitchAttr.bMainPipe && bMainPipeOk) {
 				memcpy(&(pstIspCtx->stAwbResult), &(g_astIspCtx[mainPipe]->stAwbResult),
 						sizeof(ISP_AWB_RESULT_S));
-				if (pstIspCtx->stStitchAttr.CalibEnable) {
-					ISP_AWB_RESULT_S *tmp = &pstIspCtx->stAwbResult;
-
-					tmp->au32WhiteBalanceGain[0] = stAwbResult.au32WhiteBalanceGain[0] *
-						pstIspCtx->stStitchAttr.u32CalibRGainRatio/ 1024;
-					tmp->au32WhiteBalanceGain[3] = stAwbResult.au32WhiteBalanceGain[3] *
-						pstIspCtx->stStitchAttr.u32CalibBGainRatio/ 1024;
-				}
 			} else {
 				memcpy(&(pstIspCtx->stAwbResult), &stAwbResult, sizeof(ISP_AWB_RESULT_S));
 			}
+			if (pstIspCtx->stStitchAttr.enable && pstIspCtx->stStitchAttr.bCalibEnable) {
+				ISP_AWB_RESULT_S *tmp = &pstIspCtx->stAwbResult;
 
+				lumaRatio = pstIspCtx->stStitchAttr.u32CalibLumaRatio;
+				lumaRatio = (lumaRatio == 0 ? 1024 : lumaRatio);
+				tmpRatio = pstIspCtx->stStitchAttr.u32CalibRGainRatio;
+				tmpRatio = (tmpRatio == 0 ? 1024 : tmpRatio);
+				tmpRatio = tmpRatio * lumaRatio / 1024;
+				tmp->au32WhiteBalanceGain[0] = stAwbResult.au32WhiteBalanceGain[0] *
+					tmpRatio / 1024;
+				tmp->au32WhiteBalanceGain[1] = stAwbResult.au32WhiteBalanceGain[1] *
+					lumaRatio / 1024;
+				tmp->au32WhiteBalanceGain[2] = stAwbResult.au32WhiteBalanceGain[2] *
+					lumaRatio / 1024;
+				tmpRatio = pstIspCtx->stStitchAttr.u32CalibBGainRatio;
+				tmpRatio = (tmpRatio == 0 ? 1024 : tmpRatio);
+				tmpRatio = tmpRatio * lumaRatio / 1024;
+				tmp->au32WhiteBalanceGain[3] = stAwbResult.au32WhiteBalanceGain[3] *
+					tmpRatio / 1024;
+			}
 		} else {
 			ISP_LOG_ERR("Active AWB lib didn't initial or support run func\n");
 

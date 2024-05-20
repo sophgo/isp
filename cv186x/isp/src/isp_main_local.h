@@ -122,7 +122,7 @@ typedef struct {
 	ISP_AUTO_GAMMA_ATTR_S autoGamma;
 	ISP_DEHAZE_ATTR_S dehaze;
 	ISP_CLUT_ATTR_S clut;
-	ISP_CLUT_SATURATION_ATTR_S clut_saturation;
+	ISP_CLUT_HSL_ATTR_S clut_hsl;
 	ISP_CSC_ATTR_S csc;
 	ISP_DCI_ATTR_S dci;
 	ISP_LDCI_ATTR_S ldci;
@@ -156,6 +156,7 @@ typedef struct {
 
 extern ISP_CTX_S *g_astIspCtx[VI_MAX_PIPE_NUM];
 extern CVI_S32 isp_mgr_buf_init(VI_PIPE ViPipe, CVI_U64 u64PhyAddr);
+extern CVI_U8 g_ispCtxBufCnt;
 
 #define ISP_GET_CTX(dev, pstIspCtx) ({    \
 	if (g_astIspCtx[dev] == CVI_NULL) {   \
@@ -164,7 +165,7 @@ extern CVI_S32 isp_mgr_buf_init(VI_PIPE ViPipe, CVI_U64 u64PhyAddr);
 	pstIspCtx = g_astIspCtx[dev];         \
 })
 
-#define IS_MULTI_CAM() ((g_astIspCtx[0] != CVI_NULL) && (g_astIspCtx[1] != CVI_NULL))
+#define IS_MULTI_CAM() (g_ispCtxBufCnt > 1 ? 1 : 0)
 
 /*isp_3a.c*/
 CVI_S32 isp_3aLib_find(VI_PIPE ViPipe, const ALG_LIB_S *pstAeLib, AAA_LIB_TYPE_E type);

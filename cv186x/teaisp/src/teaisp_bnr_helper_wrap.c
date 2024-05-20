@@ -90,6 +90,125 @@ static int teaisp_bnr_put_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *out
 	return 0;
 }
 
+static void teaisp_bnr_dump_input(TEAISP_MODEL_S *model, uint64_t input_raw_addr,
+	uint8_t tuning_index, int pipe)
+{
+	void *addr_tmp = NULL;
+	int size = 0;
+	FILE *fp = NULL;
+	char path[128] = {0};
+
+	snprintf(path, sizeof(path), "/tmp/input0%d_img.bin", pipe);
+	size = model->input_tensors[tuning_index][0].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(input_raw_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+
+	snprintf(path, sizeof(path), "/tmp/input1%d_fusion.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_FUSION_IMG].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(
+		model->input_tensors[tuning_index][BNR_IN_FUSION_IMG].device_mem.u.device.device_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+
+	snprintf(path, sizeof(path), "/tmp/input2%d_sigma.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_SIGMA].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(
+		model->input_tensors[tuning_index][BNR_IN_SIGMA].device_mem.u.device.device_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+
+	snprintf(path, sizeof(path), "/tmp/input3%d_coeff_a.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_COEFF_A].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_COEFF_A];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input4%d_coeff_b.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_COEFF_B].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_COEFF_B];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input5%d_blend.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_BLEND].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_BLEND];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input6%d_motion_str_2d.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_MOTION_STR_2D].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_MOTION_STR_2D];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input7%d_static_str_2d.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_STATIC_STR_2D].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_STATIC_STR_2D];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input8%d_blc.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input9%d_str_3d.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_STR_3D].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_STR_3D];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+}
+
+static void teaisp_bnr_dump_output(TEAISP_MODEL_S *model, uint64_t output_raw_addr,
+	uint8_t tuning_index, int pipe)
+{
+	void *addr_tmp = NULL;
+	int size = 0;
+	FILE *fp = NULL;
+	char path[128] = {0};
+
+	snprintf(path, sizeof(path), "/tmp/output0%d_img.bin", pipe);
+	size = model->output_tensors[tuning_index][0].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(output_raw_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+
+	snprintf(path, sizeof(path), "/tmp/output1%d_fusion.bin", pipe);
+	size = model->output_tensors[tuning_index][BNR_OUT_FUSION_IMG].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(
+		model->output_tensors[tuning_index][BNR_OUT_FUSION_IMG].device_mem.u.device.device_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+
+	snprintf(path, sizeof(path), "/tmp/output2%d_sigma.bin", pipe);
+	size = model->output_tensors[tuning_index][BNR_OUT_SIGMA].device_mem.size;
+	addr_tmp = CVI_SYS_MmapCache(
+		model->output_tensors[tuning_index][BNR_OUT_SIGMA].device_mem.u.device.device_addr, size);
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+	CVI_SYS_Munmap(addr_tmp, size);
+}
+
 static void *teaisp_bnr_launch_thread(void *param)
 {
 	int pipe = (int) (uint64_t) param;
@@ -160,6 +279,11 @@ reset_launch:
 
 		//gettimeofday(&tv1, NULL);
 
+		if (access("/tmp/teaisp_bnr_dump", F_OK) == 0) {
+			teaisp_bnr_dump_input(model, input_raw_addr, tuning_index, pipe);
+			system("rm /tmp/teaisp_bnr_dump;touch /tmp/teaisp_bnr_dump_output");
+		}
+
 		bool ret = bmrt_launch_tensor_multi_cores(model->p_bmrt, model->net_names[0],
 			model->input_tensors[tuning_index], model->input_num,
 			model->output_tensors[tuning_index], model->output_num, true, false,
@@ -171,6 +295,11 @@ reset_launch:
 
 		if (!ret || BM_SUCCESS != status) {
 			ISP_LOG_ERR("%s, inference failed...\n", model->net_names[0]);
+		}
+
+		if (access("/tmp/teaisp_bnr_dump_output", F_OK) == 0) {
+			teaisp_bnr_dump_output(model, output_raw_addr, tuning_index, pipe);
+			system("rm /tmp/teaisp_bnr_dump_output");
 		}
 
 		//gettimeofday(&tv2, NULL);
@@ -346,7 +475,8 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 				m->input_vaddr[index][i] = (void *) vmem;
 			}
 
-			ISP_LOG_INFO("index: %d, in: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n", index, i,
+			ISP_LOG_ERR("index: %d, in: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
+				index, i,
 				m->input_tensors[index][i].dtype,
 				m->input_tensors[index][i].shape.dims[0], m->input_tensors[index][i].shape.dims[1],
 				m->input_tensors[index][i].shape.dims[2], m->input_tensors[index][i].shape.dims[3],
@@ -390,7 +520,8 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 					(void *) vmem, (int) net_info->max_output_bytes[i]);
 			}
 
-			ISP_LOG_INFO("index: %d, out: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n", index, i,
+			ISP_LOG_ERR("index: %d, out: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
+				index, i,
 				m->output_tensors[index][i].dtype,
 				m->output_tensors[index][i].shape.dims[0], m->output_tensors[index][i].shape.dims[1],
 				m->output_tensors[index][i].shape.dims[2], m->output_tensors[index][i].shape.dims[3],
@@ -632,11 +763,42 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 	memcpy(m->input_vaddr[tuning_index][BNR_IN_STATIC_STR_2D], &bnr_cfg->filter_static_str_2d,
 		m->input_tensors[tuning_index][BNR_IN_STATIC_STR_2D].device_mem.size);
 
-	memcpy(m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL], &bnr_cfg->blc,
-		m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size);
-
 	memcpy(m->input_vaddr[tuning_index][BNR_IN_STR_3D], &bnr_cfg->filter_str_3d,
 		m->input_tensors[tuning_index][BNR_IN_STR_3D].device_mem.size);
+
+	if ((int) m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size == (int) sizeof(float)) {
+		memcpy(m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL], &bnr_cfg->blc,
+			m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size);
+	} else {
+		int lblc_cnt = 0;
+		float *lblc = (float *) m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL];
+
+		for (int i = 0; i < ISP_LBLC_GRID_POINTS; i++) {
+			*lblc++ = (float) bnr_cfg->lblcOffsetR[i];
+			lblc_cnt++;
+		}
+
+		for (int i = 0; i < ISP_LBLC_GRID_POINTS; i++) {
+			*lblc++ = (float) bnr_cfg->lblcOffsetGr[i];
+			lblc_cnt++;
+		}
+
+		for (int i = 0; i < ISP_LBLC_GRID_POINTS; i++) {
+			*lblc++ = (float) bnr_cfg->lblcOffsetB[i];
+			lblc_cnt++;
+		}
+
+		for (int i = 0; i < ISP_LBLC_GRID_POINTS; i++) {
+			*lblc++ = (float) bnr_cfg->lblcOffsetGb[i];
+			lblc_cnt++;
+		}
+
+		if ((int) (lblc_cnt * sizeof(float)) !=
+			(int) m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size) {
+			ISP_LOG_ERR("fill lblc cnt error, %d, %d\n",
+				lblc_cnt, m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size);
+		}
+	}
 
 	ISP_LOG_INFO("int bnr param: %d, %d, %d, %d, %d, %d, %d\n",
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_COEFF_A]),
@@ -647,7 +809,7 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]));
 
-	ISP_LOG_INFO("float bnr param: %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\n",
+	ISP_LOG_ERR("float bnr param: %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\n",
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_COEFF_A]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_COEFF_B]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_BLEND]),

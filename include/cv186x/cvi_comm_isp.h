@@ -75,6 +75,7 @@ extern "C" {
 #define LV_TOTAL_NUM	(MAX_LV - MIN_LV + 1)
 #define AE_LV_FACTOR	(100)
 #define ISP_AUTO_LV_NUM (LV_TOTAL_NUM)
+#define TEAISP_SCENE_NUM (5)
 
 /*Defines the format of the input Bayer image*/
 typedef enum _ISP_BAYER_FORMAT_E {
@@ -294,7 +295,8 @@ typedef union _ISP_MODULE_CTRL_U {
 		CVI_U64 bitBypassYcontrast : 1;	/*RW:[30]*/
 		CVI_U64 bitBypassMono : 1;		/*RW:[31]*/
 		CVI_U64 bitBypassRgbir : 1;		/*RW:[32]*/
-		CVI_U64 bitRsv : 31;			/*H; [33:63] */
+		CVI_U64 bitBypassLblc : 1;		/*RW:[33]*/
+		CVI_U64 bitRsv : 30;			/*H; [34:63] */
 	};
 } ISP_MODULE_CTRL_U;
 
@@ -1152,6 +1154,43 @@ typedef struct _ISP_BLACK_LEVEL_ATTR_S {
 } ISP_BLACK_LEVEL_ATTR_S;
 
 //-----------------------------------------------------------------------------
+//  Local Black Level Correction(LBLC)
+//-----------------------------------------------------------------------------
+#define ISP_LBLC_ISO_SIZE (7)
+#define ISP_LBLC_GRID_COL (8)
+#define ISP_LBLC_GRID_ROW (8)
+#define ISP_LBLC_GRID_POINTS (ISP_LBLC_GRID_COL * ISP_LBLC_GRID_ROW)
+
+typedef struct _ISP_LBLC_LUT_S {
+	CVI_U32 iso; /*RW; Range:[0x64, 0x320000]*/
+	CVI_U16 lblcOffsetR[ISP_LBLC_GRID_POINTS]; /*RW; Range:[0x0, 0xFFF]*/
+	CVI_U16 lblcOffsetGr[ISP_LBLC_GRID_POINTS]; /*RW; Range:[0x0, 0xFFF]*/
+	CVI_U16 lblcOffsetGb[ISP_LBLC_GRID_POINTS]; /*RW; Range:[0x0, 0xFFF]*/
+	CVI_U16 lblcOffsetB[ISP_LBLC_GRID_POINTS]; /*RW; Range:[0x0, 0xFFF]*/
+} ISP_LBLC_LUT_S;
+
+typedef struct _ISP_LBLC_LUT_ATTR_S {
+	CVI_U8 size; /*RW; Range:[0x1, 0x7]*/
+	ISP_LBLC_LUT_S lblcLut[ISP_LBLC_ISO_SIZE];
+} ISP_LBLC_LUT_ATTR_S;
+
+typedef struct _ISP_LBLC_MANUAL_ATTR_S {
+	CVI_U16 strength; /*RW; Range:[0x0, 0xFFF]*/
+} ISP_LBLC_MANUAL_ATTR_S;
+
+typedef struct _ISP_LBLC_AUTO_ATTR_S {
+	CVI_U16 strength[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFFF]*/
+} ISP_LBLC_AUTO_ATTR_S;
+
+typedef struct _ISP_LBLC_ATTR_S {
+	CVI_BOOL enable; /*RW; Range:[0x0, 0x1]*/
+	ISP_OP_TYPE_E enOpType;
+	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
+	ISP_LBLC_MANUAL_ATTR_S stManual;
+	ISP_LBLC_AUTO_ATTR_S stAuto;
+} ISP_LBLC_ATTR_S;
+
+//-----------------------------------------------------------------------------
 //  Dead pixel correction(DPC)
 //-----------------------------------------------------------------------------
 typedef struct _ISP_DP_DYNAMIC_MANUAL_ATTR_S {
@@ -1937,22 +1976,15 @@ typedef struct _ISP_CLUT_ATTR_S {
 	CVI_U16 ClutB[ISP_CLUT_LUT_LENGTH]; /*RW; Range:[0x0, 0x3FF]*/
 } ISP_CLUT_ATTR_S;
 
-typedef struct _ISP_CLUT_SATURATION_MANUAL_ATTR_S {
-	CVI_U16 SatIn[4]; /*RW; Range:[0x0, 0x2000]*/
-	CVI_U16 SatOut[4]; /*RW; Range:[0x0, 0x2000]*/
-} ISP_CLUT_SATURATION_MANUAL_ATTR_S;
-
-typedef struct _ISP_CLUT_SATURATION_AUTO_ATTR_S {
-	CVI_U16 SatIn[4][ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x2000]*/
-	CVI_U16 SatOut[4][ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x2000]*/
-} ISP_CLUT_SATURATION_AUTO_ATTR_S;
-
-typedef struct _ISP_CLUT_SATURATION_ATTR_S {
+#define ISP_CLUT_HUE_LENGTH (37)
+#define ISP_CLUT_SAT_LENGTH (21)
+typedef struct _ISP_CLUT_HSL_ATTR_S {
 	CVI_BOOL Enable;
-	ISP_OP_TYPE_E enOpType;
-	ISP_CLUT_SATURATION_MANUAL_ATTR_S stManual;
-	ISP_CLUT_SATURATION_AUTO_ATTR_S stAuto;
-} ISP_CLUT_SATURATION_ATTR_S;
+	CVI_S16 HByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[-0x1E, 0x1E]*/
+	CVI_U16 SByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[0x0, 0x64]*/
+	CVI_U16 LByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[0x0, 0x64]*/
+	CVI_U16 SByS[ISP_CLUT_SAT_LENGTH]; /*RW; Range:[0x0, 0x64]*/
+} ISP_CLUT_HSL_ATTR_S;
 
 //-----------------------------------------------------------------------------
 //  DCI
@@ -2716,7 +2748,8 @@ typedef struct _ISP_RGBIR_ATTR_S {
 //-----------------------------------------------------------------------------
 typedef enum _TEAISP_MODE_E {
 	TEAISP_OFF_MODE,
-	TEAISP_RAW_MODE,
+	TEAISP_BEFORE_FE_RAW_MODE,
+	TEAISP_AFTER_FE_RAW_MODE,
 	TEAISP_YUV_MODE,
 	TEAISP_MODE_BUTT
 } TEAISP_MODE_E;
@@ -2812,6 +2845,44 @@ typedef struct _ISP_VC_ATTR_S {
 	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
 	CVI_U8 MotionThreshold[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xff] */
 } ISP_VC_ATTR_S;
+
+//-----------------------------------------------------------------------------
+//  TEAISP PQ
+//-----------------------------------------------------------------------------
+typedef enum _TEAISP_PQ_SCENE {
+	SCENE_SNOW,
+	SCENE_FOG,
+	SCENE_BACKLIGHT,
+	SCENE_GRASS,
+	SCENE_COMMON
+} TEAISP_PQ_SCENE;
+
+typedef struct _TEAISP_PQ_SCENE_INFO {
+	TEAISP_PQ_SCENE scene;
+	CVI_U8 scene_score[TEAISP_SCENE_NUM];
+} TEAISP_PQ_SCENE_INFO;
+
+typedef struct _TEAISP_PQ_MANUAL_ATTR_S {
+	CVI_U8 resv;
+} TEAISP_PQ_MANUAL_ATTR_S;
+
+typedef struct _TEAISP_PQ_AUTO_ATTR_S {
+	CVI_U8 resv;
+} TEAISP_PQ_AUTO_ATTR_S;
+
+typedef struct _TEAISP_PQ_ATTR_S {
+	CVI_BOOL Enable; /*RW; Range:[0x0, 0x1]*/
+	ISP_OP_TYPE_E enOpType;
+	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U8 TuningMode; /*RW; Range:[0x0, 0x5]*/
+
+	CVI_BOOL SceneBypass[TEAISP_SCENE_NUM];
+	CVI_U8 SceneConfThres[TEAISP_SCENE_NUM];
+
+	TEAISP_PQ_AUTO_ATTR_S stAuto;
+	TEAISP_PQ_MANUAL_ATTR_S stManual;
+} TEAISP_PQ_ATTR_S;
+
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -2,9 +2,9 @@
     "DEVICE": {
         "FULL_NAME": "cv186x",
         "CODE_NAME": "cv186x",
-        "SDK_VERSION": "20240407",
-        "GENERATOR_VERSION": "(NULL,NULL)",
-        "ISP_VERSION": "(NULL,NULL)",
+        "SDK_VERSION": "20240520",
+        "GENERATOR_VERSION": "(I309377,573569a7)",
+        "ISP_VERSION": "(If35c59,2e8ec010)",
         "ISP_BRANCH": "master",
         "COMM_PROTOCOL": "1.0",
         "ROUTES": {
@@ -598,7 +598,10 @@
                             "ID": "TEAISP_OFF_MODE"
                         },
                         {
-                            "ID": "TEAISP_RAW_MODE"
+                            "ID": "TEAISP_BEFORE_FE_RAW_MODE"
+                        },
+                        {
+                            "ID": "TEAISP_AFTER_FE_RAW_MODE"
                         },
                         {
                             "ID": "TEAISP_YUV_MODE"
@@ -627,6 +630,28 @@
                         {
                             "ID": "DIS_MOTION_LEVEL_NORMAL",
                             "VALUE": 1
+                        }
+                    ]
+                },
+                {
+                    "ID": "TEAISP_PQ_SCENE",
+                    "ALIAS": "TEAISP_PQ_SCENE",
+                    "COMMENT": "",
+                    "ENUM_ITEM": [
+                        {
+                            "ID": "SCENE_SNOW"
+                        },
+                        {
+                            "ID": "SCENE_FOG"
+                        },
+                        {
+                            "ID": "SCENE_BACKLIGHT"
+                        },
+                        {
+                            "ID": "SCENE_GRASS"
+                        },
+                        {
+                            "ID": "SCENE_COMMON"
                         }
                     ]
                 },
@@ -9810,6 +9835,231 @@
                             "ALIAS": "Auto",
                             "COMMENT": "",
                             "TYPE": "ISP_BLACK_LEVEL_AUTO_ATTR_S",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "ISP_LBLC_LUT_S",
+                    "ALIAS": "ISP_LBLC_LUT_S",
+                    "COMMENT": "Defines ISP_LBLC_LUT_S",
+                    "MEMBER": [
+                        {
+                            "ID": "iso",
+                            "ALIAS": "Iso",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U32",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                100,
+                                3276800
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "lblcOffsetR",
+                            "ALIAS": "LblcOffsetR",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 64,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "lblcOffsetGr",
+                            "ALIAS": "LblcOffsetGr",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 64,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "lblcOffsetGb",
+                            "ALIAS": "LblcOffsetGb",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 64,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "lblcOffsetB",
+                            "ALIAS": "LblcOffsetB",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 64,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "ISP_LBLC_LUT_ATTR_S",
+                    "ALIAS": "ISP_LBLC_LUT_ATTR_S",
+                    "COMMENT": "Defines ISP_LBLC_LUT_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "size",
+                            "ALIAS": "Size",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                1,
+                                7
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "lblcLut",
+                            "ALIAS": "LblcLut",
+                            "COMMENT": "",
+                            "TYPE": "ISP_LBLC_LUT_S",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 7,
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "ISP_LBLC_MANUAL_ATTR_S",
+                    "ALIAS": "ISP_LBLC_MANUAL_ATTR_S",
+                    "COMMENT": "Defines ISP_LBLC_MANUAL_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "strength",
+                            "ALIAS": "Strength",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "ISP_LBLC_AUTO_ATTR_S",
+                    "ALIAS": "ISP_LBLC_AUTO_ATTR_S",
+                    "COMMENT": "Defines ISP_LBLC_AUTO_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "strength",
+                            "ALIAS": "Strength",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "TITLE_H": [
+                                "ISO100",
+                                "ISO200",
+                                "ISO400",
+                                "ISO800",
+                                "ISO1600",
+                                "ISO3200",
+                                "ISO6400",
+                                "ISO12800",
+                                "ISO25600",
+                                "ISO51200",
+                                "ISO102400",
+                                "ISO204800",
+                                "ISO409600",
+                                "ISO819200",
+                                "ISO1638400",
+                                "ISO3276800"
+                            ],
+                            "COUNT": 16,
+                            "RANGE": [
+                                0,
+                                4095
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "ISP_LBLC_ATTR_S",
+                    "ALIAS": "ISP_LBLC_ATTR_S",
+                    "COMMENT": "Defines ISP_LBLC_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "enable",
+                            "ALIAS": "Enable",
+                            "COMMENT": "",
+                            "TYPE": "CVI_BOOL",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                1
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "enOpType",
+                            "ALIAS": "OpType",
+                            "COMMENT": "",
+                            "TYPE": "ISP_OP_TYPE_E",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "UpdateInterval",
+                            "ALIAS": "UpdateInterval",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                1,
+                                255
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "stManual",
+                            "ALIAS": "Manual",
+                            "COMMENT": "",
+                            "TYPE": "ISP_LBLC_MANUAL_ATTR_S",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "stAuto",
+                            "ALIAS": "Auto",
+                            "COMMENT": "",
+                            "TYPE": "ISP_LBLC_AUTO_ATTR_S",
                             "ACCESS": "RW",
                             "LEVEL": 0,
                             "FORMAT": ""
@@ -19376,121 +19626,9 @@
                     ]
                 },
                 {
-                    "ID": "ISP_CLUT_SATURATION_MANUAL_ATTR_S",
-                    "ALIAS": "ISP_CLUT_SATURATION_MANUAL_ATTR_S",
-                    "COMMENT": "Defines ISP_CLUT_SATURATION_MANUAL_ATTR_S",
-                    "MEMBER": [
-                        {
-                            "ID": "SatIn",
-                            "ALIAS": "SatIn",
-                            "COMMENT": "",
-                            "TYPE": "CVI_U16",
-                            "ACCESS": "RW",
-                            "LEVEL": 0,
-                            "COUNT": 4,
-                            "RANGE": [
-                                0,
-                                8192
-                            ],
-                            "FORMAT": ""
-                        },
-                        {
-                            "ID": "SatOut",
-                            "ALIAS": "SatOut",
-                            "COMMENT": "",
-                            "TYPE": "CVI_U16",
-                            "ACCESS": "RW",
-                            "LEVEL": 0,
-                            "COUNT": 4,
-                            "RANGE": [
-                                0,
-                                8192
-                            ],
-                            "FORMAT": ""
-                        }
-                    ]
-                },
-                {
-                    "ID": "ISP_CLUT_SATURATION_AUTO_ATTR_S",
-                    "ALIAS": "ISP_CLUT_SATURATION_AUTO_ATTR_S",
-                    "COMMENT": "Defines ISP_CLUT_SATURATION_AUTO_ATTR_S",
-                    "MEMBER": [
-                        {
-                            "ID": "SatIn",
-                            "ALIAS": "SatIn",
-                            "COMMENT": "",
-                            "TYPE": "CVI_U16",
-                            "ACCESS": "RW",
-                            "LEVEL": 0,
-                            "TITLE_H": [
-                                "ISO100",
-                                "ISO200",
-                                "ISO400",
-                                "ISO800",
-                                "ISO1600",
-                                "ISO3200",
-                                "ISO6400",
-                                "ISO12800",
-                                "ISO25600",
-                                "ISO51200",
-                                "ISO102400",
-                                "ISO204800",
-                                "ISO409600",
-                                "ISO819200",
-                                "ISO1638400",
-                                "ISO3276800"
-                            ],
-                            "COUNT": [
-                                4,
-                                16
-                            ],
-                            "RANGE": [
-                                0,
-                                8192
-                            ],
-                            "FORMAT": ""
-                        },
-                        {
-                            "ID": "SatOut",
-                            "ALIAS": "SatOut",
-                            "COMMENT": "",
-                            "TYPE": "CVI_U16",
-                            "ACCESS": "RW",
-                            "LEVEL": 0,
-                            "TITLE_H": [
-                                "ISO100",
-                                "ISO200",
-                                "ISO400",
-                                "ISO800",
-                                "ISO1600",
-                                "ISO3200",
-                                "ISO6400",
-                                "ISO12800",
-                                "ISO25600",
-                                "ISO51200",
-                                "ISO102400",
-                                "ISO204800",
-                                "ISO409600",
-                                "ISO819200",
-                                "ISO1638400",
-                                "ISO3276800"
-                            ],
-                            "COUNT": [
-                                4,
-                                16
-                            ],
-                            "RANGE": [
-                                0,
-                                8192
-                            ],
-                            "FORMAT": ""
-                        }
-                    ]
-                },
-                {
-                    "ID": "ISP_CLUT_SATURATION_ATTR_S",
-                    "ALIAS": "ISP_CLUT_SATURATION_ATTR_S",
-                    "COMMENT": "Defines ISP_CLUT_SATURATION_ATTR_S",
+                    "ID": "ISP_CLUT_HSL_ATTR_S",
+                    "ALIAS": "ISP_CLUT_HSL_ATTR_S",
+                    "COMMENT": "Defines ISP_CLUT_HSL_ATTR_S",
                     "MEMBER": [
                         {
                             "ID": "Enable",
@@ -19506,30 +19644,59 @@
                             "FORMAT": ""
                         },
                         {
-                            "ID": "enOpType",
-                            "ALIAS": "OpType",
+                            "ID": "HByH",
+                            "ALIAS": "HByH",
                             "COMMENT": "",
-                            "TYPE": "ISP_OP_TYPE_E",
+                            "TYPE": "CVI_S16",
                             "ACCESS": "RW",
                             "LEVEL": 0,
+                            "COUNT": 37,
+                            "RANGE": [
+                                -30,
+                                30
+                            ],
                             "FORMAT": ""
                         },
                         {
-                            "ID": "stManual",
-                            "ALIAS": "Manual",
+                            "ID": "SByH",
+                            "ALIAS": "SByH",
                             "COMMENT": "",
-                            "TYPE": "ISP_CLUT_SATURATION_MANUAL_ATTR_S",
+                            "TYPE": "CVI_U16",
                             "ACCESS": "RW",
                             "LEVEL": 0,
+                            "COUNT": 37,
+                            "RANGE": [
+                                0,
+                                100
+                            ],
                             "FORMAT": ""
                         },
                         {
-                            "ID": "stAuto",
-                            "ALIAS": "Auto",
+                            "ID": "LByH",
+                            "ALIAS": "LByH",
                             "COMMENT": "",
-                            "TYPE": "ISP_CLUT_SATURATION_AUTO_ATTR_S",
+                            "TYPE": "CVI_U16",
                             "ACCESS": "RW",
                             "LEVEL": 0,
+                            "COUNT": 37,
+                            "RANGE": [
+                                0,
+                                100
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "SByS",
+                            "ALIAS": "SByS",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U16",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 21,
+                            "RANGE": [
+                                0,
+                                100
+                            ],
                             "FORMAT": ""
                         }
                     ]
@@ -30808,6 +30975,177 @@
                     ]
                 },
                 {
+                    "ID": "TEAISP_PQ_SCENE_INFO",
+                    "ALIAS": "TEAISP_PQ_SCENE_INFO",
+                    "COMMENT": "Defines TEAISP_PQ_SCENE_INFO",
+                    "MEMBER": [
+                        {
+                            "ID": "scene",
+                            "ALIAS": "Scene",
+                            "COMMENT": "",
+                            "TYPE": "TEAISP_PQ_SCENE",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "scene_score",
+                            "ALIAS": "Scene_score",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 5,
+                            "RANGE": [
+                                0,
+                                255
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "TEAISP_PQ_MANUAL_ATTR_S",
+                    "ALIAS": "TEAISP_PQ_MANUAL_ATTR_S",
+                    "COMMENT": "Defines TEAISP_PQ_MANUAL_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "resv",
+                            "ALIAS": "Resv",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                255
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "TEAISP_PQ_AUTO_ATTR_S",
+                    "ALIAS": "TEAISP_PQ_AUTO_ATTR_S",
+                    "COMMENT": "Defines TEAISP_PQ_AUTO_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "resv",
+                            "ALIAS": "Resv",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                255
+                            ],
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
+                    "ID": "TEAISP_PQ_ATTR_S",
+                    "ALIAS": "TEAISP_PQ_ATTR_S",
+                    "COMMENT": "Defines TEAISP_PQ_ATTR_S",
+                    "MEMBER": [
+                        {
+                            "ID": "Enable",
+                            "ALIAS": "Enable",
+                            "COMMENT": "",
+                            "TYPE": "CVI_BOOL",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                1
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "enOpType",
+                            "ALIAS": "OpType",
+                            "COMMENT": "",
+                            "TYPE": "ISP_OP_TYPE_E",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "UpdateInterval",
+                            "ALIAS": "UpdateInterval",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                1,
+                                255
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "TuningMode",
+                            "ALIAS": "TuningMode",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                5
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "SceneBypass",
+                            "ALIAS": "SceneBypass",
+                            "COMMENT": "",
+                            "TYPE": "CVI_BOOL",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 5,
+                            "RANGE": [
+                                0,
+                                1
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "SceneConfThres",
+                            "ALIAS": "SceneConfThres",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "COUNT": 5,
+                            "RANGE": [
+                                0,
+                                255
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "stAuto",
+                            "ALIAS": "Auto",
+                            "COMMENT": "",
+                            "TYPE": "TEAISP_PQ_AUTO_ATTR_S",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "stManual",
+                            "ALIAS": "Manual",
+                            "COMMENT": "",
+                            "TYPE": "TEAISP_PQ_MANUAL_ATTR_S",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "FORMAT": ""
+                        }
+                    ]
+                },
+                {
                     "ID": "ISP_AE_RANGE_S",
                     "ALIAS": "ISP_AE_RANGE_S",
                     "COMMENT": "Defines ISP_AE_RANGE_S",
@@ -31789,7 +32127,7 @@
                             "FORMAT": ""
                         },
                         {
-                            "ID": "CalibEnable",
+                            "ID": "bCalibEnable",
                             "ALIAS": "CalibEnable",
                             "COMMENT": "",
                             "TYPE": "CVI_BOOL",
@@ -31798,6 +32136,32 @@
                             "RANGE": [
                                 0,
                                 1
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "bCombineSts",
+                            "ALIAS": "CombineSts",
+                            "COMMENT": "",
+                            "TYPE": "CVI_BOOL",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                1
+                            ],
+                            "FORMAT": ""
+                        },
+                        {
+                            "ID": "u8Group",
+                            "ALIAS": "Group",
+                            "COMMENT": "",
+                            "TYPE": "CVI_U8",
+                            "ACCESS": "RW",
+                            "LEVEL": 0,
+                            "RANGE": [
+                                0,
+                                255
                             ],
                             "FORMAT": ""
                         },
@@ -38997,9 +39361,24 @@
 				"SET": "CVI_TEAISP_BNR_SetNoiseProfileAttr"
 			},
 			{
+				"STRUCT": "TEAISP_PQ_ATTR_S",
+				"GET": "CVI_TEAISP_PQ_GetAttr",
+				"SET": "CVI_TEAISP_PQ_SetAttr"
+			},
+			{
 				"STRUCT": "ISP_BLACK_LEVEL_ATTR_S",
 				"GET": "CVI_ISP_GetBlackLevelAttr",
 				"SET": "CVI_ISP_SetBlackLevelAttr"
+			},
+			{
+				"STRUCT": "ISP_LBLC_ATTR_S",
+				"GET": "CVI_ISP_GetLblcAttr",
+				"SET": "CVI_ISP_SetLblcAttr"
+			},
+			{
+				"STRUCT": "ISP_LBLC_LUT_ATTR_S",
+				"GET": "CVI_ISP_GetLblcLutAttr",
+				"SET": "CVI_ISP_SetLblcLutAttr"
 			},
 			{
 				"STRUCT": "ISP_RGBIR_ATTR_S",
@@ -39137,9 +39516,9 @@
 				"SET": "CVI_ISP_SetClutAttr"
 			},
 			{
-				"STRUCT": "ISP_CLUT_SATURATION_ATTR_S",
-				"GET": "CVI_ISP_GetClutSaturationAttr",
-				"SET": "CVI_ISP_SetClutSaturationAttr"
+				"STRUCT": "ISP_CLUT_HSL_ATTR_S",
+				"GET": "CVI_ISP_GetClutHslAttr",
+				"SET": "CVI_ISP_SetClutHslAttr"
 			},
 			{
 				"STRUCT": "ISP_CSC_ATTR_S",
@@ -39438,6 +39817,38 @@
 				}
 			},
 			{
+				"ID": "TEAISP.pq",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"TEAISP_PQ_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "TEAISP.pq attr",
+							"MEMBER": [
+								"TEAISP_PQ_ATTR_S.Enable",
+								"TEAISP_PQ_ATTR_S.enOpType",
+								"TEAISP_PQ_ATTR_S.UpdateInterval",
+								"TEAISP_PQ_ATTR_S.TuningMode",
+								"TEAISP_PQ_ATTR_S.SceneBypass",
+								"TEAISP_PQ_ATTR_S.SceneConfThres"
+							]
+						},
+						{
+							"TITLE": "TEAISP.pq attr",
+							"MEMBER": [
+								"TEAISP_PQ_ATTR_S.stManual.resv",
+								"TEAISP_PQ_ATTR_S.stAuto.resv"
+							]
+						}
+					]
+				}
+			},
+			{
 				"ID": "BLC",
 				"READY": true,
 				"TYPE": "REG_API_MPI",
@@ -39660,6 +40071,77 @@
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].RGain",
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].GGain",
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].BGain"
+							]
+						}
+					]
+				}
+			},
+			{
+				"ID": "LBLC",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"ISP_LBLC_ATTR_S",
+						"ISP_LBLC_LUT_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "LBLC",
+							"MEMBER": [
+								"ISP_LBLC_ATTR_S.enable",
+								"ISP_LBLC_ATTR_S.enOpType",
+								"ISP_LBLC_ATTR_S.UpdateInterval",
+								"ISP_LBLC_ATTR_S.stManual.strength",
+								"ISP_LBLC_ATTR_S.stAuto.strength"
+							]
+						},
+						{
+							"TITLE": "LBLC Lut Attr",
+							"MEMBER": [
+								"ISP_LBLC_LUT_ATTR_S.size",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetB"
+							]
+						},
+						{
+							"TITLE": "LBLC Lut Attr",
+							"MEMBER": [
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetB"
 							]
 						}
 					]
@@ -41899,7 +42381,7 @@
 				"CONTENTS": {
 					"CONTENT": [
 						"ISP_CLUT_ATTR_S",
-						"ISP_CLUT_SATURATION_ATTR_S"
+						"ISP_CLUT_HSL_ATTR_S"
 					]
 				},
 				"LAYOUTS": {
@@ -41915,25 +42397,13 @@
 							]
 						},
 						{
-							"TITLE": "Saturation by Saturation",
+							"TITLE": "HSL Adjust",
 							"MEMBER": [
-								"ISP_CLUT_SATURATION_ATTR_S.Enable",
-								"ISP_CLUT_SATURATION_ATTR_S.enOpType",
-								"ISP_CLUT_SATURATION_ATTR_S.stManual.SatIn",
-								"ISP_CLUT_SATURATION_ATTR_S.stManual.SatOut",
-								"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatIn",
-								"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatOut"
-							],
-							"CURVE": [
-								{
-									"ALIAS": "SatCurve",
-									"POINTS": [
-										[
-											"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatIn",
-											"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatOut"
-										]
-									]
-								}
+								"ISP_CLUT_HSL_ATTR_S.Enable",
+								"ISP_CLUT_HSL_ATTR_S.HByH",
+								"ISP_CLUT_HSL_ATTR_S.SByH",
+								"ISP_CLUT_HSL_ATTR_S.LByH",
+								"ISP_CLUT_HSL_ATTR_S.SByS"
 							]
 						}
 					]

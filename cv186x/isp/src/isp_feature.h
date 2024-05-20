@@ -43,7 +43,9 @@
 #include "isp_ycontrast_ctrl.h"
 #include "isp_mono_ctrl.h"
 #include "isp_rgbir_ctrl.h"
+#include "isp_lblc_ctrl.h"
 
 #include "teaisp_bnr_ctrl.h"
+#include "teaisp_pq_ctrl.h"
 
 #endif // _ISP_FEATURE_H_

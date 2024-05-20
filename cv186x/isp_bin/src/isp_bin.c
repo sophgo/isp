@@ -529,6 +529,8 @@ static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 
 	// PRE_RAW
 	CVI_ISP_SetBlackLevelAttr(ViPipe, &pstParaBuf->blc);
+	CVI_ISP_SetLblcAttr(ViPipe, &pstParaBuf->lblc);
+	CVI_ISP_SetLblcLutAttr(ViPipe, &pstParaBuf->lblcLut);
 	CVI_ISP_SetRgbirAttr(ViPipe, &pstParaBuf->rgbir);
 	CVI_ISP_SetDPDynamicAttr(ViPipe, &pstParaBuf->dpc_dynamic);
 	CVI_ISP_SetDPStaticAttr(ViPipe, &pstParaBuf->dpc_static);
@@ -559,7 +561,7 @@ static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	CVI_ISP_SetAutoGammaAttr(ViPipe, &pstParaBuf->autoGamma);
 	CVI_ISP_SetDehazeAttr(ViPipe, &pstParaBuf->dehaze);
 	CVI_ISP_SetClutAttr(ViPipe, &pstParaBuf->clut);
-	CVI_ISP_SetClutSaturationAttr(ViPipe, &pstParaBuf->clut_saturation);
+	CVI_ISP_SetClutHslAttr(ViPipe, &pstParaBuf->clut_hsl);
 	CVI_ISP_SetCSCAttr(ViPipe, &pstParaBuf->csc);
 	CVI_ISP_SetVCAttr(ViPipe, &pstParaBuf->vc_motion);
 
@@ -588,6 +590,7 @@ static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	// TEAISP
 	CVI_TEAISP_BNR_SetAttr(ViPipe, &pstParaBuf->teaisp_bnr);
 	CVI_TEAISP_BNR_SetNoiseProfileAttr(ViPipe, &pstParaBuf->teaisp_bnr_np);
+	CVI_TEAISP_PQ_SetAttr(ViPipe, &pstParaBuf->teaisp_pq);
 
 	// Other
 	CVI_ISP_SetNoiseProfileAttr(ViPipe, &pstParaBuf->np);
@@ -612,6 +615,8 @@ static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 
 	// PRE_RAW
 	CVI_ISP_GetBlackLevelAttr(ViPipe, &pstParaBuf->blc);
+	CVI_ISP_GetLblcAttr(ViPipe, &pstParaBuf->lblc);
+	CVI_ISP_GetLblcLutAttr(ViPipe, &pstParaBuf->lblcLut);
 	CVI_ISP_GetRgbirAttr(ViPipe, &pstParaBuf->rgbir);
 	CVI_ISP_GetDPDynamicAttr(ViPipe, &pstParaBuf->dpc_dynamic);
 	CVI_ISP_GetDPStaticAttr(ViPipe, &pstParaBuf->dpc_static);
@@ -642,7 +647,7 @@ static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	CVI_ISP_GetAutoGammaAttr(ViPipe, &pstParaBuf->autoGamma);
 	CVI_ISP_GetDehazeAttr(ViPipe, &pstParaBuf->dehaze);
 	CVI_ISP_GetClutAttr(ViPipe, &pstParaBuf->clut);
-	CVI_ISP_GetClutSaturationAttr(ViPipe, &pstParaBuf->clut_saturation);
+	CVI_ISP_GetClutHslAttr(ViPipe, &pstParaBuf->clut_hsl);
 	CVI_ISP_GetCSCAttr(ViPipe, &pstParaBuf->csc);
 	CVI_ISP_GetVCAttr(ViPipe, &pstParaBuf->vc_motion);
 
@@ -671,6 +676,7 @@ static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	// TEAISP
 	CVI_TEAISP_BNR_GetAttr(ViPipe, &pstParaBuf->teaisp_bnr);
 	CVI_TEAISP_BNR_GetNoiseProfileAttr(ViPipe, &pstParaBuf->teaisp_bnr_np);
+	CVI_TEAISP_PQ_GetAttr(ViPipe, &pstParaBuf->teaisp_pq);
 
 	// other
 	CVI_ISP_GetNoiseProfileAttr(ViPipe, &pstParaBuf->np);

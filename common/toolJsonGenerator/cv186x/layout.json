@@ -89,6 +89,38 @@
 				}
 			},
 			{
+				"ID": "TEAISP.pq",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"TEAISP_PQ_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "TEAISP.pq attr",
+							"MEMBER": [
+								"TEAISP_PQ_ATTR_S.Enable",
+								"TEAISP_PQ_ATTR_S.enOpType",
+								"TEAISP_PQ_ATTR_S.UpdateInterval",
+								"TEAISP_PQ_ATTR_S.TuningMode",
+								"TEAISP_PQ_ATTR_S.SceneBypass",
+								"TEAISP_PQ_ATTR_S.SceneConfThres"
+							]
+						},
+						{
+							"TITLE": "TEAISP.pq attr",
+							"MEMBER": [
+								"TEAISP_PQ_ATTR_S.stManual.resv",
+								"TEAISP_PQ_ATTR_S.stAuto.resv"
+							]
+						}
+					]
+				}
+			},
+			{
 				"ID": "BLC",
 				"READY": true,
 				"TYPE": "REG_API_MPI",
@@ -311,6 +343,77 @@
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].RGain",
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].GGain",
 								"ISP_MESH_SHADING_GAIN_LUT_ATTR_S.LscGainLut[6].BGain"
+							]
+						}
+					]
+				}
+			},
+			{
+				"ID": "LBLC",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"ISP_LBLC_ATTR_S",
+						"ISP_LBLC_LUT_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "LBLC",
+							"MEMBER": [
+								"ISP_LBLC_ATTR_S.enable",
+								"ISP_LBLC_ATTR_S.enOpType",
+								"ISP_LBLC_ATTR_S.UpdateInterval",
+								"ISP_LBLC_ATTR_S.stManual.strength",
+								"ISP_LBLC_ATTR_S.stAuto.strength"
+							]
+						},
+						{
+							"TITLE": "LBLC Lut Attr",
+							"MEMBER": [
+								"ISP_LBLC_LUT_ATTR_S.size",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[0].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[1].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[2].lblcOffsetB"
+							]
+						},
+						{
+							"TITLE": "LBLC Lut Attr",
+							"MEMBER": [
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[3].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[4].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[5].lblcOffsetB",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].iso",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetR",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetGr",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetGb",
+								"ISP_LBLC_LUT_ATTR_S.lblcLut[6].lblcOffsetB"
 							]
 						}
 					]
@@ -2550,7 +2653,7 @@
 				"CONTENTS": {
 					"CONTENT": [
 						"ISP_CLUT_ATTR_S",
-						"ISP_CLUT_SATURATION_ATTR_S"
+						"ISP_CLUT_HSL_ATTR_S"
 					]
 				},
 				"LAYOUTS": {
@@ -2566,25 +2669,13 @@
 							]
 						},
 						{
-							"TITLE": "Saturation by Saturation",
+							"TITLE": "HSL Adjust",
 							"MEMBER": [
-								"ISP_CLUT_SATURATION_ATTR_S.Enable",
-								"ISP_CLUT_SATURATION_ATTR_S.enOpType",
-								"ISP_CLUT_SATURATION_ATTR_S.stManual.SatIn",
-								"ISP_CLUT_SATURATION_ATTR_S.stManual.SatOut",
-								"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatIn",
-								"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatOut"
-							],
-							"CURVE": [
-								{
-									"ALIAS": "SatCurve",
-									"POINTS": [
-										[
-											"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatIn",
-											"ISP_CLUT_SATURATION_ATTR_S.stAuto.SatOut"
-										]
-									]
-								}
+								"ISP_CLUT_HSL_ATTR_S.Enable",
+								"ISP_CLUT_HSL_ATTR_S.HByH",
+								"ISP_CLUT_HSL_ATTR_S.SByH",
+								"ISP_CLUT_HSL_ATTR_S.LByH",
+								"ISP_CLUT_HSL_ATTR_S.SByS"
 							]
 						}
 					]

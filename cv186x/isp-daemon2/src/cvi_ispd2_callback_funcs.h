@@ -199,6 +199,14 @@ CVI_S32 CVI_ISPD2_CBFunc_ISP_SetMeshShadingGainLutAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_ISP_GetMeshShadingGainLutAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_ISP_SetLblcAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_ISP_GetLblcAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_ISP_SetLblcLutAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_ISP_GetLblcLutAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_ISP_SetBlackLevelAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_ISP_GetBlackLevelAttr(TJSONRpcContentIn *ptIn,
@@ -275,9 +283,9 @@ CVI_S32 CVI_ISPD2_CBFunc_ISP_SetClutAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_ISP_GetClutAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
-CVI_S32 CVI_ISPD2_CBFunc_ISP_SetClutSaturationAttr(TJSONRpcContentIn *ptIn,
+CVI_S32 CVI_ISPD2_CBFunc_ISP_SetClutHslAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
-CVI_S32 CVI_ISPD2_CBFunc_ISP_GetClutSaturationAttr(TJSONRpcContentIn *ptIn,
+CVI_S32 CVI_ISPD2_CBFunc_ISP_GetClutHslAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_ISP_SetVCAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
@@ -310,6 +318,11 @@ CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_GetAttr(TJSONRpcContentIn *ptIn,
 CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_SetNP(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_GetNP(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_PQ_SetAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_PQ_GetAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 
 CVI_S32 CVI_ISPD2_CBFunc_ISP_SetPubAttr(TJSONRpcContentIn *ptIn,

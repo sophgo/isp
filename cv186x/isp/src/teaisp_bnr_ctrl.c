@@ -469,10 +469,11 @@ static CVI_S32 teaisp_bnr_ctrl_postprocess(VI_PIPE ViPipe)
 		bnr_cfg->update = 1;
 
 		volatile CVI_U32 *temp = NULL;
-
-		CVI_FLOAT temp_f = (CVI_FLOAT) (pre_fe_blc_cfg[0]->groffset + pre_fe_blc_cfg[0]->gboffset) / 2.0;
+		CVI_FLOAT temp_f = 0;
 
 		temp = (volatile CVI_U32 *) &temp_f;
+
+		temp_f = (CVI_FLOAT) (pre_fe_blc_cfg[0]->groffset + pre_fe_blc_cfg[0]->gboffset) / 2.0;
 		bnr_cfg->blc = *temp;
 
 		temp_f = runtime->bnr_param_out.slope;
@@ -489,6 +490,14 @@ static CVI_S32 teaisp_bnr_ctrl_postprocess(VI_PIPE ViPipe)
 
 		temp_f = (CVI_FLOAT) (255 - runtime->bnr_attr.FilterStr3D) / 255.0;
 		bnr_cfg->filter_str_3d = *temp;
+
+		struct lblc_info lblcInfo;
+
+		isp_lblc_ctrl_get_lblc_info(ViPipe, &lblcInfo);
+		memcpy(bnr_cfg->lblcOffsetR, lblcInfo.lblcOffsetR, ISP_LBLC_GRID_POINTS * sizeof(CVI_U16));
+		memcpy(bnr_cfg->lblcOffsetGr, lblcInfo.lblcOffsetGr, ISP_LBLC_GRID_POINTS * sizeof(CVI_U16));
+		memcpy(bnr_cfg->lblcOffsetGb, lblcInfo.lblcOffsetGb, ISP_LBLC_GRID_POINTS * sizeof(CVI_U16));
+		memcpy(bnr_cfg->lblcOffsetB, lblcInfo.lblcOffsetB, ISP_LBLC_GRID_POINTS * sizeof(CVI_U16));
 	}
 
 	TEAISP_BNR_HANDLE_S *handle = (TEAISP_BNR_HANDLE_S *) runtime->handle;

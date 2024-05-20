@@ -683,6 +683,175 @@ void ISP_BLACK_LEVEL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_BLACK_LEV
 
 	JSON_END(r_w_flag);
 }
+
+// -----------------------------------------------------------------------------
+// ISP structure - LBLC
+// -----------------------------------------------------------------------------
+static void ISP_LBLC_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_MANUAL_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_U16, strength);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+static void ISP_LBLC_AUTO_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_AUTO_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON_A(r_w_flag, CVI_U16, strength, ISP_AUTO_ISO_STRENGTH_NUM);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+void ISP_LBLC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_BOOL, enable);
+	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
+	JSON(r_w_flag, CVI_U8, UpdateInterval);
+	JSON(r_w_flag, ISP_LBLC_MANUAL_ATTR_S, stManual);
+	JSON(r_w_flag, ISP_LBLC_AUTO_ATTR_S, stAuto);
+
+	JSON_END(r_w_flag);
+}
+
+static int ISP_LBLC_LUT_ATTR_S_GET_MAX_SIZE(void)
+{
+	int gain_lut_size = 0, attr_size = 0;
+
+	gain_lut_size += GET_OBJECT_STRING_SIZE("iso", 7);
+	gain_lut_size += GET_ARRAY_STRING_SIZE("lblcOffsetR", ISP_LBLC_GRID_POINTS, 4);
+	gain_lut_size += GET_ARRAY_STRING_SIZE("lblcOffsetGr", ISP_LBLC_GRID_POINTS, 4);
+	gain_lut_size += GET_ARRAY_STRING_SIZE("lblcOffsetGb", ISP_LBLC_GRID_POINTS, 4);
+	gain_lut_size += GET_ARRAY_STRING_SIZE("lblcOffsetB", ISP_LBLC_GRID_POINTS, 4);
+
+	attr_size += GET_OBJECT_STRING_SIZE("size", 2);
+	attr_size += GET_ARRAY_STRING_SIZE("lblcLut", ISP_LBLC_ISO_SIZE, gain_lut_size);
+
+	return attr_size;
+}
+
+void ISP_LBLC_LUT_S_WRITE_JSON(ISP_LBLC_LUT_S *plutAttr, char *json_str)
+{
+	char tmpstr[64] = {0};
+
+	JSON_EX_START(json_str);
+	snprintf(tmpstr, sizeof(tmpstr), "%c%s%c: %d, ", '"', "iso", '"', plutAttr->iso);
+	strcat(json_str, tmpstr);
+	PARSE_INT_ARRAY_TO_JSON_STR("lblcOffsetR", plutAttr->lblcOffsetR, ISP_LBLC_GRID_POINTS, json_str);
+	strcat(json_str, ", ");
+	PARSE_INT_ARRAY_TO_JSON_STR("lblcOffsetGr", plutAttr->lblcOffsetGr, ISP_LBLC_GRID_POINTS, json_str);
+	strcat(json_str, ", ");
+	PARSE_INT_ARRAY_TO_JSON_STR("lblcOffsetGb", plutAttr->lblcOffsetGb, ISP_LBLC_GRID_POINTS, json_str);
+	strcat(json_str, ", ");
+	PARSE_INT_ARRAY_TO_JSON_STR("lblcOffsetB", plutAttr->lblcOffsetB, ISP_LBLC_GRID_POINTS, json_str);
+	JSON_EX_END(json_str);
+}
+
+int ISP_LBLC_LUT_ATTR_S_WRITE_JSON(ISP_LBLC_LUT_ATTR_S *pAttr, char *json_str)
+{
+	char tmpstr[64] = {0};
+
+	JSON_EX_START(json_str);
+	snprintf(tmpstr, sizeof(tmpstr), "%c%s%c: %d, ", '"', "size", '"', pAttr->size);
+	strcat(json_str, tmpstr);
+
+	snprintf(tmpstr, sizeof(tmpstr), "%c%s%c: [ ", '"', "lblcLut", '"');
+	strcat(json_str, tmpstr);
+
+	ISP_LBLC_LUT_S_WRITE_JSON(&pAttr->lblcLut[0], json_str);
+	for (int i = 1; i < ISP_LBLC_ISO_SIZE; i++) {
+		strcat(json_str, ", ");
+		ISP_LBLC_LUT_S_WRITE_JSON(&pAttr->lblcLut[i], json_str);
+	}
+	strcat(json_str, " ]");
+	JSON_EX_END(json_str);
+
+	return strlen(json_str);
+}
+
+char *ISP_LBLC_LUT_S_READ_JSON(ISP_LBLC_LUT_S *pAttr, char *json_str)
+{
+	char *tmpStr = json_str;
+	char *valPos = NULL;
+
+	PARSE_JSON_STR_TO_INT_VALUE(iso, json_str, pAttr);
+	PARSE_JSON_STR_TO_INT_ARRAY(lblcOffsetR, tmpStr, pAttr, ISP_LBLC_GRID_POINTS);
+	PARSE_JSON_STR_TO_INT_ARRAY(lblcOffsetGr, tmpStr, pAttr, ISP_LBLC_GRID_POINTS);
+	PARSE_JSON_STR_TO_INT_ARRAY(lblcOffsetGb, tmpStr, pAttr, ISP_LBLC_GRID_POINTS);
+	PARSE_JSON_STR_TO_INT_ARRAY(lblcOffsetB, tmpStr, pAttr, ISP_LBLC_GRID_POINTS);
+
+	return tmpStr;
+}
+
+void ISP_LBLC_LUT_ATTR_S_READ_JSON(ISP_LBLC_LUT_ATTR_S *pAttr, const char *json_str)
+{
+	char *tmpStr = (char *)json_str;
+
+	PARSE_JSON_STR_TO_INT_VALUE(size, tmpStr, pAttr);
+	tmpStr = strstr(tmpStr, "lblcLut");
+
+	if (tmpStr) {
+		for (int i = 0; i < ISP_LBLC_ISO_SIZE; i++) {
+			tmpStr = strstr(tmpStr, "{");
+			tmpStr = ISP_LBLC_LUT_S_READ_JSON(&pAttr->lblcLut[i], tmpStr);
+			tmpStr = strstr(tmpStr, "}");
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+static void ISP_LBLC_LUT_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_LUT_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_U32, iso);
+	JSON_A(r_w_flag, CVI_U16, lblcOffsetR, ISP_LBLC_GRID_POINTS);
+	JSON_A(r_w_flag, CVI_U16, lblcOffsetGr, ISP_LBLC_GRID_POINTS);
+	JSON_A(r_w_flag, CVI_U16, lblcOffsetGb, ISP_LBLC_GRID_POINTS);
+	JSON_A(r_w_flag, CVI_U16, lblcOffsetB, ISP_LBLC_GRID_POINTS);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+void ISP_LBLC_LUT_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_LBLC_LUT_ATTR_S *data)
+{
+	if (r_w_flag == R_FLAG) {
+		JSON_START(r_w_flag);
+
+		if (cvi_json_object_is_type(obj, cvi_json_type_string)) {
+			const char *json_str = cvi_json_object_get_string(obj);
+
+			ISP_LBLC_LUT_ATTR_S_READ_JSON(data, json_str);
+		} else {
+			JSON(r_w_flag, CVI_U8, size);
+			JSON_A(r_w_flag, ISP_LBLC_LUT_S, lblcLut, ISP_LBLC_ISO_SIZE);
+		}
+		JSON_END(r_w_flag);
+	} else {
+		int max_size = ISP_LBLC_LUT_ATTR_S_GET_MAX_SIZE();
+		char *json_str = (char *)malloc(max_size);
+
+		if (json_str == NULL) {
+			CVI_TRACE_JSON(LOG_WARNING, "%s\n", "Allocate memory fail");
+			return;
+		}
+
+		memset(json_str, 0, max_size);
+		int json_len = ISP_LBLC_LUT_ATTR_S_WRITE_JSON(data, json_str);
+		JSON *json_obj = cvi_json_object_new_string_len(json_str, json_len);
+
+		cvi_json_object_object_add(j, key, json_obj);
+		free(json_str);
+	}
+}
+
 // -----------------------------------------------------------------------------
 // ISP structure - rgbir
 // -----------------------------------------------------------------------------
@@ -2021,38 +2190,15 @@ void ISP_CLUT_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_ATTR_S *dat
 
 
 // -----------------------------------------------------------------------------
-static void ISP_CLUT_SATURATION_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key,
-	ISP_CLUT_SATURATION_MANUAL_ATTR_S *data)
-{
-	JSON_START(r_w_flag);
-
-	JSON_A(r_w_flag, CVI_U16, SatIn, 4);
-	JSON_A(r_w_flag, CVI_U16, SatOut, 4);
-
-	JSON_END(r_w_flag);
-}
-
-// -----------------------------------------------------------------------------
-static void ISP_CLUT_SATURATION_AUTO_ATTR_S_JSON(int r_w_flag, JSON *j, char *key,
-	ISP_CLUT_SATURATION_AUTO_ATTR_S *data)
-{
-	JSON_START(r_w_flag);
-
-	JSON_A(r_w_flag, CVI_U16, SatIn, 4 * ISP_AUTO_ISO_STRENGTH_NUM);
-	JSON_A(r_w_flag, CVI_U16, SatOut, 4 * ISP_AUTO_ISO_STRENGTH_NUM);
-
-	JSON_END(r_w_flag);
-}
-
-// -----------------------------------------------------------------------------
-void ISP_CLUT_SATURATION_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_SATURATION_ATTR_S *data)
+void ISP_CLUT_HSL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_HSL_ATTR_S *data)
 {
 	JSON_START(r_w_flag);
 
 	JSON(r_w_flag, CVI_BOOL, Enable);
-	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
-	JSON(r_w_flag, ISP_CLUT_SATURATION_MANUAL_ATTR_S, stManual);
-	JSON(r_w_flag, ISP_CLUT_SATURATION_AUTO_ATTR_S, stAuto);
+	JSON_A(r_w_flag, CVI_S16, HByH, ISP_CLUT_HUE_LENGTH);
+	JSON_A(r_w_flag, CVI_U16, SByH, ISP_CLUT_HUE_LENGTH);
+	JSON_A(r_w_flag, CVI_U16, LByH, ISP_CLUT_HUE_LENGTH);
+	JSON_A(r_w_flag, CVI_U16, SByS, ISP_CLUT_SAT_LENGTH);
 
 	JSON_END(r_w_flag);
 }
@@ -3221,6 +3367,45 @@ void TEAISP_BNR_NP_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_NP_S *dat
 }
 
 // -----------------------------------------------------------------------------
+// ISP structure - TEAISP PQ
+// -----------------------------------------------------------------------------
+static void TEAISP_PQ_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_MANUAL_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_U8, resv);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+static void TEAISP_PQ_AUTO_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_AUTO_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_U8, resv);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+void TEAISP_PQ_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_BOOL, Enable);
+	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
+	JSON(r_w_flag, CVI_U8, UpdateInterval);
+	JSON(r_w_flag, CVI_U8, TuningMode);
+	JSON_A(r_w_flag, CVI_BOOL, SceneBypass, TEAISP_SCENE_NUM);
+	JSON_A(r_w_flag, CVI_U8, SceneConfThres, TEAISP_SCENE_NUM);
+	JSON(r_w_flag, TEAISP_PQ_MANUAL_ATTR_S, stManual);
+	JSON(r_w_flag, TEAISP_PQ_AUTO_ATTR_S, stAuto);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
 // ISP Other
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -3268,6 +3453,8 @@ void ISP_PARAMETER_BUFFER_JSON(int r_w_flag, JSON *j, char *key_word, ISP_Parame
 
 		// Pre-RAW
 		JSON(r_w_flag, ISP_BLACK_LEVEL_ATTR_S, blc);
+		JSON(r_w_flag, ISP_LBLC_ATTR_S, lblc);
+		JSON(r_w_flag, ISP_LBLC_LUT_ATTR_S, lblcLut);
 		JSON(r_w_flag, ISP_RGBIR_ATTR_S, rgbir);
 		JSON(r_w_flag, ISP_DP_DYNAMIC_ATTR_S, dpc_dynamic);
 		JSON(r_w_flag, ISP_DP_STATIC_ATTR_S, dpc_static);
@@ -3305,7 +3492,7 @@ void ISP_PARAMETER_BUFFER_JSON(int r_w_flag, JSON *j, char *key_word, ISP_Parame
 		JSON(r_w_flag, ISP_CLUT_ATTR_S, clut);
 		break;
 	case 5:
-		JSON(r_w_flag, ISP_CLUT_SATURATION_ATTR_S, clut_saturation);
+		JSON(r_w_flag, ISP_CLUT_HSL_ATTR_S, clut_hsl);
 		JSON(r_w_flag, ISP_CSC_ATTR_S, csc);
 		JSON(r_w_flag, ISP_VC_ATTR_S, vc_motion);
 

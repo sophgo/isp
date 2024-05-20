@@ -76,6 +76,14 @@ CVI_S32 CVI_ISP_SetBlackLevelAttr(VI_PIPE ViPipe, const ISP_BLACK_LEVEL_ATTR_S *
 CVI_S32 CVI_ISP_GetBlackLevelAttr(VI_PIPE ViPipe, ISP_BLACK_LEVEL_ATTR_S *pstBlackLevelAttr);
 
 //-----------------------------------------------------------------------------
+//  Local Black Level Correction(LBLC)
+//-----------------------------------------------------------------------------
+CVI_S32 CVI_ISP_SetLblcAttr(VI_PIPE ViPipe, const ISP_LBLC_ATTR_S *pstLblcAttr);
+CVI_S32 CVI_ISP_GetLblcAttr(VI_PIPE ViPipe, ISP_LBLC_ATTR_S *pstLblcAttr);
+CVI_S32 CVI_ISP_SetLblcLutAttr(VI_PIPE ViPipe, const ISP_LBLC_LUT_ATTR_S *pstLblcLutAttr);
+CVI_S32 CVI_ISP_GetLblcLutAttr(VI_PIPE ViPipe, ISP_LBLC_LUT_ATTR_S *pstLblcLutAttr);
+
+//-----------------------------------------------------------------------------
 //  Dead pixel correction(DPC)
 //-----------------------------------------------------------------------------
 CVI_S32 CVI_ISP_SetDPDynamicAttr(VI_PIPE ViPipe, const ISP_DP_DYNAMIC_ATTR_S *pstDPCDynamicAttr);
@@ -186,8 +194,8 @@ CVI_S32 CVI_ISP_GetDehazeAttr(VI_PIPE ViPipe, ISP_DEHAZE_ATTR_S *pstDehazeAttr);
 //-----------------------------------------------------------------------------
 CVI_S32 CVI_ISP_SetClutAttr(VI_PIPE ViPipe, const ISP_CLUT_ATTR_S *pstClutAttr);
 CVI_S32 CVI_ISP_GetClutAttr(VI_PIPE ViPipe, ISP_CLUT_ATTR_S *pstClutAttr);
-CVI_S32 CVI_ISP_SetClutSaturationAttr(VI_PIPE ViPipe, const ISP_CLUT_SATURATION_ATTR_S *pstClutSaturationAttr);
-CVI_S32 CVI_ISP_GetClutSaturationAttr(VI_PIPE ViPipe, ISP_CLUT_SATURATION_ATTR_S *pstClutSaturationAttr);
+CVI_S32 CVI_ISP_SetClutHslAttr(VI_PIPE ViPipe, const ISP_CLUT_HSL_ATTR_S *pstClutHslAttr);
+CVI_S32 CVI_ISP_GetClutHslAttr(VI_PIPE ViPipe, ISP_CLUT_HSL_ATTR_S *pstClutHslAttr);
 
 //-----------------------------------------------------------------------------
 //  DCI
@@ -343,6 +351,16 @@ CVI_S32 CVI_ISP_GetSmartInfo(VI_PIPE ViPipe, ISP_SMART_INFO_S *pstSmartInfo);
 CVI_S32 CVI_ISP_SetStitchAttr(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pstStitchAttr);
 CVI_S32 CVI_ISP_GetStitchAttr(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pstStitchAttr);
 CVI_S32 CVI_ISP_StitchCalibartion(VI_PIPE ViPipe, ISP_STITCH_ATTR_S *pstAttr, CVI_U8 chnNum);
+//
+//-----------------------------------------------------------------------------
+//  TEAISP PQ
+//-----------------------------------------------------------------------------
+CVI_S32 CVI_TEAISP_PQ_SetAttr(VI_PIPE ViPipe, const TEAISP_PQ_ATTR_S *pstTEAISPPQAttr);
+CVI_S32 CVI_TEAISP_PQ_GetAttr(VI_PIPE ViPipe, TEAISP_PQ_ATTR_S *pstTEAISPPQAttr);
+
+CVI_S32 CVI_TEAISP_PQ_SetSceneInfo(VI_PIPE ViPipe, const TEAISP_PQ_SCENE_INFO *pstTEAISPPQSceneInfo);
+CVI_S32 CVI_TEAISP_PQ_GetSceneInfo(VI_PIPE ViPipe, TEAISP_PQ_SCENE_INFO *pstTEAISPPQSceneInfo);
+CVI_S32 CVI_TEAISP_PQ_GetDetectSceneInfo(VI_PIPE ViPipe, TEAISP_PQ_SCENE_INFO *pstTEAISPPQSceneInfo);
 
 #ifdef __cplusplus
 #if __cplusplus

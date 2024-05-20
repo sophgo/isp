@@ -27,6 +27,7 @@ extern "C" {
 #define MAX_AE_H (24)
 #define MAX_AE_SIZE (MAX_AE_W * MAX_AE_H)
 #define MAX_AE_WIN (2)
+#define MAX_STITCH_GROUP (2)
 
 #define ENABLE_AF_LIB	(0)
 
@@ -154,7 +155,11 @@ typedef struct _ISP_EXPOSURE_ATTR_S {
 typedef struct ISP_STITCH_ATTR_T {
 	CVI_BOOL enable;
 	CVI_BOOL bMainPipe;
-	CVI_BOOL CalibEnable;
+	CVI_BOOL bCalibEnable;
+	CVI_BOOL bCombineSts;
+	CVI_U8  u8CombChnSum;
+	CVI_U8  u8CombChn;
+	CVI_U8	u8Group;
 	CVI_U32 u32CalibLumaRatio;
 	CVI_U32 u32CalibRGainRatio;
 	CVI_U32 u32CalibBGainRatio;
