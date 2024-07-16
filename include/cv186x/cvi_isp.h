@@ -13,6 +13,7 @@
 #include "cvi_comm_isp.h"
 #include "cvi_comm_3a.h"
 #include "cvi_comm_sns.h"
+#include "cvi_comm_cif.h"
 
 #ifdef __cplusplus
 #if __cplusplus

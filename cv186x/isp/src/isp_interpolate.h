@@ -17,7 +17,6 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-
 // **** CVI_BOOL defined as unsigned char in cvi_type.h ****
 #define INTERPOLATE_LINEAR(vipipe, type, u) _Generic((u), \
 		const CVI_U8 * : intrplt_u8, \

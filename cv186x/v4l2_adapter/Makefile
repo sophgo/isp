@@ -33,12 +33,12 @@ DEPS += $(ISP_SRCS:.c=.d)
 VPSS_INC = $(MW_PATH)/modules/vpss/include
 
 INCS += -Iinc
-INCS += -I$(KERNEL_INC) -I$(MW_INC) -I$(ISP_INC) -I$(SYS_INC) -I$(VI_INC) -I$(VPSS_INC)
+INCS += -I$(MW_INC) -I$(ISP_INC) -I$(SYS_INC) -I$(VI_INC) -I$(VPSS_INC) -I$(VO_INC)
 # drm for vo
 DRM_INC = -I$(MW_INC)/3rd/drm -I$(MW_INC)/3rd/drm/libdrm
 DRM_OBJ = $(TOP_DIR)/middleware/$(MW_VER)/lib/3rd/drm/libdrm.a
 
-LOCAL_CFLAGS = $(INCS) -std=gnu11 -MMD -MP
+LOCAL_CFLAGS = $(INCS) -std=gnu11 -MMD -MP -DV4L2_ISP_ENABLE
 
 .PHONY: all clean
 

@@ -8,7 +8,7 @@ extern "C" {
 #endif
 #endif /* End of #ifdef __cplusplus */
 
-#define TEAISP_MAX_TPU_DEV (2)
+#define TEAISP_MAX_TPU_DEV (1)
 
 CVI_S32 CVI_TEAISP_GetMaxDev(VI_PIPE ViPipe, CVI_S32 *maxDev);
 

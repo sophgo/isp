@@ -15,7 +15,7 @@
 
 extern "C" {
 #include "cvi_type.h"
-#include "linux/cvi_comm_video.h"
+#include "cvi_comm_video.h"
 #include "cvi_ispd2.h"
 #include "raw_dump.h"
 #include "cvi_isp.h"

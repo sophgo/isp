@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <linux/cvi_common.h>
-#include <linux/cvi_defines.h>
+#include <cvi_common.h>
+#include <cvi_defines.h>
 #include "cvi_comm_isp.h"
 #include "isp_bin.h"
 #include "cvi_json_struct_comm.h"

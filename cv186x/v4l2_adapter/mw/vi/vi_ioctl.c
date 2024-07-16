@@ -13,10 +13,9 @@
 #include <sys/ioctl.h>
 #include <linux/videodev2.h>
 
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_comm_vo.h>
-
-#include <linux/vi_uapi.h>
+#include <cvi_comm_video.h>
+#include <cvi_comm_vo.h>
+#include "vi_ioctl.h"
 
 #define UNUSED(x) ((void)(x))
 
@@ -219,7 +218,7 @@ int vi_sdk_release_pipe_frame(int fd, int pipe, VIDEO_FRAME_INFO_S *pstFrameInfo
 	return 0;
 }
 
-int vi_get_ip_dump_list(int fd, void *ip_info_list)
+int vi_get_ip_dump_list(int fd, struct ip_info *ip_info_list)
 {
 	struct v4l2_ext_controls ecs;
 	struct v4l2_ext_control ec;
@@ -240,7 +239,7 @@ int vi_get_ip_dump_list(int fd, void *ip_info_list)
 	return 0;
 }
 
-int vi_get_tun_addr(int fd, void *tun_buf_info)
+int vi_get_tun_addr(int fd, struct isp_tuning_cfg *tun_buf_info)
 {
 	struct v4l2_ext_controls ecs;
 	struct v4l2_ext_control ec;

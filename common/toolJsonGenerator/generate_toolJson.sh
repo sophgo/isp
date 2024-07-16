@@ -55,7 +55,7 @@ if [ $CHIP_ID == "cv181x" ] || [ $CHIP_ID == "cv180x" ] || [ $CHIP_ID == "cv186x
 then
 HEADERLIST+=" $MW_INCLUDE_PATH/cvi_comm_vi.h"
 HEADERLIST+=" $MW_INCLUDE_PATH/cvi_comm_vpss.h"
-HEADERLIST+=" $OSDRV_INCLUDE_PATH/cvi_defines.h"
+HEADERLIST+=" $MW_INC/cvi_defines.h"
 fi
 LEVELJSON=$CHIP_ID/level.json
 LAYOUTJSON=$CHIP_ID/layout.json

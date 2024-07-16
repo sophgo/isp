@@ -26,6 +26,8 @@
 
 #include "list.h"
 
+#define ENABLE_PRELOAD_BNR_MODEL 1
+
 typedef struct {
 	struct list_head list;
 	TEAISP_BNR_MODEL_INFO_S model_info;
@@ -176,6 +178,49 @@ CVI_S32 teaisp_bnr_ctrl_ctrl(VI_PIPE ViPipe, enum isp_module_cmd cmd, CVI_VOID *
 //-----------------------------------------------------------------------------
 //  private functions
 //-----------------------------------------------------------------------------
+#ifdef ENABLE_PRELOAD_BNR_MODEL
+static void bnr_load_all_bmodel(VI_PIPE ViPipe)
+{
+	CVI_S32 ret = CVI_SUCCESS;
+	struct teaisp_bnr_ctrl_runtime *runtime = _get_bnr_ctrl_runtime(ViPipe);
+
+	TEAISP_BNR_HANDLE_S *handle = (TEAISP_BNR_HANDLE_S *) runtime->handle;
+
+	struct list_head *pos, *n;
+	TEAISP_BNR_MODEL_S *model;
+
+	list_for_each_safe(pos, n, &handle->model_info_head) {
+		model = list_entry(pos, TEAISP_BNR_MODEL_S, list);
+
+		if (model->model == NULL) {
+			ret = teaisp_bnr_load_model(ViPipe, model->model_info.path, &model->model);
+			if (ret != CVI_SUCCESS) {
+				model->model = NULL;
+			}
+		}
+	}
+}
+
+static void bnr_unload_all_bmodel(VI_PIPE ViPipe)
+{
+	struct teaisp_bnr_ctrl_runtime *runtime = _get_bnr_ctrl_runtime(ViPipe);
+
+	TEAISP_BNR_HANDLE_S *handle = (TEAISP_BNR_HANDLE_S *) runtime->handle;
+
+	struct list_head *pos, *n;
+	TEAISP_BNR_MODEL_S *model;
+
+	list_for_each_safe(pos, n, &handle->model_info_head) {
+		model = list_entry(pos, TEAISP_BNR_MODEL_S, list);
+
+		if (model->model != NULL) {
+			teaisp_bnr_unload_model(ViPipe, model->model);
+			model->model = CVI_NULL;
+		}
+	}
+}
+#endif
+
 static void *bnr_work_thread(void *arg)
 {
 	CVI_S32 ret = CVI_SUCCESS;
@@ -213,15 +258,19 @@ static void *bnr_work_thread(void *arg)
 				}
 
 				teaisp_bnr_set_driver_stop(ViPipe);
-
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 				teaisp_bnr_unload_model(ViPipe, handle->pcurr_model->model);
 				handle->pcurr_model->model = CVI_NULL;
+#endif
 				handle->pcurr_model = CVI_NULL;
 
 				runtime->is_teaisp_bnr_running = CVI_FALSE;
 			}
 
 			if (!bnr_attr->enable && runtime->is_teaisp_bnr_enable) {
+#ifdef ENABLE_PRELOAD_BNR_MODEL
+				bnr_unload_all_bmodel(ViPipe);
+#endif
 				ret = teaisp_bnr_set_driver_deinit(ViPipe);
 
 				if (ret != CVI_SUCCESS) {
@@ -237,6 +286,9 @@ static void *bnr_work_thread(void *arg)
 		} else {
 
 			if (!runtime->is_teaisp_bnr_enable) {
+#ifdef ENABLE_PRELOAD_BNR_MODEL
+				bnr_load_all_bmodel(ViPipe);
+#endif
 				ret = teaisp_bnr_set_driver_init(ViPipe);
 
 				if (ret != CVI_SUCCESS) {
@@ -258,11 +310,16 @@ static void *bnr_work_thread(void *arg)
 
 			if (handle->pcurr_model == NULL) {
 				handle->pcurr_model = temp;
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 				// load model && set api info
 				//ISP_LOG_INFO("load model: %s, %d, %d\n",
 				printf("load model: %s, %d, %d\n",
 					temp->model_info.path, temp->model_info.enterISO, temp->model_info.tolerance);
 				teaisp_bnr_load_model(ViPipe, temp->model_info.path, &temp->model);
+#else
+				printf("enter model: %s, %d, %d\n",
+					temp->model_info.path, temp->model_info.enterISO, temp->model_info.tolerance);
+#endif
 				u32UpdateCnt = 0;
 				runtime->bnr_cfg.blend = 0x0;
 				bnr_cfg = runtime->bnr_cfg;
@@ -271,7 +328,9 @@ static void *bnr_work_thread(void *arg)
 
 			if (temp != handle->pcurr_model) {
 
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 				TEAISP_BNR_MODEL_S *pprev = CVI_NULL;
+#endif
 
 				ISP_LOG_INFO("ISO: %d, next model enterISO: %d, curr model enterISO: %d, %d\n",
 					runtime->u32CurrentISO, temp->model_info.enterISO,
@@ -279,31 +338,41 @@ static void *bnr_work_thread(void *arg)
 					handle->pcurr_model->model_info.tolerance);
 
 				if (temp->model_info.enterISO > handle->pcurr_model->model_info.enterISO) {
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 					pprev = handle->pcurr_model;
+#endif
 					handle->pcurr_model = temp;
 				}
 
 				if (temp->model_info.enterISO < handle->pcurr_model->model_info.enterISO &&
 					u32ISO < (handle->pcurr_model->model_info.enterISO -
 						handle->pcurr_model->model_info.tolerance)) {
-
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 					pprev = handle->pcurr_model;
+#endif
 					handle->pcurr_model = temp;
 				}
 
 				if (temp == handle->pcurr_model) {
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 					// load model && set api info
 					//ISP_LOG_INFO("load model: %s, %d, %d\n",
 					printf("load model: %s, %d, %d\n",
 						temp->model_info.path, temp->model_info.enterISO,
 						temp->model_info.tolerance);
 					teaisp_bnr_load_model(ViPipe, temp->model_info.path, &temp->model);
-					u32UpdateCnt = 0;
-					runtime->bnr_cfg.blend = 0x0;
-					bnr_cfg = runtime->bnr_cfg;
-					teaisp_bnr_set_api_info((int) ViPipe, temp->model, (void *) &bnr_cfg, 1);
+#else
+					printf("enter model: %s, %d, %d\n",
+						temp->model_info.path, temp->model_info.enterISO, temp->model_info.tolerance);
+#endif
+					//u32UpdateCnt = 0;
+					//runtime->bnr_cfg.blend = 0x0;
+					//bnr_cfg = runtime->bnr_cfg;
+					//teaisp_bnr_set_api_info((int) ViPipe, temp->model, (void *) &bnr_cfg, 1);
+#ifndef ENABLE_PRELOAD_BNR_MODEL
 					teaisp_bnr_unload_model(ViPipe, pprev->model);
 					pprev->model = CVI_NULL;
+#endif
 				}
 			}
 
@@ -615,6 +684,13 @@ CVI_S32 teaisp_bnr_ctrl_set_model(VI_PIPE ViPipe, const TEAISP_BNR_MODEL_INFO_S 
 	}
 
 	info->model_info = *pstModelInfo;
+
+#ifdef ENABLE_PRELOAD_BNR_MODEL
+	ret = teaisp_bnr_load_model(ViPipe, info->model_info.path, &info->model);
+	if (ret != CVI_SUCCESS) {
+		return CVI_FAILURE;
+	}
+#endif
 
 	list_add_tail(&info->list, &handle->model_info_head);
 

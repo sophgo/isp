@@ -6,7 +6,7 @@ endif
 
 SDIR = $(PWD)
 SRCS = $(wildcard $(SDIR)/*.c)
-INCS = -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(SYS_INC) -I../
+INCS = -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(SYS_INC) -I$(VI_INC) -I../
 
 ifneq ($(findstring $(CHIP_ARCH), CV183X cv183x),)
 CFLAGS += -DCHIP_ARCH_CV183X

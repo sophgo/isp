@@ -56,7 +56,7 @@ make clean
 make all || return $?
 
 echo "build cvi venc ..."
-cd ${TOP_DIR}/middleware/${MW_VER}/modules/venc || return $?
+cd ${TOP_DIR}/middleware/${MW_VER}/modules/vcodec || return $?
 make clean
 make all || return $?
 

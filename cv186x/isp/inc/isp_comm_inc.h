@@ -18,15 +18,18 @@ extern "C" {
 #include "stdint.h"
 #include <sys/time.h>
 
-#include <linux/cvi_common.h>
-#include <linux/cvi_comm_vi.h>
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_defines.h>
-#include <linux/cvi_math.h>
-#include <linux/vi_isp.h>
-#include <linux/vi_tun_cfg.h>
-#include <linux/vi_uapi.h>
-#include <linux/vi_snsr.h>
+#include <cvi_common.h>
+#include <cvi_comm_vi.h>
+#include <cvi_comm_video.h>
+#include <cvi_defines.h>
+#include <cvi_math.h>
+#include <vi_isp.h>
+#include <vi_tun_cfg.h>
+#ifdef V4L2_ISP_ENABLE
+#include <vi_v4l2_uapi.h>
+#else
+#include <vi_uapi.h>
+#endif
 
 #ifdef __cplusplus
 #if __cplusplus

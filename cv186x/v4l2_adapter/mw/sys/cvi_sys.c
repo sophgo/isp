@@ -16,9 +16,8 @@
 #include "cvi_base.h"
 #include "cvi_sys.h"
 #include "hashmap.h"
-#include <linux/cvi_tpu_ioctl.h>
-#include <linux/base_uapi.h>
-#include <linux/sys_uapi.h>
+#include <base_uapi.h>
+#include <sys_uapi.h>
 #include "devmem.h"
 
 #define UNUSED(x) ((void)(x))

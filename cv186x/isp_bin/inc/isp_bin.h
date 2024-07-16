@@ -9,7 +9,7 @@
 #ifndef _ISP_BIN_H
 #define _ISP_BIN_H
 
-#include <linux/cvi_common.h>
+#include <cvi_common.h>
 #include "cvi_bin.h"
 
 #ifdef __cplusplus
