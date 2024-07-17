@@ -10,7 +10,7 @@
 #include "cvi_streamer.hpp"
 
 extern "C" {
-#include "ini.h"
+#include "3rd/ini.h"
 #include "cvi_bin.h"
 #include "cvi_vi.h"
 #include "common/sample_comm.h"

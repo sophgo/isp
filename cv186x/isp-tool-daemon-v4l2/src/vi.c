@@ -21,7 +21,6 @@
 #include "vi.h"
 #include "cvi_isp_v4l2.h"
 
-
 #include "bmcv_api_ext_c.h"
 
 #ifndef UNUSED
@@ -419,7 +418,10 @@ int start_vi(RTSP_CFG *p_rtsp_cfg)
 		CVI_ISP_V4L2_Init(pipe, ViCtx[pipe].vi_fd);
 
 		if (p_rtsp_cfg->pa_video_src_cfg[pipe].enable_teaisp_bnr) {
-			CVI_TEAISP_SetMode(pipe, TEAISP_BEFORE_FE_RAW_MODE); // TODO: mason.zou
+			if (pipe_num > 1)
+				CVI_TEAISP_SetMode(pipe, TEAISP_AFTER_FE_RAW_MODE);
+			else
+				CVI_TEAISP_SetMode(pipe, TEAISP_BEFORE_FE_RAW_MODE);
 			init_teaisp_bnr(pipe, p_rtsp_cfg->pa_video_src_cfg[pipe].bnr_model_list);
 		}
 	}

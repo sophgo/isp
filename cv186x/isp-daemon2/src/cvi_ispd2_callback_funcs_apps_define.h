@@ -14,10 +14,10 @@
 #include <stdbool.h>
 
 #include "cvi_type.h"
-#include "linux/cvi_comm_vb.h"
+#include "cvi_comm_vb.h"
 
-#include "linux/cvi_defines.h"
-#include "linux/cvi_comm_video.h"
+#include "cvi_defines.h"
+#include "cvi_comm_video.h"
 
 #define MAX_WDR_FUSION_FRAMES		(4)
 

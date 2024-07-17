@@ -12,9 +12,6 @@
 #include <sys/ioctl.h>
 // #include <sys/time.h>
 
-// #include <linux/vi_uapi.h>
-// #include <linux/vi_isp.h>
-
 #include "isp_defines.h"
 #include "isp_main_local.h"
 

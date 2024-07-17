@@ -27,7 +27,7 @@ ifeq ($(DESTDIR),)
 	DESTDIR := $(shell pwd)/install
 endif
 
-INCS = -I$(KERNEL_INC) -I$(MW_INC) -I$(ISP_INC) -Iinclude -I$(MW_PATH)/sample -I$(CVI_ISPD2_PATH)
+INCS = -I$(KERNEL_INC) -I$(MW_INC) -I$(ISP_INC) -I$(VI_INC) -Iinclude -I$(MW_PATH)/sample -I$(CVI_ISPD2_PATH)
 INCS += -I$(ISP_COMMON_DIR)/raw_dump/inc
 INCS += -I$(ISP_COMMON_DIR)/raw_dump/src
 
@@ -43,7 +43,7 @@ SAMPLE_SRCS = $(wildcard $(MW_SAMPLE_COMMON_PATH)/*.c)
 SAMPLE_OBJS = $(SAMPLE_SRCS:.c=.o)
 SAMPLE_DEPS = $(SAMPLE_SRCS:.c=.d)
 PANEL_INC = $(TOP_DIR)/middleware/$(MW_VER)/component/panel/$(shell echo $(CVIARCH) | tr A-Z a-z)
-MW_SAMPLE_CFLAGS = -I$(MW_SAMPLE_COMMON_PATH) -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(PANEL_INC)
+MW_SAMPLE_CFLAGS = -I$(MW_SAMPLE_COMMON_PATH) -I$(MW_INC) -I$(ISP_INC) -I$(VI_INC) -I$(KERNEL_INC) -I$(PANEL_INC)
 MW_SAMPLE_CFLAGS += -MMD -MP
 MW_SAMPLE_CFLAGS += $(KBUILD_DEFINES)
 

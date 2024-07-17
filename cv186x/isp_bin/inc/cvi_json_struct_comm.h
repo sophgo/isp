@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <float.h>
-#include <linux/cvi_common.h>
+#include "cvi_common.h"
 
 #include "cvi_json.h"
 #include "cvi_bin.h"

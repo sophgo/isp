@@ -11,7 +11,7 @@
 #include <fcntl.h>
 
 #include <linux/videodev2.h>
-#include <linux/sns_v4l2_uapi.h>
+#include <sns_v4l2_uapi.h>
 #include <sys/ioctl.h>
 
 #include "cvi_bin.h"
@@ -136,6 +136,13 @@ static void *get_sensor_obj(int pipe)
 		pstSnsObj = &stSnsN6_Obj;
 		break;
 #endif
+
+#if defined(SENSOR_ONSEMI_AR2020)
+	case V4L2_ONSEMI_AR2020_20M_25FPS_10BIT:
+		pstSnsObj = &stSnsAR2020_Obj;
+		break;
+#endif
+
 #if defined(SENSOR_OV_OS02D10)
 	case V4L2_OV_OS02D10_MIPI_2M_30FPS_10BIT:
 		pstSnsObj = &stSnsOs02d10_Obj;
@@ -535,6 +542,9 @@ static void *get_sensor_obj(int pipe)
 	case V4L2_LONTIUM_MIPI_LT6911_1M_60FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_2M_60FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_8M_60FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_1M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_2M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_8M_30FPS_8BIT:
 		pstSnsObj = &stSnsLT6911_Obj;
 		break;
 #endif
@@ -625,6 +635,9 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_OV_OS04A10_MIPI_4M_1440P_30FPS_12BIT:
 	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT:
 	case V4L2_OV_OS08B10_MIPI_8M_30FPS_10BIT_WDR2TO1:
+	case V4L2_LONTIUM_MIPI_LT6911_1M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_2M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_8M_30FPS_8BIT:
 		pstPubAttr->f32FrameRate = 30;
 		break;
 	case V4L2_OV_OS04E10_MIPI_4M_30FPS_2L_10BIT_WDR2TO1:
@@ -709,6 +722,7 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_GCORE_GC4653_SLAVE_MIPI_4M_30FPS_10BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_2M_30FPS_8BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_4M_30FPS_8BIT:
+	case V4L2_ONSEMI_AR2020_20M_25FPS_10BIT:
 		pstPubAttr->enBayer = BAYER_GRBG;
 		break;
 	default:
@@ -1350,6 +1364,9 @@ static int set_dev_attr(int pipe)
 	case V4L2_LONTIUM_MIPI_LT6911_1M_60FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_2M_60FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_8M_60FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_1M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_2M_30FPS_8BIT:
+	case V4L2_LONTIUM_MIPI_LT6911_8M_30FPS_8BIT:
 		stViDevAttr.enDataSeq = VI_DATA_SEQ_UYVY;
 		stViDevAttr.enInputDataType = VI_DATA_TYPE_YUV;
 		stViDevAttr.enIntfMode = VI_MODE_MIPI_YUV422;
@@ -1472,6 +1489,7 @@ static int set_dev_attr(int pipe)
 	case V4L2_GCORE_GC4653_SLAVE_MIPI_4M_30FPS_10BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_2M_30FPS_8BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_4M_30FPS_8BIT:
+	case V4L2_ONSEMI_AR2020_20M_25FPS_10BIT:
 		stViDevAttr.enBayerFormat = BAYER_FORMAT_GR;
 		break;
 	case V4L2_SOI_K06_MIPI_4M_25FPS_10BIT:

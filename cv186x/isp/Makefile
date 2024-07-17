@@ -7,7 +7,7 @@ include ../../isp.mk
 
 TMP_FOLDER = $(PWD)/tmp
 SDIR = $(PWD)/src
-INCS = -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(SYS_INC) -I$(VI_INC) -Iinc -Isrc
+INCS = -I$(MW_INC) -I$(ISP_INC) -I$(SYS_INC) -I$(VI_INC) -Iinc -Isrc
 INCS += -I../isp_algo/inc
 INCS += -I../teaisp/src
 INCS += -I../../algo

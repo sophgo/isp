@@ -16,7 +16,7 @@ SRCS = $(wildcard $(SDIR)/*.c)
 SRCS := $(filter-out $(SDIR)/self_test.c, $(SRCS))
 
 INCS += -I./inc
-INCS += -I$(KERNEL_INC) -I$(MW_INC) -I$(ISP_INC) -I$(SYS_INC)
+INCS += -I$(MW_INC) -I$(ISP_INC) -I$(SYS_INC) -I$(VI_INC)
 INCS += -I../../common/clog
 INCS += -I../isp/inc
 INCS += -I../v4l2_adapter/inc
@@ -36,7 +36,7 @@ DEPS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.d, $(SRCS))
 TARGET = isp_tool_daemon
 
 EXTRA_CFLAGS = $(INCS)
-CFLAGS += -MMD -MP
+CFLAGS += -MMD -MP -DV4L2_ISP_ENABLE
 
 ELFFLAGS += -L$(MW_PATH)/lib
 ELFFLAGS += -L$(MW_PATH)/lib/3rd/drm

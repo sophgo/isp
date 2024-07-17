@@ -19,12 +19,12 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 
-#include <linux/base_uapi.h>
+#include <base_uapi.h>
 #include <sys/prctl.h>
 
 #include "cvi_base.h"
 #include "cvi_buffer.h"
-#include <linux/cvi_errno.h>
+#include <cvi_errno.h>
 
 static CVI_S32 base_fd = -1;
 static int dev_isp[VI_MAX_PIPE_NUM];

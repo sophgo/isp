@@ -17,7 +17,7 @@
 	"buf1-blk-cnt": 0,
 	"rtsp-max-buf-size": 10485760,
 	"vi-vpss-mode": 0,
-	"max-use-tpu-num": 2,
+	"max-use-tpu-num": 1,
 	"teaisp-faceae-model": "./cvi_models/scrfd_500m_bnkps_432_768_int8_cv186x.bmodel",
 	"teaisp-pq-model": "./cvi_models/mqbench_qmodel_best_deploy_model_cv186x.bmodel",
 	"sbm": 0,

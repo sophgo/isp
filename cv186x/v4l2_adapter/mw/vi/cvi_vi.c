@@ -16,7 +16,6 @@
 #include "vi_ioctl.h"
 #include "cvi_sns_ctrl.h"
 #include "cvi_isp_v4l2.h"
-#include <linux/cvi_vi_ctx.h>
 
 #define UNUSED(x) ((void)(x))
 

@@ -14,7 +14,7 @@
 #if defined(CHIP_ARCH_CV183X) || defined(CHIP_ARCH_CV182X)
 #include "cvi_common.h"
 #else
-#include <linux/cvi_common.h>
+#include <cvi_common.h>
 #endif //
 
 #ifdef __cplusplus

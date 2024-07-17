@@ -10,7 +10,7 @@ ISP_BASE_PATH = $(PWD)/../../$(isp_chip_name)
 SDIR = $(PWD)/src
 SRCS = $(wildcard $(SDIR)/*.c)
 
-INCS = -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(SYS_INC) -I./inc -I./src -I../../algo
+INCS = -I$(MW_INC) -I$(ISP_INC) -I$(KERNEL_INC) -I$(SYS_INC) -I$(VI_INC) -I./inc -I./src -I../../algo
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)

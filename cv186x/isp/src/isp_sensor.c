@@ -20,10 +20,6 @@
 #include "isp_sts_ctrl.h"
 #include "../../../algo/ae/aealgo.h"
 
-// #include <linux/vi_uapi.h>
-// #include <linux/vi_isp.h>
-// #include <linux/vi_snsr.h>
-
 typedef struct _ISP_SNS_CTX_S {
 	ISP_CMOS_DEFAULT_S stCmosDft;
 	ISP_CMOS_BLACK_LEVEL_S stSnsBlackLevel;

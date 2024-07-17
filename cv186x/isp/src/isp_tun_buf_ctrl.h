@@ -10,9 +10,6 @@
 #define _ISP_TUN_BUF_CTRL_H_
 
 #include "isp_comm_inc.h"
-// #include <linux/vi_uapi.h>
-// #include <linux/vi_isp.h>
-
 
 #ifdef __cplusplus
 #if __cplusplus

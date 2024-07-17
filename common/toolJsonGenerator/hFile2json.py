@@ -221,6 +221,8 @@ class MarcoDict():
                 num =  int(str.split(" ")[2].replace("(","").replace(")",""),10)
         else:
             num = str.split(" ")[2].replace("(","").replace(")","")
+            if "UL" in num:
+                num = num.replace("UL","")
 
         return name,num
     def getDict(self):
@@ -483,11 +485,17 @@ class StructJson():
                     if self.marcoDict.get(Range[0]):
                         self.RANGE.append(int(self.marcoDict[Range[0]], 16))
                     else:
-                        self.RANGE.append(int(Range[0], 16))
+                        try:
+                            self.RANGE.append(int(Range[0], 16))
+                        except:
+                            pass
                     if self.marcoDict.get(Range[1]):
                         self.RANGE.append(self.marcoDict[Range[1]])
                     else:
-                        self.RANGE.append(int(Range[1], 16))
+                        try:
+                            self.RANGE.append(int(Range[1], 16))
+                        except:
+                            pass
         def parseLevel(self):
             if USE_LEVEL:
                 if self.structId in levelDict.keys():
@@ -640,7 +648,7 @@ def parseStruct(str):
     pattern = re.compile('struct\s*\w+\s*\{[^\}\{\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
     return pattern.findall(str)
 def parseEnum(str):
-    pattern = re.compile('enum[^\{\#]*\{[^\}\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
+    pattern = re.compile('enum[^\{\#\}]*\{[^\}\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
     return pattern.findall(str)
 def SaveEnumJson2File(fp, enumStrs):
     startLine = """

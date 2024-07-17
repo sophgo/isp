@@ -9,7 +9,7 @@
 #ifndef _ISP_3A_BIN_H
 #define _ISP_3A_BIN_H
 
-#include <linux/cvi_common.h>
+#include <cvi_common.h>
 #include "isp_param_header.h"
 
 #ifdef __cplusplus

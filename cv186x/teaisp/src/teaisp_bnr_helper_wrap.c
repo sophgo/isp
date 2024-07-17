@@ -64,7 +64,14 @@ typedef struct {
 	TEAISP_MODEL_S *bmodel1;
 } TEAISP_BNR_CTX_S;
 
+typedef struct {
+	bm_tensor_t *input_tensors[TEAISP_MAX_TUNING_INDEX];
+	bm_tensor_t *output_tensors[TEAISP_MAX_TUNING_INDEX];
+	void **input_vaddr[TEAISP_MAX_TUNING_INDEX];
+} TEAISP_BNR_SHARED_IN_OUT_S;
+
 static TEAISP_BNR_CTX_S *bnr_ctx[VI_MAX_PIPE_NUM];
+static TEAISP_BNR_SHARED_IN_OUT_S *bnr_shared_in_out[VI_MAX_PIPE_NUM];
 
 static int teaisp_bnr_get_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *output_raw)
 {
@@ -375,6 +382,10 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 		return CVI_FAILURE;
 	}
 
+	struct timeval tv1, tv2;
+
+	gettimeofday(&tv1, NULL);
+
 	memset(m, 0, sizeof(TEAISP_MODEL_S));
 
 	m->pipe = ViPipe;
@@ -390,6 +401,21 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 	}
 
 	ISP_LOG_INFO("load bmodel++: pipe:%d, core_id: %d, %s\n", ViPipe, m->core_id, path);
+
+	if (bnr_ctx[ViPipe] == NULL) {
+		bnr_ctx[ViPipe] = (TEAISP_BNR_CTX_S *) ISP_CALLOC(1, sizeof(TEAISP_BNR_CTX_S));
+
+		if (bnr_ctx[ViPipe] == NULL) {
+			return CVI_FAILURE;
+		}
+
+		bm_status_t status = bm_dev_request(&bnr_ctx[ViPipe]->bm_handle, 0);
+
+		if (status != BM_SUCCESS) {
+			ISP_LOG_ERR("request device fail, pipe: %d\n", ViPipe);
+			return CVI_FAILURE;
+		}
+	}
 
 	m->p_bmrt = bmrt_create(bnr_ctx[ViPipe]->bm_handle);
 	if (m->p_bmrt == NULL) {
@@ -423,119 +449,136 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 		goto load_model_fail;
 	}
 
+	if (bnr_shared_in_out[ViPipe] == NULL) {
+		//printf("--------------------------------------------------------------------------------\n");
+		//printf("pipe: %d, craete the shared mmeory!\n", ViPipe);
+		//printf("--------------------------------------------------------------------------------\n");
+		bnr_shared_in_out[ViPipe] = (TEAISP_BNR_SHARED_IN_OUT_S *) ISP_CALLOC(1, sizeof(TEAISP_BNR_SHARED_IN_OUT_S));
+		TEAISP_BNR_SHARED_IN_OUT_S *m_shared = bnr_shared_in_out[ViPipe];
+
+		for (int index = 0; index < TEAISP_MAX_TUNING_INDEX; index++) {
+
+			m_shared->input_vaddr[index] = (void *) ISP_CALLOC(net_info->input_num, sizeof(void *));
+
+			if (m_shared->input_vaddr[index] == NULL) {
+				goto load_model_fail;
+			}
+
+			m_shared->input_tensors[index] = (bm_tensor_t *) ISP_CALLOC(net_info->input_num, sizeof(bm_tensor_t));
+
+			if (m_shared->input_tensors[index] == NULL) {
+				goto load_model_fail;
+			}
+
+			m_shared->output_tensors[index] = (bm_tensor_t *) ISP_CALLOC(net_info->output_num, sizeof(bm_tensor_t));
+
+			if (m_shared->output_tensors[index] == NULL) {
+				goto load_model_fail;
+			}
+
+			for (int i = 0; i < net_info->input_num; i++) {
+				m_shared->input_tensors[index][i].dtype = net_info->input_dtypes[i];
+				m_shared->input_tensors[index][i].shape = net_info->stages[0].input_shapes[i];
+				m_shared->input_tensors[index][i].st_mode = BM_STORE_1N;
+
+				if (i == BNR_IN_INPUT_IMG) {
+					memset(&m_shared->input_tensors[index][i].device_mem, 0, sizeof(bm_device_mem_t));
+					m_shared->input_tensors[index][i].device_mem.size = net_info->max_input_bytes[i];
+				} else {
+
+					if (index > 0 && (i == BNR_IN_FUSION_IMG || i == BNR_IN_SIGMA)) {
+						m_shared->input_tensors[index][i].device_mem = m_shared->input_tensors[0][i].device_mem;
+						continue;
+					}
+
+					status = bm_malloc_device_byte(bnr_ctx[ViPipe]->bm_handle,
+						&m_shared->input_tensors[index][i].device_mem,
+						net_info->max_input_bytes[i]);
+					if (status != BM_SUCCESS) {
+						goto load_model_fail;
+					}
+
+					unsigned long long vmem;
+
+					bm_mem_mmap_device_mem_no_cache(bnr_ctx[ViPipe]->bm_handle,
+						&m_shared->input_tensors[index][i].device_mem, &vmem);
+
+					memset((void *) vmem, 0, net_info->max_input_bytes[i]);
+
+					m_shared->input_vaddr[index][i] = (void *) vmem;
+				}
+
+				ISP_LOG_ERR("index: %d, in: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
+					index, i,
+					m_shared->input_tensors[index][i].dtype,
+					m_shared->input_tensors[index][i].shape.dims[0], m_shared->input_tensors[index][i].shape.dims[1],
+					m_shared->input_tensors[index][i].shape.dims[2], m_shared->input_tensors[index][i].shape.dims[3],
+					m_shared->input_tensors[index][i].shape.num_dims,
+					m_shared->input_tensors[index][i].device_mem.u.device.device_addr,
+					(int) net_info->max_input_bytes[i]);
+			}
+
+			for (int i = 0; i < net_info->output_num; i++) {
+				m_shared->output_tensors[index][i].dtype = net_info->output_dtypes[i];
+				m_shared->output_tensors[index][i].shape = net_info->stages[0].output_shapes[i];
+				m_shared->output_tensors[index][i].st_mode = BM_STORE_1N;
+
+				if (i == BNR_OUT_INPUT_IMG) {
+					memset(&m_shared->output_tensors[index][i].device_mem, 0, sizeof(bm_device_mem_t));
+					m_shared->output_tensors[index][i].device_mem.size = net_info->max_output_bytes[i];
+				} else {
+
+					if (index > 0 && (i == BNR_OUT_FUSION_IMG || i == BNR_OUT_SIGMA)) {
+						m_shared->output_tensors[index][i].device_mem = m_shared->output_tensors[0][i].device_mem;
+						continue;
+					}
+
+					status = bm_malloc_device_byte(bnr_ctx[ViPipe]->bm_handle,
+						&m_shared->output_tensors[index][i].device_mem,
+						net_info->max_output_bytes[i]);
+					if (status != BM_SUCCESS) {
+						goto load_model_fail;
+					}
+
+					unsigned long long vmem;
+
+					bm_mem_mmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
+						&m_shared->output_tensors[index][i].device_mem, &vmem);
+
+					memset((void *) vmem, 0, net_info->max_output_bytes[i]);
+
+					bm_mem_flush_device_mem(bnr_ctx[ViPipe]->bm_handle,
+						&m_shared->output_tensors[index][i].device_mem);
+					bm_mem_unmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
+						(void *) vmem, (int) net_info->max_output_bytes[i]);
+				}
+
+				ISP_LOG_ERR("index: %d, out: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
+					index, i,
+					m_shared->output_tensors[index][i].dtype,
+					m_shared->output_tensors[index][i].shape.dims[0], m_shared->output_tensors[index][i].shape.dims[1],
+					m_shared->output_tensors[index][i].shape.dims[2], m_shared->output_tensors[index][i].shape.dims[3],
+					m_shared->output_tensors[index][i].shape.num_dims,
+					m_shared->output_tensors[index][i].device_mem.u.device.device_addr,
+					(int) net_info->max_output_bytes[i]);
+			}
+		}
+	}
+
+	// shared input, output -> model
 	for (int index = 0; index < TEAISP_MAX_TUNING_INDEX; index++) {
-
-		m->input_vaddr[index] = (void *) ISP_CALLOC(net_info->input_num, sizeof(void *));
-
-		if (m->input_vaddr[index] == NULL) {
-			goto load_model_fail;
-		}
-
-		m->input_tensors[index] = (bm_tensor_t *) ISP_CALLOC(net_info->input_num, sizeof(bm_tensor_t));
-
-		if (m->input_tensors[index] == NULL) {
-			goto load_model_fail;
-		}
-
-		m->output_tensors[index] = (bm_tensor_t *) ISP_CALLOC(net_info->input_num, sizeof(bm_tensor_t));
-
-		if (m->output_tensors[index] == NULL) {
-			goto load_model_fail;
-		}
-
-		for (int i = 0; i < net_info->input_num; i++) {
-			m->input_tensors[index][i].dtype = net_info->input_dtypes[i];
-			m->input_tensors[index][i].shape = net_info->stages[0].input_shapes[i];
-			m->input_tensors[index][i].st_mode = BM_STORE_1N;
-
-			if (i == BNR_IN_INPUT_IMG) {
-				memset(&m->input_tensors[index][i].device_mem, 0, sizeof(bm_device_mem_t));
-				m->input_tensors[index][i].device_mem.size = net_info->max_input_bytes[i];
-			} else {
-
-				if (index > 0 && (i == BNR_IN_FUSION_IMG || i == BNR_IN_SIGMA)) {
-					m->input_tensors[index][i].device_mem = m->input_tensors[0][i].device_mem;
-					continue;
-				}
-
-				status = bm_malloc_device_byte(bnr_ctx[ViPipe]->bm_handle,
-					&m->input_tensors[index][i].device_mem,
-					net_info->max_input_bytes[i]);
-				if (status != BM_SUCCESS) {
-					goto load_model_fail;
-				}
-
-				unsigned long long vmem;
-
-				bm_mem_mmap_device_mem_no_cache(bnr_ctx[ViPipe]->bm_handle,
-					&m->input_tensors[index][i].device_mem, &vmem);
-
-				memset((void *) vmem, 0, net_info->max_input_bytes[i]);
-
-				m->input_vaddr[index][i] = (void *) vmem;
-			}
-
-			ISP_LOG_ERR("index: %d, in: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
-				index, i,
-				m->input_tensors[index][i].dtype,
-				m->input_tensors[index][i].shape.dims[0], m->input_tensors[index][i].shape.dims[1],
-				m->input_tensors[index][i].shape.dims[2], m->input_tensors[index][i].shape.dims[3],
-				m->input_tensors[index][i].shape.num_dims,
-				m->input_tensors[index][i].device_mem.u.device.device_addr,
-				(int) net_info->max_input_bytes[i]);
-		}
-
-		for (int i = 0; i < net_info->output_num; i++) {
-			m->output_tensors[index][i].dtype = net_info->output_dtypes[i];
-			m->output_tensors[index][i].shape = net_info->stages[0].output_shapes[i];
-			m->output_tensors[index][i].st_mode = BM_STORE_1N;
-
-			if (i == BNR_OUT_INPUT_IMG) {
-				memset(&m->output_tensors[index][i].device_mem, 0, sizeof(bm_device_mem_t));
-				m->output_tensors[index][i].device_mem.size = net_info->max_output_bytes[i];
-			} else {
-
-				if (index > 0 && (i == BNR_OUT_FUSION_IMG || i == BNR_OUT_SIGMA)) {
-					m->output_tensors[index][i].device_mem = m->output_tensors[0][i].device_mem;
-					continue;
-				}
-
-				status = bm_malloc_device_byte(bnr_ctx[ViPipe]->bm_handle,
-					&m->output_tensors[index][i].device_mem,
-					net_info->max_output_bytes[i]);
-				if (status != BM_SUCCESS) {
-					goto load_model_fail;
-				}
-
-				unsigned long long vmem;
-
-				bm_mem_mmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
-					&m->output_tensors[index][i].device_mem, &vmem);
-
-				memset((void *) vmem, 0, net_info->max_output_bytes[i]);
-
-				bm_mem_flush_device_mem(bnr_ctx[ViPipe]->bm_handle,
-					&m->output_tensors[index][i].device_mem);
-				bm_mem_unmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
-					(void *) vmem, (int) net_info->max_output_bytes[i]);
-			}
-
-			ISP_LOG_ERR("index: %d, out: %d, dtype: %d, shape: %dx%dx%dx%d, %d, 0x%lx, size: %d\n",
-				index, i,
-				m->output_tensors[index][i].dtype,
-				m->output_tensors[index][i].shape.dims[0], m->output_tensors[index][i].shape.dims[1],
-				m->output_tensors[index][i].shape.dims[2], m->output_tensors[index][i].shape.dims[3],
-				m->output_tensors[index][i].shape.num_dims,
-				m->output_tensors[index][i].device_mem.u.device.device_addr,
-				(int) net_info->max_output_bytes[i]);
-		}
+		m->input_vaddr[index] = bnr_shared_in_out[ViPipe]->input_vaddr[index];
+		m->input_tensors[index] = bnr_shared_in_out[ViPipe]->input_tensors[index];
+		m->output_tensors[index] = bnr_shared_in_out[ViPipe]->output_tensors[index];
 	}
 
 	*model = m;
 
-	bnr_ctx[ViPipe]->bmodel0 = m;
+	gettimeofday(&tv2, NULL);
 
-	ISP_LOG_INFO("load bnr model success, %p\n", m);
+	//ISP_LOG_INFO("load bnr model success, %p\n", m);
+	printf("load bmodel success: pipe:%d, core_id: %d, cost time: %ld, %s\n", ViPipe, m->core_id,
+		((tv2.tv_sec - tv1.tv_sec) * 1000000 + (tv2.tv_usec - tv1.tv_usec)), path);
 
 	return CVI_SUCCESS;
 
@@ -570,52 +613,6 @@ CVI_S32 teaisp_bnr_unload_model_wrap(VI_PIPE ViPipe, void *model)
 			bnr_ctx[ViPipe]->bmodel1,
 			bnr_ctx[ViPipe]->enable_lauch_thread);
 		usleep(5 * 1000);
-	}
-
-	for (int index = 0; index < TEAISP_MAX_TUNING_INDEX; index++) {
-
-		for (int i = 0; i < m->input_num; i++) {
-			if (m->input_vaddr[index][i]) {
-				bm_mem_unmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
-					m->input_vaddr[index][i],
-					(int) m->input_tensors[index][i].device_mem.size);
-			}
-		}
-
-		for (int i = 0; i < m->input_num; i++) {
-
-			if (i == BNR_IN_INPUT_IMG) {
-				continue;
-			}
-
-			if (index > 0 && (i == BNR_IN_FUSION_IMG || i == BNR_IN_SIGMA)) {
-				continue;
-			}
-
-			if (m->input_tensors[index][i].device_mem.u.device.device_addr != 0) {
-				bm_free_device(bnr_ctx[ViPipe]->bm_handle, m->input_tensors[index][i].device_mem);
-			}
-		}
-
-		for (int i = 0; i < m->output_num; i++) {
-
-			if (i == BNR_OUT_INPUT_IMG) {
-				continue;
-			}
-
-			if (index > 0 && (i == BNR_OUT_FUSION_IMG || i == BNR_OUT_SIGMA)) {
-				continue;
-			}
-
-			if (m->output_tensors[index][i].device_mem.u.device.device_addr != 0) {
-				bm_free_device(bnr_ctx[ViPipe]->bm_handle,
-					m->output_tensors[index][i].device_mem);
-			}
-		}
-
-		ISP_RELEASE_MEMORY(m->input_vaddr[index]);
-		ISP_RELEASE_MEMORY(m->input_tensors[index]);
-		ISP_RELEASE_MEMORY(m->output_tensors[index]);
 	}
 
 	if (m->net_names) {
@@ -660,17 +657,19 @@ CVI_S32 teaisp_bnr_set_driver_init_wrap(VI_PIPE ViPipe)
 
 	S_EXT_CTRLS_PTR(VI_IOCTL_AI_ISP_CFG, &cfg);
 
-	bnr_ctx[ViPipe] = (TEAISP_BNR_CTX_S *) ISP_CALLOC(1, sizeof(TEAISP_BNR_CTX_S));
-
 	if (bnr_ctx[ViPipe] == NULL) {
-		return CVI_FAILURE;
-	}
+		bnr_ctx[ViPipe] = (TEAISP_BNR_CTX_S *) ISP_CALLOC(1, sizeof(TEAISP_BNR_CTX_S));
 
-	bm_status_t status = bm_dev_request(&bnr_ctx[ViPipe]->bm_handle, 0);
+		if (bnr_ctx[ViPipe] == NULL) {
+			return CVI_FAILURE;
+		}
 
-	if (status != BM_SUCCESS) {
-		ISP_LOG_ERR("request device fail, pipe: %d\n", ViPipe);
-		return CVI_FAILURE;
+		bm_status_t status = bm_dev_request(&bnr_ctx[ViPipe]->bm_handle, 0);
+
+		if (status != BM_SUCCESS) {
+			ISP_LOG_ERR("request device fail, pipe: %d\n", ViPipe);
+			return CVI_FAILURE;
+		}
 	}
 
 	return CVI_SUCCESS;
@@ -679,6 +678,57 @@ CVI_S32 teaisp_bnr_set_driver_init_wrap(VI_PIPE ViPipe)
 CVI_S32 teaisp_bnr_set_driver_deinit_wrap(VI_PIPE ViPipe)
 {
 	ISP_LOG_INFO("set driver deinit, %d\n", ViPipe);
+
+	// releaes shraed input and the output tensor
+	if (bnr_shared_in_out[ViPipe]) {
+		TEAISP_BNR_SHARED_IN_OUT_S *shared_m = bnr_shared_in_out[ViPipe];
+
+		for (int index = 0; index < TEAISP_MAX_TUNING_INDEX; index++) {
+
+			for (int i = 0; i < BNR_IN_NUM; i++) {
+				if (shared_m->input_vaddr[index][i]) {
+					bm_mem_unmap_device_mem(bnr_ctx[ViPipe]->bm_handle,
+						shared_m->input_vaddr[index][i],
+						(int) shared_m->input_tensors[index][i].device_mem.size);
+				}
+			}
+
+			for (int i = 0; i < BNR_IN_NUM; i++) {
+
+				if (i == BNR_IN_INPUT_IMG) {
+					continue;
+				}
+
+				if (index > 0 && (i == BNR_IN_FUSION_IMG || i == BNR_IN_SIGMA)) {
+					continue;
+				}
+
+				if (shared_m->input_tensors[index][i].device_mem.u.device.device_addr != 0) {
+					bm_free_device(bnr_ctx[ViPipe]->bm_handle, shared_m->input_tensors[index][i].device_mem);
+				}
+			}
+
+			for (int i = 0; i < BNR_OUT_NUM; i++) {
+
+				if (i == BNR_OUT_INPUT_IMG) {
+					continue;
+				}
+
+				if (index > 0 && (i == BNR_OUT_FUSION_IMG || i == BNR_OUT_SIGMA)) {
+					continue;
+				}
+
+				if (shared_m->output_tensors[index][i].device_mem.u.device.device_addr != 0) {
+					bm_free_device(bnr_ctx[ViPipe]->bm_handle,
+						shared_m->output_tensors[index][i].device_mem);
+				}
+			}
+
+			ISP_RELEASE_MEMORY(shared_m->input_vaddr[index]);
+			ISP_RELEASE_MEMORY(shared_m->input_tensors[index]);
+			ISP_RELEASE_MEMORY(shared_m->output_tensors[index]);
+		}
+	}
 
 	ai_isp_cfg_t cfg;
 
@@ -694,6 +744,10 @@ CVI_S32 teaisp_bnr_set_driver_deinit_wrap(VI_PIPE ViPipe)
 	cfg.ai_isp_type = AI_ISP_TYPE_BNR;
 
 	S_EXT_CTRLS_PTR(VI_IOCTL_AI_ISP_CFG, &cfg);
+
+	if (bnr_shared_in_out[ViPipe]) {
+		ISP_RELEASE_MEMORY(bnr_shared_in_out[ViPipe]);
+	}
 
 	return CVI_SUCCESS;
 }
@@ -819,6 +873,8 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]));
 
 	UNUSED(is_new);
+
+	bnr_ctx[ViPipe]->bmodel0 = m;
 
 	return CVI_SUCCESS;
 }

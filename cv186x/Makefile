@@ -9,15 +9,10 @@ CV182X_BASE_PATH = $(ISP_BASE_PATH)/cv182x
 CV183X_BASE_PATH = $(ISP_BASE_PATH)/cv183x
 #CV183X_COMMON_BASE_PATH = $(CV183X_BASE_PATH)/common
 
-# v4l2 replace files: vi_uapi.h, sns_v4l2_uapi.h
+# v4l2 use files: vi_v4l2_uapi.h, sns_v4l2_uapi.h
 ifeq ($(PARAM_FILE),)
 	PARAM_FILE := $(TOP_DIR)/middleware/$(MW_VER)/Makefile.param
 	include $(PARAM_FILE)
-endif
-ifeq ($(V4L2_ISP_ENABLE),1)
-	VI_UAPI_PATH :=  $(TOP_DIR)/linux_5.10/drivers/media/platform/soph/osdrv_include/chip/cv186x/uapi/linux/vi_uapi.h
-	SNS_V4L2_UAPI_PATH := $(TOP_DIR)/linux_5.10/drivers/media/platform/soph/osdrv_include/chip/cv186x/uapi/linux/sns_v4l2_uapi.h
-	__v4l2_pre_action__ := $(shell cp $(VI_UAPI_PATH) $(SNS_V4L2_UAPI_PATH) $(KERNEL_INC)/linux)
 endif
 
 all:

@@ -19,10 +19,10 @@ extern "C" {
 #include "stdint.h"
 #include <sys/time.h>
 
-#include <linux/cvi_common.h>
-#include <linux/cvi_comm_vi.h>
-#include <linux/cvi_comm_video.h>
-#include <linux/cvi_defines.h>
+#include <cvi_common.h>
+#include <cvi_comm_vi.h>
+#include <cvi_comm_video.h>
+#include <cvi_defines.h>
 
 #ifdef __cplusplus
 #if __cplusplus

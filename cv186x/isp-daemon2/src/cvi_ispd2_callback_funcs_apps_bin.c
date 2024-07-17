@@ -106,7 +106,12 @@ static CVI_S32 CVI_ISPD2_WriteSingleISPRegToBinBuffer(enum CVI_BIN_SECTION_ID id
 	CVI_U32			u32BinLen;
 	CVI_S32			s32Ret;
 
+	#ifdef ENABLE_ISP_IPC
+	UNUSED(id);
+	u32BinLen = CVI_BIN_GetBinTotalLenWrap();
+	#else
 	u32BinLen = CVI_BIN_GetSingleISPBinLen(id);
+	#endif
 	if (u32BinLen > u32MaxBufSize) {
 		ISP_DAEMON2_DEBUG(LOG_ERR, "Buffer for module bin is less than request");
 		return CVI_FAILURE;
@@ -118,9 +123,12 @@ static CVI_S32 CVI_ISPD2_WriteSingleISPRegToBinBuffer(enum CVI_BIN_SECTION_ID id
 	}
 	memcpy(pu8Buffer, &stBinHeader, sizeof(CVI_BIN_HEADER));
 
+	#ifdef ENABLE_ISP_IPC
+	s32Ret = CVI_BIN_ExportBinDataWrap(pu8Buffer, u32BinLen);
+	#else
 	s32Ret = CVI_BIN_ExportSingleISPBinData(id, pu8Buffer, u32BinLen);
+	#endif
 	if (s32Ret != CVI_SUCCESS) {
-		printf("~CVI_BIN_ExportSingleISPBinData fail, error value:0x%X\n", s32Ret);
 		ISP_DAEMON2_DEBUG(LOG_ERR, "CVI_BIN_ExportSingleISPBinData fail");
 	} else {
 		*pu32DataLen = u32BinLen;
@@ -192,17 +200,18 @@ CVI_S32 CVI_ISPD2_CBFunc_ExportBinFile(TJSONRpcContentIn *ptContentIn,
 		u32BinLen = CVI_BIN_GetSingleISPBinLen(id);
 		#endif
 		u32BinBufSize = MULTIPLE_4(u32BinLen);
+		if (u32BinBufSize == 0) {
+			ISP_DAEMON2_DEBUG(LOG_DEBUG, "Allocate size of internal buffer is 0!");
+			CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
+					"Allocate size of internal buffer is 0!");
+			return CVI_FAILURE;
+		}
+
 		ptBinaryOutData->pu8Buffer = (CVI_U8 *)malloc(sizeof(CVI_U8) * u32BinBufSize);
 		if (ptBinaryOutData->pu8Buffer == NULL) {
-			if (u32BinBufSize == 0) {
-				ISP_DAEMON2_DEBUG(LOG_DEBUG, "Allocate size of internal buffer is 0!");
-				CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
-					"Allocate size of internal buffer is 0!");
-			} else {
-				ISP_DAEMON2_DEBUG(LOG_DEBUG, "Allocate internal buffer for single bin fail");
-				CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
-					"Allocate internal buffer for single bin fail");
-			}
+			ISP_DAEMON2_DEBUG(LOG_DEBUG, "Allocate internal buffer for single bin fail");
+			CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
+				"Allocate internal buffer for single bin fail");
 			return CVI_FAILURE;
 		}
 
@@ -211,7 +220,6 @@ CVI_S32 CVI_ISPD2_CBFunc_ExportBinFile(TJSONRpcContentIn *ptContentIn,
 			ISP_DAEMON2_DEBUG(LOG_DEBUG, "Dump module bin fail");
 			CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
 				"Dump module bin fail");
-
 			CVI_ISPD2_ReleaseBinaryData(ptBinaryOutData);
 			return CVI_FAILURE;
 		}
@@ -450,7 +458,6 @@ CVI_S32 CVI_ISPD2_CBFunc_ImportBinFile(TISPDeviceInfo *ptIn,
 #else
 	s32Ret = CVI_BIN_ImportBinData(ptBinaryData->pu8Buffer, ptBinaryData->u32Size);
 #endif
-
 	if (s32Ret != CVI_SUCCESS) {
 		ISP_DAEMON2_DEBUG_EX(LOG_ALERT, "CVI_BIN_ImportBinData fail");
 		CVI_ISPD2_Utils_ComposeAPIErrorMessageEX(ptContentOut, "CVI_BIN_ImportBinData fail");

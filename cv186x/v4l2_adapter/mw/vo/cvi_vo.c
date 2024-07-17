@@ -15,12 +15,12 @@
 #include <xf86drmMode.h>
 #include <drm_fourcc.h>
 #include "cvi_sys.h"
-#include <linux/cvi_comm_vo.h>
+#include <cvi_comm_vo.h>
 #include "cvi_buffer.h"
 
 #include "cvi_base.h"
 #include "cvi_vo.h"
-#include <linux/vo_uapi.h>
+#include <vo_uapi.h>
 
 #define UNUSED(x) ((void)(x))
 

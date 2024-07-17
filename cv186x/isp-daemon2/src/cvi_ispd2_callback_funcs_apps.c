@@ -13,7 +13,7 @@
 #include "cvi_ispd2_callback_funcs_apps_local.h"
 #include "cvi_pqtool_json.h"
 
-#include "linux/cvi_math.h"
+#include "cvi_math.h"
 
 #include "cvi_sys.h"
 #include "cvi_buffer.h"

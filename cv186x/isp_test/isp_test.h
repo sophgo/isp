@@ -9,7 +9,7 @@
 #ifndef _ISP_TEST_H_
 #define _ISP_TEST_H_
 
-#include <linux/cvi_type.h>
+#include <cvi_type.h>
 
 #ifdef __cplusplus
 #if __cplusplus
