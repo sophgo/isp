@@ -36,7 +36,7 @@ COBJS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.o, $(wildcard $(SDIR)/*.c))
 DEPS = $(patsubst $(SDIR)/%.cpp, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.cpp))
 CDEPS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.c))
 AI_SDK_PATH = $(OUTPUT_DIR)/tpu_$(SDK_VER)/cvitek_ai_sdk
-TPU_SDK_PATH = $(TOP_DIR)/libsophon/install/libsophon-0.4.9/lib
+TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
 
 # mw sample common
 SAMPLE_SRCS = $(wildcard $(MW_SAMPLE_COMMON_PATH)/*.c)
@@ -152,6 +152,7 @@ endif
 	@cp ../config.ini install/
 	@cp ../cfg.json install/
 	@cp ../vc_param.json install/
+	@cp ../replay.json install/
 
 	@mkdir install/lib/ai
 ifeq "$(TPU_SDK_PATH_EXIST)" "noexist"
@@ -202,6 +203,7 @@ endif
 	@cp -f install/config.ini $(DESTDIR)/usr/bin
 	@cp -f install/cfg.json $(DESTDIR)/usr/bin
 	@cp -f install/vc_param.json $(DESTDIR)/usr/bin
+	@cp -f install/replay.json $(DESTDIR)/usr/bin
 
 	-@cp -f install/pqtool_definition.json $(DESTDIR)/usr/bin
 
@@ -217,13 +219,14 @@ endif
 	-@rm -f $(DESTDIR)/usr/bin/cfg.json
 	-@rm -f $(DESTDIR)/usr/bin/vc_param.json
 	-@rm -f $(DESTDIR)/usr/bin/pqtool_definition.json
+	-@rm -f $(DESTDIR)/usr/bin/replay.json
 
 sdk_release: package
 	-@rm -rf include src tmp
 	-@mv Makefile.sdk_release Makefile
 	-@rm -f Makefile.*
 
-	-@rm -f ../cfg.json ../vc_param.json ../config.ini ../CviIspTool.sh ../README.md ../.gitignore
+	-@rm -f ../cfg.json ../vc_param.json ../config.ini ../CviIspTool.sh ../README.md ../.gitignore ../replay.json
 	-@rm -rf ../test
 
 clean:

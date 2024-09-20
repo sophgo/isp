@@ -319,6 +319,13 @@ CVI_S32 CVI_TEAISP_BNR_GetAttr(VI_PIPE ViPipe, TEAISP_BNR_ATTR_S *pstTEAISPBNRAt
 CVI_S32 CVI_TEAISP_BNR_SetNoiseProfileAttr(VI_PIPE ViPipe, const TEAISP_BNR_NP_S *np);
 CVI_S32 CVI_TEAISP_BNR_GetNoiseProfileAttr(VI_PIPE ViPipe, TEAISP_BNR_NP_S *np);
 
+//-----------------------------------------------------------------------------
+//  TEAISP DRC
+//-----------------------------------------------------------------------------
+CVI_S32 CVI_TEAISP_DRC_RegParamUpdateCallback(VI_PIPE ViPipe, TEAISP_DRC_PARAM_UPDATE_CALLBACK callback);
+CVI_S32 CVI_TEAISP_DRC_SetAttr(VI_PIPE ViPipe, const TEAISP_DRC_ATTR_S *pstTEAISPDrcAttr);
+CVI_S32 CVI_TEAISP_DRC_GetAttr(VI_PIPE ViPipe, TEAISP_DRC_ATTR_S *pstTEAISPDrcAttr);
+
 /* MIPI related function. */
 CVI_S32 CVI_MIPI_SetMipiReset(CVI_S32 devno, CVI_U32 reset);
 CVI_S32 CVI_MIPI_SetSensorClock(CVI_S32 devno, CVI_U32 enable);

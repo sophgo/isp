@@ -45,6 +45,8 @@ else
 	$(error Un-support SOC Architecture)
 endif
 
+LOCAL_CFLAGS += -Wno-format-truncation
+
 .PHONY: clean all cleanall sdk_release
 ifeq ($(ISP_SRC_RELEASE),1)
 all: $(TARGET_A) $(TARGET_SO) sdk_release

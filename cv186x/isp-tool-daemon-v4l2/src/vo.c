@@ -445,7 +445,7 @@ static void *hotplug_monitor_thread(void *param)
 	struct pollfd fds[1];
 
 	memset(recvbuf, 0, sz);
-	memset(fds, 0, sizeof(fds) / sizeof(struct pollfd));
+	memset(fds, 0, sizeof(fds));
 
 	int ret = -1;
 

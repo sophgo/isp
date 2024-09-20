@@ -1,0 +1,3 @@
+cp -f /opt/sophon/sophon-soc-libisp_1.0.0/data/sophon-isp.conf /etc/ld.so.conf.d/
+ldconfig
+cp -f /opt/sophon/sophon-soc-libisp_1.0.0/data/sophon-isp-autoconf.sh /etc/profile.d/

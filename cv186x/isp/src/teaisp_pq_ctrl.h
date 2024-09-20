@@ -53,9 +53,13 @@ struct teaisp_pq_ctrl_runtime {
 	CVI_BOOL postprocess_updated;
 	CVI_BOOL is_module_bypass;
 
+	CVI_BOOL is_module_update_scene;
 	TEAISP_PQ_SCENE_INFO last_scene_info;
 	TEAISP_PQ_SCENE_INFO cur_scene_info;
 	TEAISP_PQ_SCENE_INFO module_set_scene_info;
+	TEAISP_PQ_SCENE_INFO module_algo_scene_info;
+	CVI_U64 continue_scene_cnt[TEAISP_SCENE_NUM];
+	CVI_FLOAT module_detect_sence_cfd[TEAISP_SCENE_NUM];
 
 	ISP_ALGO_RESULT_S *algo_result;
 

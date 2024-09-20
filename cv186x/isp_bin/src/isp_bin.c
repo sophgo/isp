@@ -118,6 +118,8 @@ static CVI_S32 isp_bin_checkBinVersion(CVI_U8 *addr, CVI_U32 binSize);
 static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pstParaBuf);
 static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pstParaBuf);
 
+static ISP_BIN_BYPASS g_binBypassParams = {0};
+
 CVI_S32 header_bin_getBinSize(enum CVI_BIN_SECTION_ID id, CVI_U32 *binSize)
 {
 	CVI_S32 ret = CVI_SUCCESS;
@@ -194,9 +196,9 @@ CVI_S32 header_bin_GetHeaderDescInfo(CVI_CHAR *pOutDesc, enum CVI_BIN_CREATMODE 
 	//Supplement isp branch and isp commitId to pqbin
 	CVI_S32 ret = CVI_SUCCESS;
 	SENSOR_INFO sensorInfo;
-	CVI_CHAR binCommitId[BIN_COMMIT_SIZE] = { 0 };
-	CVI_CHAR binGerrit[BIN_GERRIT_SIZE] = { 0 };
-	CVI_CHAR binMd5[BIN_MD5_SIZE] = { 0 };
+	CVI_CHAR binCommitId[BIN_COMMIT_SIZE + 1] = { 0 };
+	CVI_CHAR binGerrit[BIN_GERRIT_SIZE + 1] = { 0 };
+	CVI_CHAR binMd5[BIN_MD5_SIZE + 1] = { 0 };
 
 	isp_bin_getSensorInfo(&sensorInfo);
 	bin_get_repo_info(binGerrit, binCommitId, binMd5);
@@ -378,10 +380,10 @@ static CVI_S32 isp_bin_checkMd5(VI_PIPE ViPipe, CVI_U8 *addr, CVI_U32 binSize)
 {
 	CVI_S32 ret = CVI_SUCCESS;
 	CVI_U32 size = 0;
-	CVI_CHAR binCommitId[BIN_COMMIT_SIZE];
-	CVI_CHAR binGerrit[BIN_GERRIT_SIZE];
-	CVI_CHAR curMd5[BIN_MD5_SIZE] = { 0 };
-	CVI_CHAR binMd5[BIN_MD5_SIZE] = { 0 };
+	CVI_CHAR binCommitId[BIN_COMMIT_SIZE + 1] = {0};
+	CVI_CHAR binGerrit[BIN_GERRIT_SIZE + 1] = {0};
+	CVI_CHAR curMd5[BIN_MD5_SIZE + 1] = { 0 };
+	CVI_CHAR binMd5[BIN_MD5_SIZE + 1] = { 0 };
 	CVI_BIN_HEADER *header = (CVI_BIN_HEADER *)addr;
 	CVI_BIN_EXTRA_S *pExtraInfo = &(header->extraInfo);
 
@@ -422,21 +424,15 @@ static CVI_S32 isp_bin_checkBinVersion(CVI_U8 *addr, CVI_U32 binSize)
 	//get sensor info
 	SENSOR_INFO sensorInfo;
 	//show pqbin isp branch & commit & sensor
-	CVI_CHAR toolVersion[TOOLVERSION_SIZE];
-	CVI_CHAR sensorNum[SENSORNUM_SIZE];
-	CVI_CHAR sensorName[SUPPORT_VI_MAX_PIPE_NUM][SENSORNAME_SIZE];
-	CVI_CHAR binCommitId[BIN_COMMIT_SIZE] = {0};
-	CVI_CHAR binGerrit[BIN_GERRIT_SIZE] = {0};
-	CVI_CHAR binMd5[BIN_MD5_SIZE] = { 0 };
+	CVI_CHAR toolVersion[TOOLVERSION_SIZE + 1] = {0};
+	CVI_CHAR sensorNum[SENSORNUM_SIZE + 1] = {0};
+	CVI_CHAR sensorName[SUPPORT_VI_MAX_PIPE_NUM][SENSORNAME_SIZE + 1] = {0};
+	CVI_CHAR binCommitId[BIN_COMMIT_SIZE + 1] = {0};
+	CVI_CHAR binGerrit[BIN_GERRIT_SIZE + 1] = {0};
+	CVI_CHAR binMd5[BIN_MD5_SIZE + 1] = { 0 };
 	CVI_CHAR pqbinVersion[PQBINVERSION_SIZE + 1] = { 0 };
 	CVI_CHAR pqbinMode[PQBINCREATE_MODE_SIZE + 1] = { 0 };
 	CVI_CHAR *pDesc = (CVI_CHAR *)pExtraInfo->Desc;
-
-	memset(toolVersion, 0, TOOLVERSION_SIZE);
-	memset(sensorNum, 0, SENSORNUM_SIZE);
-	memset(sensorName, 0, SENSORNAME_SIZE * SUPPORT_VI_MAX_PIPE_NUM);
-	memset(binCommitId, 0, BIN_COMMIT_SIZE);
-	memset(binGerrit, 0, BIN_GERRIT_SIZE);
 
 	//show curSw isp_bin branch & commit
 	printf("cvi_bin_isp message\n");
@@ -520,12 +516,19 @@ static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 		return CVI_FAILURE;
 	}
 
-	//Pub attr
-	ISP_PUB_ATTR_S stPubAttr;
+	ISP_BIN_BYPASS_U binBypass = {0};
 
-	CVI_ISP_GetPubAttr(ViPipe, &stPubAttr);
-	stPubAttr.f32FrameRate = pstParaBuf->pub_attr.f32FrameRate;
-	CVI_ISP_SetPubAttr(ViPipe, &stPubAttr);
+	CVI_S32 ret = isp_bin_getBinBypassParams(ViPipe, &binBypass);
+
+	//Pub attr
+	if (ret != CVI_SUCCESS || binBypass.bitBypassFrameRate != CVI_TRUE) {
+
+		ISP_PUB_ATTR_S stPubAttr;
+
+		CVI_ISP_GetPubAttr(ViPipe, &stPubAttr);
+		stPubAttr.f32FrameRate = pstParaBuf->pub_attr.f32FrameRate;
+		CVI_ISP_SetPubAttr(ViPipe, &stPubAttr);
+	}
 
 	// PRE_RAW
 	CVI_ISP_SetBlackLevelAttr(ViPipe, &pstParaBuf->blc);
@@ -590,6 +593,7 @@ static CVI_S32 isp_set_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	// TEAISP
 	CVI_TEAISP_BNR_SetAttr(ViPipe, &pstParaBuf->teaisp_bnr);
 	CVI_TEAISP_BNR_SetNoiseProfileAttr(ViPipe, &pstParaBuf->teaisp_bnr_np);
+	CVI_TEAISP_DRC_SetAttr(ViPipe, &pstParaBuf->teaisp_drc);
 	CVI_TEAISP_PQ_SetAttr(ViPipe, &pstParaBuf->teaisp_pq);
 
 	// Other
@@ -676,6 +680,7 @@ static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	// TEAISP
 	CVI_TEAISP_BNR_GetAttr(ViPipe, &pstParaBuf->teaisp_bnr);
 	CVI_TEAISP_BNR_GetNoiseProfileAttr(ViPipe, &pstParaBuf->teaisp_bnr_np);
+	CVI_TEAISP_DRC_GetAttr(ViPipe, &pstParaBuf->teaisp_drc);
 	CVI_TEAISP_PQ_GetAttr(ViPipe, &pstParaBuf->teaisp_pq);
 
 	// other
@@ -685,6 +690,43 @@ static CVI_S32 isp_get_paramstruct(VI_PIPE ViPipe, ISP_Parameter_Structures *pst
 	return CVI_SUCCESS;
 }
 
+CVI_S32 isp_bin_setBinBypassParams(VI_PIPE ViPipe, ISP_BIN_BYPASS_U *ispBinBypass)
+{
+	CVI_S32 ret = CVI_SUCCESS;
+	ISP_BIN_BYPASS_U binBypassParam = {0};
+
+	if (((ViPipe) < 0) || ((ViPipe) >= SUPPORT_VI_MAX_PIPE_NUM)) {
+		CVI_TRACE_ISP_BIN(LOG_ERR, "ViPipe %d value error\n", ViPipe);
+		return CVI_FAILURE;
+	}
+
+	if (ispBinBypass == NULL) {
+		return CVI_FAILURE;
+	}
+
+	memcpy(&binBypassParam, ispBinBypass, sizeof(ISP_BIN_BYPASS_U));
+	g_binBypassParams.ispBinBypass[ViPipe] = binBypassParam;
+
+	return ret;
+}
+
+CVI_S32 isp_bin_getBinBypassParams(VI_PIPE ViPipe, ISP_BIN_BYPASS_U *ispBinBypass)
+{
+	CVI_S32 ret = CVI_SUCCESS;
+
+	if (((ViPipe) < 0) || ((ViPipe) >= SUPPORT_VI_MAX_PIPE_NUM)) {
+		CVI_TRACE_ISP_BIN(LOG_ERR, "ViPipe %d value error\n", ViPipe);
+		return CVI_FAILURE;
+	}
+
+	if (ispBinBypass == NULL) {
+		return CVI_FAILURE;
+	}
+
+	memcpy(ispBinBypass, &g_binBypassParams.ispBinBypass[ViPipe], sizeof(ISP_BIN_BYPASS_U));
+
+	return ret;
+}
 
 /**************************************************************************
  *   Json related APIs.

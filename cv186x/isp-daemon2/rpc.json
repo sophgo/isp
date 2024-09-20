@@ -17,6 +17,11 @@
 				"SET": "CVI_TEAISP_BNR_SetNoiseProfileAttr"
 			},
 			{
+				"STRUCT": "TEAISP_DRC_ATTR_S",
+				"GET": "CVI_TEAISP_DRC_GetAttr",
+				"SET": "CVI_TEAISP_DRC_SetAttr"
+			},
+			{
 				"STRUCT": "TEAISP_PQ_ATTR_S",
 				"GET": "CVI_TEAISP_PQ_GetAttr",
 				"SET": "CVI_TEAISP_PQ_SetAttr"

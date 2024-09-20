@@ -31,6 +31,9 @@ CVI_S32 isp_bin_setBinParam(enum CVI_BIN_SECTION_ID id, FILE *fp);
 CVI_S32 header_bin_setBinParambuf(enum CVI_BIN_SECTION_ID id, CVI_U8 *buffer);
 CVI_S32 isp_bin_setBinParambuf(enum CVI_BIN_SECTION_ID id, CVI_U8 *buffer);
 
+CVI_S32 isp_bin_setBinBypassParams(VI_PIPE ViPipe, ISP_BIN_BYPASS_U *ispBinBypass);
+CVI_S32 isp_bin_getBinBypassParams(VI_PIPE ViPipe, ISP_BIN_BYPASS_U *ispBinBypass);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

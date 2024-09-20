@@ -252,7 +252,11 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 
 		runtime->dci_param_in.bUpdateCurve = CVI_FALSE;
 		for (CVI_U32 i = 0 ; i < DCI_BINS_NUM; i++) {
-			diff = abs(runtime->dciStatsInfoBuf.hist[i] - dciStatsInfo->hist[i]);
+			if (runtime->dciStatsInfoBuf.hist[i] >= dciStatsInfo->hist[i])
+				diff = runtime->dciStatsInfoBuf.hist[i] - dciStatsInfo->hist[i];
+			else
+				diff = dciStatsInfo->hist[i] - runtime->dciStatsInfoBuf.hist[i];
+
 			if (diff > threshold) {
 				memcpy(&runtime->dciStatsInfoBuf, dciStatsInfo, sizeof(*dciStatsInfo));
 				runtime->dci_param_in.bUpdateCurve = CVI_TRUE;

@@ -41,7 +41,6 @@ CVI_S32 CVI_ISP_AEMallocRawReplayExpBuf(VI_PIPE ViPipe, CVI_U16 frmNum);
 CVI_S32 CVI_ISP_AEGetRawReplayExpBuf(VI_PIPE ViPipe, CVI_U8 *buf, CVI_U32 *bufSize);
 void CVI_ISP_AESetRawReplayMode(VI_PIPE ViPipe, CVI_BOOL bMode);
 CVI_S32 CVI_ISP_AESetRawReplayExposure(VI_PIPE ViPipe, const ISP_EXP_INFO_S *pstExpInfo);
-CVI_S32 CVI_ISP_GetAERawReplayFrmNum(VI_PIPE ViPipe, CVI_U8 *bootfrmNum, CVI_U8 *ispDgainPeriodNum);
 
 
 /* AWB */

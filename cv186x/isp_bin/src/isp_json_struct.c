@@ -61,7 +61,30 @@ static void ISP_AE_METER_MODE_E_JSON(int r_w_flag, JSON *j, char *key, ISP_AE_ME
 		}
 	}
 }
+// -----------------------------------------------------------------------------
+static void ISP_CHANNEL_LIST_E_JSON(int r_w_flag, JSON *j, char *key, ISP_CHANNEL_LIST_E *value)
+{
+	JSON *obj = 0;
 
+	if (r_w_flag == R_FLAG) {
+		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
+			int temp;
+
+			temp = cvi_json_object_get_int(obj);
+			JSON_CHECK_RANGE(key, &temp, ISP_CHANNEL_LE, ISP_CHANNEL_MAX_NUM);
+			*value = temp;
+		} else {
+			JSON_PRINT_ERR_NOT_EXIST(key);
+		}
+	} else {
+		obj = cvi_json_object_new_int(*value);
+		if (cvi_json_object_is_type(j, cvi_json_type_array)) {
+			cvi_json_object_array_add(j, obj);
+		} else {
+			cvi_json_object_object_add(j, key, obj);
+		}
+	}
+}
 // -----------------------------------------------------------------------------
 static void ISP_AE_STRATEGY_E_JSON(int r_w_flag, JSON *j, char *key, ISP_AE_STRATEGY_E *value)
 {
@@ -1887,6 +1910,7 @@ void ISP_WDR_EXPOSURE_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_WDR_EXPO
 	JSON(r_w_flag, CVI_U16, u16Speed);
 	JSON(r_w_flag, CVI_U16, u16RatioBias);
 	JSON(r_w_flag, CVI_U8, u8SECompensation);
+	JSON(r_w_flag, ISP_CHANNEL_LIST_E, enExpMainChn);
 	JSON(r_w_flag, CVI_U16, u16SEHisThr);
 	JSON(r_w_flag, CVI_U16, u16SEHisCntRatio1);
 	JSON(r_w_flag, CVI_U16, u16SEHisCntRatio2);
@@ -2195,6 +2219,7 @@ void ISP_CLUT_HSL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_CLUT_HSL_ATT
 	JSON_START(r_w_flag);
 
 	JSON(r_w_flag, CVI_BOOL, Enable);
+	JSON(r_w_flag, CVI_FLOAT, Sigma);
 	JSON_A(r_w_flag, CVI_S16, HByH, ISP_CLUT_HUE_LENGTH);
 	JSON_A(r_w_flag, CVI_U16, SByH, ISP_CLUT_HUE_LENGTH);
 	JSON_A(r_w_flag, CVI_U16, LByH, ISP_CLUT_HUE_LENGTH);
@@ -3322,6 +3347,7 @@ static void TEAISP_BNR_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAI
 	JSON(r_w_flag, CVI_U8, FilterMotionStr2D);
 	JSON(r_w_flag, CVI_U8, FilterStaticStr2D);
 	JSON(r_w_flag, CVI_U8, FilterStr3D);
+	JSON(r_w_flag, CVI_U8, FilterStr2D);
 	JSON(r_w_flag, CVI_U16, NoiseLevel);
 	JSON(r_w_flag, CVI_U16, NoiseHiLevel);
 
@@ -3336,6 +3362,7 @@ static void TEAISP_BNR_AUTO_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP
 	JSON_A(r_w_flag, CVI_U8, FilterMotionStr2D, ISP_AUTO_ISO_STRENGTH_NUM);
 	JSON_A(r_w_flag, CVI_U8, FilterStaticStr2D, ISP_AUTO_ISO_STRENGTH_NUM);
 	JSON_A(r_w_flag, CVI_U8, FilterStr3D, ISP_AUTO_ISO_STRENGTH_NUM);
+	JSON_A(r_w_flag, CVI_U8, FilterStr2D, ISP_AUTO_ISO_STRENGTH_NUM);
 	JSON_A(r_w_flag, CVI_U16, NoiseLevel, ISP_AUTO_ISO_STRENGTH_NUM);
 	JSON_A(r_w_flag, CVI_U16, NoiseHiLevel, ISP_AUTO_ISO_STRENGTH_NUM);
 
@@ -3362,6 +3389,53 @@ void TEAISP_BNR_NP_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_NP_S *dat
 
 	JSON_A(r_w_flag, CVI_FLOAT, CalibrationCoef,
 		NOISE_PROFILE_ISO_NUM * NOISE_PROFILE_LEVEL_NUM);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+// ISP structure - TEAISP DRC
+// -----------------------------------------------------------------------------
+static void TEAISP_DRC_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_DRC_MANUAL_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_U8, DarkStrength);
+	JSON(r_w_flag, CVI_U8, BrightThreshold);
+	JSON(r_w_flag, CVI_U8, SatuStrength);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+static void TEAISP_DRC_AUTO_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_DRC_AUTO_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON_A(r_w_flag, CVI_U8, DarkStrength, ISP_AUTO_ISO_STRENGTH_NUM);
+	JSON(r_w_flag, CVI_U8, DarkCompensateRatio);
+	JSON(r_w_flag, CVI_U8, StrengthMin);
+	JSON(r_w_flag, CVI_U8, StrengthMax);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+void TEAISP_DRC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_DRC_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_BOOL, enable);
+	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
+	JSON(r_w_flag, CVI_U8, UpdateInterval);
+	JSON(r_w_flag, CVI_U8, DeflickStrength);
+	JSON(r_w_flag, CVI_U8, DetailStrength);
+	JSON(r_w_flag, CVI_U8, GlobalLuma);
+	JSON(r_w_flag, CVI_U8, DarkThreshold);
+	JSON(r_w_flag, CVI_U8, BrightStrength);
+	JSON(r_w_flag, CVI_U8, MaxvStrength);
+	JSON(r_w_flag, TEAISP_DRC_MANUAL_ATTR_S, stManual);
+	JSON(r_w_flag, TEAISP_DRC_AUTO_ATTR_S, stAuto);
 
 	JSON_END(r_w_flag);
 }
@@ -3397,6 +3471,7 @@ void TEAISP_PQ_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_ATTR_S *d
 	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
 	JSON(r_w_flag, CVI_U8, UpdateInterval);
 	JSON(r_w_flag, CVI_U8, TuningMode);
+	JSON(r_w_flag, CVI_U8, SmoothThr);
 	JSON_A(r_w_flag, CVI_BOOL, SceneBypass, TEAISP_SCENE_NUM);
 	JSON_A(r_w_flag, CVI_U8, SceneConfThres, TEAISP_SCENE_NUM);
 	JSON(r_w_flag, TEAISP_PQ_MANUAL_ATTR_S, stManual);
@@ -3521,6 +3596,7 @@ void ISP_PARAMETER_BUFFER_JSON(int r_w_flag, JSON *j, char *key_word, ISP_Parame
 		// TEAISP
 		JSON(r_w_flag, TEAISP_BNR_ATTR_S, teaisp_bnr);
 		JSON(r_w_flag, TEAISP_BNR_NP_S, teaisp_bnr_np);
+		JSON(r_w_flag, TEAISP_DRC_ATTR_S, teaisp_drc);
 
 		// Other
 		JSON(r_w_flag, ISP_CMOS_NOISE_CALIBRATION_S, np);

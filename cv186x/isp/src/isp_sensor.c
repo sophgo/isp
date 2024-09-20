@@ -73,11 +73,9 @@ CVI_S32 isp_sensor_register(CVI_S32 ViPipe, ISP_SNS_ATTR_INFO_S *pstSnsAttrInfo,
 
 	if (pstRegister->stSnsExp.pfn_cmos_sensor_global_init != CVI_NULL)
 		pstRegister->stSnsExp.pfn_cmos_sensor_global_init(ViPipe);
-	else {
-		ISP_LOG_ERR("pfn_cmos_sensor_global_init is NULL\n");
-		return CVI_FAILURE;
-	}
+
 	isp_sensor_updDefault(ViPipe);
+
 	return CVI_SUCCESS;
 }
 
@@ -110,10 +108,7 @@ CVI_S32 isp_sensor_init(CVI_S32 ViPipe)
 
 	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_sensor_init != CVI_NULL)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_sensor_init(ViPipe);
-	else {
-		ISP_LOG_WARNING("sensor init cb not registered\n");
-		return CVI_FAILURE;
-	}
+
 	return 0;
 }
 
@@ -133,10 +128,8 @@ static CVI_S32 isp_sensor_updDefault(VI_PIPE ViPipe)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_isp_default(ViPipe, &pSnsInfo->stCmosDft);
 		/*TODO@CF. This value will give from sensor init. Write constant first.*/
 		pstIspCtx->u8AEWaitFrame = 8;
-	} else {
-		ISP_LOG_WARNING("sensor get default not registered\n");
-		return CVI_FAILURE;
 	}
+
 	return CVI_SUCCESS;
 }
 
@@ -154,11 +147,9 @@ CVI_S32 isp_sensor_updateBlc(VI_PIPE ViPipe, ISP_BLACK_LEVEL_ATTR_S **ppstSnsBla
 		return CVI_FAILURE;
 	}
 
-	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_isp_black_level != NULL) {
+	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_isp_black_level != NULL)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_isp_black_level(ViPipe, &pSnsInfo->stSnsBlackLevel);
-	} else {
-		return CVI_FAILURE;
-	}
+
 	*ppstSnsBlackLevel = &(pSnsInfo->stSnsBlackLevel.blcAttr);
 
 	return CVI_SUCCESS;
@@ -200,10 +191,8 @@ CVI_S32 isp_sensor_regCfg_get(VI_PIPE ViPipe)
 	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_sns_reg_info != CVI_NULL) {
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_get_sns_reg_info(ViPipe, &pSnsInfo->stSnsSyncCfg);
 		pSnsInfo->stSnsSyncCfg.snsCfg.bConfig = CVI_TRUE;
-	} else {
-		ISP_LOG_WARNING("sensor reg config not registered\n");
-		return CVI_FAILURE;
 	}
+
 	return CVI_SUCCESS;
 }
 
@@ -222,10 +211,7 @@ CVI_S32 isp_sensor_switchMode(CVI_S32 ViPipe)
 
 	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_set_image_mode != NULL)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_set_image_mode(ViPipe, &mode);
-	else {
-		ISP_LOG_WARNING("sensor switch mode not registered\n");
-		return CVI_FAILURE;
-	}
+
 	return 0;
 }
 
@@ -243,10 +229,7 @@ CVI_S32 isp_sensor_setWdrMode(CVI_S32 ViPipe, WDR_MODE_E wdrMode)
 
 	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_set_wdr_mode != NULL)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_set_wdr_mode(ViPipe, mode);
-	else {
-		ISP_LOG_WARNING("sensor switch mode not registered\n");
-		return CVI_FAILURE;
-	}
+
 	return 0;
 }
 
@@ -263,10 +246,7 @@ CVI_S32 isp_sensor_exit(CVI_S32 ViPipe)
 
 	if (pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_sensor_exit != NULL)
 		pSnsInfo->snsRegFunc.stSnsExp.pfn_cmos_sensor_exit(ViPipe);
-	else {
-		ISP_LOG_WARNING("sensor exit not registered\n");
-		return CVI_FAILURE;
-	}
+
 	return CVI_SUCCESS;
 }
 

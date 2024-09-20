@@ -1,0 +1,7 @@
+Package: libisp
+Version: 1.0.0
+Section: test
+Priority: optional
+Architecture: arm64
+Maintainer: mason.zou@sophgo.com
+Description: isp mw for edge usage

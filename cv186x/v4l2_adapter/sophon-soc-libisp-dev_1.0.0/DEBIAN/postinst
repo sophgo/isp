@@ -1,0 +1,11 @@
+echo "libisp-dev post installation ..."
+if [ -d /sophon-soc-libisp_1.0.0 ]; then
+    rm -rf /sophon-soc-libisp_1.0.0
+fi
+
+if [ -d /opt/sophon/sophon-soc-libisp-dev_1.0.0 ]; then
+
+    cp -f /opt/sophon/sophon-soc-libisp-dev_1.0.0/data/sophon-isp-dev.conf /etc/ld.so.conf.d/
+    ldconfig
+    cp -f /opt/sophon/sophon-soc-libisp-dev_1.0.0/data/sophon-isp-dev-autoconf.sh /etc/profile.d/
+fi

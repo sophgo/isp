@@ -27,6 +27,7 @@ struct isp_clut_ctrl_runtime {
 	CVI_BOOL process_updated;
 	CVI_BOOL postprocess_updated;
 	CVI_BOOL is_module_bypass;
+	CVI_BOOL isClutNeedUpdate;
 };
 
 CVI_S32 isp_clut_ctrl_init(VI_PIPE ViPipe);

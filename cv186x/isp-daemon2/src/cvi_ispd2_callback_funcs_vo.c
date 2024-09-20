@@ -19,7 +19,7 @@ CVI_S32 CVI_ISPD2_CBFunc_VO_SetGammaInfo(TJSONRpcContentIn *ptContentIn,
 	ptContentOut->s32StatusCode = JSONRPC_CODE_OK;
 
 	memset(&stAttr, 0, sizeof(VO_GAMMA_INFO_S));
-	stAttr.s32VoDev = 0;
+	stAttr.s32VoDev = ptContentIn->ptDeviceInfo->s32VoDev;
 
 	if (CVI_VO_GetGammaInfo(&stAttr) != CVI_SUCCESS) {
 		CVI_ISPD2_Utils_ComposeAPIErrorMessage(ptContentOut);
@@ -49,7 +49,7 @@ CVI_S32 CVI_ISPD2_CBFunc_VO_GetGammaInfo(TJSONRpcContentIn *ptContentIn,
 	VO_GAMMA_INFO_S	stAttr;
 
 	memset(&stAttr, 0, sizeof(VO_GAMMA_INFO_S));
-	stAttr.s32VoDev = 0;
+	stAttr.s32VoDev = ptContentIn->ptDeviceInfo->s32VoDev;
 
 	if (CVI_VO_GetGammaInfo(&stAttr) != CVI_SUCCESS) {
 		CVI_ISPD2_Utils_ComposeAPIErrorMessage(ptContentOut);

@@ -47,5 +47,6 @@
 
 #include "teaisp_bnr_ctrl.h"
 #include "teaisp_pq_ctrl.h"
+#include "teaisp_drc_ctrl.h"
 
 #endif // _ISP_FEATURE_H_

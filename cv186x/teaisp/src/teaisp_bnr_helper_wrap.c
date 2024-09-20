@@ -35,7 +35,8 @@
 #define BNR_IN_STATIC_STR_2D  (7)
 #define BNR_IN_BLACK_LEVEL    (8)
 #define BNR_IN_STR_3D         (9)
-#define BNR_IN_NUM            (10)
+#define BNR_IN_STR_2D         (10)
+#define BNR_IN_NUM            (11)
 
 #define BNR_OUT_INPUT_IMG     (0)
 #define BNR_OUT_FUSION_IMG    (1)
@@ -176,6 +177,13 @@ static void teaisp_bnr_dump_input(TEAISP_MODEL_S *model, uint64_t input_raw_addr
 	snprintf(path, sizeof(path), "/tmp/input9%d_str_3d.bin", pipe);
 	size = model->input_tensors[tuning_index][BNR_IN_STR_3D].device_mem.size;
 	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_STR_3D];
+	fp = fopen(path, "wb");
+	fwrite(addr_tmp, size, 1, fp);
+	fclose(fp);
+
+	snprintf(path, sizeof(path), "/tmp/input10%d_str_2d.bin", pipe);
+	size = model->input_tensors[tuning_index][BNR_IN_STR_2D].device_mem.size;
+	addr_tmp = model->input_vaddr[tuning_index][BNR_IN_STR_2D];
 	fp = fopen(path, "wb");
 	fwrite(addr_tmp, size, 1, fp);
 	fclose(fp);
@@ -820,6 +828,9 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 	memcpy(m->input_vaddr[tuning_index][BNR_IN_STR_3D], &bnr_cfg->filter_str_3d,
 		m->input_tensors[tuning_index][BNR_IN_STR_3D].device_mem.size);
 
+	memcpy(m->input_vaddr[tuning_index][BNR_IN_STR_2D], &bnr_cfg->filter_str_2d,
+		m->input_tensors[tuning_index][BNR_IN_STR_2D].device_mem.size);
+
 	if ((int) m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size == (int) sizeof(float)) {
 		memcpy(m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL], &bnr_cfg->blc,
 			m->input_tensors[tuning_index][BNR_IN_BLACK_LEVEL].device_mem.size);
@@ -854,23 +865,25 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 		}
 	}
 
-	ISP_LOG_INFO("int bnr param: %d, %d, %d, %d, %d, %d, %d\n",
+	ISP_LOG_INFO("int bnr param: %d, %d, %d, %d, %d, %d, %d, %d\n",
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_COEFF_A]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_COEFF_B]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_BLEND]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_MOTION_STR_2D]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_STATIC_STR_2D]),
 		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL]),
-		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]));
+		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]),
+		*((uint32_t *) m->input_vaddr[tuning_index][BNR_IN_STR_2D]));
 
-	ISP_LOG_ERR("float bnr param: %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\n",
+	ISP_LOG_ERR("float bnr param: %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f, %.5f\n",
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_COEFF_A]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_COEFF_B]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_BLEND]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_MOTION_STR_2D]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_STATIC_STR_2D]),
 		*((float *) m->input_vaddr[tuning_index][BNR_IN_BLACK_LEVEL]),
-		*((float *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]));
+		*((float *) m->input_vaddr[tuning_index][BNR_IN_STR_3D]),
+		*((float *) m->input_vaddr[tuning_index][BNR_IN_STR_2D]));
 
 	UNUSED(is_new);
 
@@ -878,4 +891,3 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 
 	return CVI_SUCCESS;
 }
-

@@ -81,7 +81,7 @@ CVI_S32 CVI_VI_ReleasePipeFrame(VI_PIPE ViPipe, const VIDEO_FRAME_INFO_S *pstFra
 	return CVI_SUCCESS;
 }
 
-CVI_VOID CVI_ISP_SetDISInfoCallback(CVI_VOID *pcallbackFunc)
+void CVI_ISP_SetDISInfoCallback(void *pcallbackFunc)
 {
 	if (pcallbackFunc) {
 		getDisInfoCallback = pcallbackFunc;

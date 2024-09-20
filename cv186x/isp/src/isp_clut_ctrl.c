@@ -60,6 +60,7 @@ CVI_S32 isp_clut_ctrl_init(VI_PIPE ViPipe)
 	runtime->postprocess_updated = CVI_FALSE;
 	runtime->is_module_bypass = CVI_FALSE;
 	runtime->clut_param_out.isUpdated = CVI_FALSE;
+	runtime->isClutNeedUpdate = CVI_FALSE;
 
 	return ret;
 }
@@ -171,6 +172,9 @@ static CVI_S32 isp_clut_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoR
 	runtime->preprocess_updated = CVI_FALSE;
 	runtime->postprocess_updated = CVI_TRUE;
 
+	if (clut_attr->Enable)
+		runtime->isClutNeedUpdate = CVI_TRUE;
+
 	// No need to update parameters if disable. Because its meaningless
 	if (!clut_attr->Enable || runtime->is_module_bypass || !clut_hsl_attr->Enable)
 		return ret;
@@ -220,6 +224,8 @@ static CVI_S32 isp_clut_ctrl_postprocess(VI_PIPE ViPipe)
 
 	struct cvi_vip_isp_post_cfg *post_addr = get_post_tuning_buf_addr(ViPipe);
 	CVI_U8 tun_idx = get_tuning_buf_idx(ViPipe);
+	CVI_U8 tun_idx_pre = (tun_idx == 0 ? 1 : 0);
+	CVI_U32 syncIdx = 0;
 
 	struct cvi_vip_isp_clut_config *clut_cfg =
 		(struct cvi_vip_isp_clut_config *)&(post_addr->tun_cfg[tun_idx].clut_cfg);
@@ -233,30 +239,58 @@ static CVI_S32 isp_clut_ctrl_postprocess(VI_PIPE ViPipe)
 
 	CVI_BOOL is_postprocess_update = ((runtime->postprocess_updated == CVI_TRUE)
 										|| (bIsMultiCam)
-										|| runtime->clut_param_out.isUpdated);
+										|| runtime->clut_param_out.isUpdated
+										|| runtime->isClutNeedUpdate);
 
 	if (is_postprocess_update == CVI_TRUE) {
 		clut_cfg->update = 1;
 		clut_cfg->is_update_partial = 0;
+		clut_cfg->tbl_idx = 0;
 		clut_cfg->enable = clut_attr->Enable && !runtime->is_module_bypass;
 		if (runtime->clut_param_out.isUpdated) {
 			if (clut_cfg->enable && clut_hsl_attr->Enable) {
 				if (!bIsMultiCam) {
-					runtime->clut_param_out.isUpdated = CVI_FALSE;
+					G_EXT_CTRLS_VALUE(VI_IOCTL_GET_CLUT_TBL_IDX, tun_idx_pre, &syncIdx);
+					if (syncIdx == 0xff) {
+						runtime->clut_param_out.isUpdated = CVI_FALSE;
+						clut_cfg->update = 0;
+						clut_cfg->tbl_idx = 0;
+					} else {
+						clut_cfg->tbl_idx = 0xff;
+					}
 				}
+				if (clut_cfg->update) {
+					runtime->isClutNeedUpdate = CVI_FALSE;
+				}
+
 				memcpy(clut_cfg->r_lut, runtime->clut_param_out.ClutR, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
 				memcpy(clut_cfg->g_lut, runtime->clut_param_out.ClutG, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
 				memcpy(clut_cfg->b_lut, runtime->clut_param_out.ClutB, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
 			} else {
 				runtime->clut_param_out.isUpdated = CVI_FALSE;
 			}
-		} else if (clut_cfg->enable && !clut_hsl_attr->Enable) {
-			memcpy(clut_cfg->r_lut, clut_attr->ClutR, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
-			memcpy(clut_cfg->g_lut, clut_attr->ClutG, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
-			memcpy(clut_cfg->b_lut, clut_attr->ClutB, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
+		} else if (runtime->isClutNeedUpdate) {
+			if (clut_cfg->enable) {
+				if (!bIsMultiCam) {
+					G_EXT_CTRLS_VALUE(VI_IOCTL_GET_CLUT_TBL_IDX, tun_idx_pre, &syncIdx);
+					if (syncIdx == 0xf) {
+						runtime->isClutNeedUpdate = CVI_FALSE;
+						clut_cfg->update = 0;
+						clut_cfg->tbl_idx = 0;
+					} else {
+						clut_cfg->tbl_idx = 0xf;
+					}
+				}
+				memcpy(clut_cfg->r_lut, clut_attr->ClutR, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
+				memcpy(clut_cfg->g_lut, clut_attr->ClutG, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
+				memcpy(clut_cfg->b_lut, clut_attr->ClutB, sizeof(uint16_t) * ISP_CLUT_LUT_LENGTH);
+			} else {
+				runtime->isClutNeedUpdate = CVI_FALSE;
+			}
 		}
 	} else {
 		clut_cfg->update = 0;
+		clut_cfg->tbl_idx = 0;
 	}
 
 	runtime->postprocess_updated = CVI_FALSE;

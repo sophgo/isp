@@ -60,6 +60,7 @@ struct isp_shared_buffer {
 	struct isp_rgbir_shared_buffer rgbir;
 	struct isp_lblc_shared_buffer lblc;
 	struct teaisp_bnr_shared_buffer teaisp_bnr;
+	struct teaisp_drc_shared_buffer teaisp_drc;
 	struct teaisp_pq_shared_buffer teaisp_pq;
 
 	ISP_CTX_S ispCtx;
@@ -306,6 +307,9 @@ CVI_S32 isp_mgr_buf_get_addr(VI_PIPE ViPipe, ISP_IQ_BLOCK_LIST_E block, CVI_VOID
 		break;
 	case ISP_IQ_BLOCK_TEAISP_BNR:
 		*addr = (CVI_VOID *) ((CVI_U8 *)runtime->vaddr + offsetof(struct isp_shared_buffer, teaisp_bnr));
+		break;
+	case ISP_IQ_BLOCK_TEAISP_DRC:
+		*addr = (CVI_VOID *) ((CVI_U8 *)runtime->vaddr + offsetof(struct isp_shared_buffer, teaisp_drc));
 		break;
 	case ISP_IQ_BLOCK_TEAISP_PQ:
 		*addr = (CVI_VOID *) ((CVI_U8 *)runtime->vaddr + offsetof(struct isp_shared_buffer, teaisp_pq));

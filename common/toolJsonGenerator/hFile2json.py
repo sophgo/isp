@@ -3,19 +3,17 @@ import sys
 import re
 import json
 from jinja2 import Template
+import os
 #TODO add parse marco to auto know defineDict-oliver
-
 #log print config
 ENABLE_ENUMJSON_LOG = 0
 ENABLE_PRINT_ENUMJSON = 0
 ENABLE_STRUCTJSON_LOG = 0
 ENABLE_PRINT_STRUCTJSON = 0
-
 #use cusaliasDict cusTitleCountDict cusTypeDict replace h file content
 USE_PATCH = 1
 #use level.json apply
 USE_LEVEL = 1
-
 #hardCode content
 hardCodeContent = \
 """
@@ -24,43 +22,35 @@ typedef struct _ISP_TOP_ATTR_S {
     CVI_U8 ViChn; /*RW; Range:[0x0, 0x6]*/
     CVI_U8 VpssGrp; /*RW; Range:[0x0, 0xF]*/
     CVI_U8 VpssChn; /*RW; Range:[0x0, 0x3]*/
+    CVI_U8 VoDev; /*RW; Range:[0x0, 0x1]*/
 } ISP_TOP_ATTR_S;
-
 typedef struct _PQT_ISP_AE_ROUTE_S {
 	CVI_U32 u32TotalNum; /*RW; Range:[0x1, 0x10]*/
 	CVI_U32 astRouteNode[16][4];
 } PQT_ISP_AE_ROUTE_S;
-
 typedef struct _PQT_AE_ROUTE_S {
 	PQT_ISP_AE_ROUTE_S ISP_AE_ROUTE_S;
 } PQT_AE_ROUTE_S;
-
 typedef struct _PQT_AE_ROUTE_SF_S {
 	PQT_ISP_AE_ROUTE_S ISP_AE_ROUTE_S;
 } PQT_AE_ROUTE_SF_S;
-
 typedef struct _PQT_ISP_AE_ROUTE_EX_S {
 	CVI_U32 u32TotalNum; /*RW; Range:[0x1, 0x10]*/
 	CVI_U32 astRouteExNode[16][4];
 } PQT_ISP_AE_ROUTE_EX_S;
-
 typedef struct _PQT_AE_ROUTE_EX_S {
 	PQT_ISP_AE_ROUTE_EX_S ISP_AE_ROUTE_EX_S;
 } PQT_AE_ROUTE_EX_S;
-
 typedef struct _PQT_AE_ROUTE_EX_SF_S {
 	PQT_ISP_AE_ROUTE_EX_S ISP_AE_ROUTE_EX_S;
 } PQT_AE_ROUTE_EX_SF_S;
-
 typedef struct _VPSS_ATTR_S {
 	CVI_S32 brightness; /*RW; Range:[0x0, 0x64]*/
 	CVI_S32 contrast; /*RW; Range:[0x0, 0x64]*/
 	CVI_S32 saturation; /*RW; Range:[0x0, 0x64]*/
 	CVI_S32 hue; /*RW; Range:[0x0, 0x64]*/
 } VPSS_ADJUSTMENT_ATTR_S;
-
 """
-
 rpcHardCode = \
 """
 			{
@@ -69,11 +59,9 @@ rpcHardCode = \
 				"SET": "CVI_VPSS_SetGrpProcAmp"
 			},
 """
-
 levelDict = {}
 typeDict = {"CVI_BOOL":["0x0","0x1"],"CVI_U8":["0x0","0xFF"],"CVI_U16":["0x0","0xFFFF"],"CVI_U32":["0x0","0xFFFFFFFF"],"CVI_U64":["0x0","0xFFFFFFFFFFFFFFFF"],
 	        "CVI_S8":["-0x80","0x7F"],"CVI_S16":["-0x8000","0x7FFF"],"CVI_S32":["-0x80000000","0x7fffffff"],"CVI_S64":["-2147483648","2147483647"]}
-
 defineDict = {"ISP_AUTO_ISO_STRENGTH_NUM":
                    [16,["ISO100",
                         "ISO200",
@@ -174,66 +162,58 @@ if USE_PATCH:
                     "PQT_ISP_AE_ROUTE_S":{"astRouteNode":[0,2147483647,0,2147483647,0,10,0,1024]},
                     "PQT_ISP_AE_ROUTE_EX_S":{"astRouteExNode":[0,2147483647,0,2147483647,0,2147483647,0,2147483647,0,10,0,1024]}}
     cusAccess = {"ISP_PUB_ATTR_S":{"stWndRect":"R","stSnsSize":"R","enBayer":"R","enWDRMode":"R","u8SnsMode":"R"}}
-
+#-----------------------@@@@@@@@@@@@@@@@@@@@-------------------------------------------------------------------------------
+from collections import defaultdict
+macros_dict=defaultdict(str)
+def init():
+    script_path = os.path.abspath(sys.argv[0])
+    script_dir = os.path.dirname(script_path)
+    os.chdir(script_dir)
+    if os.path.exists('./output.txt'):
+        try:
+            with open('./output.txt', 'r') as file:
+                lines = file.readlines()
+                for line in lines:
+                    line = line.strip()
+                    key,value = line.split('=',1)
+                    macros_dict[key]=value
+        except IOError as e:
+            print(f"can not open file: {e}")
+    else:
+        print("file is not exist")
+#------------------------------------------------------------------------------------------------------
 def is_number(s):
     try:
         float(s)
         return True
     except ValueError:
         pass
-
     try:
         import unicodedata
         unicodedata.numeric(s)
         return True
     except (TypeError, ValueError):
         pass
-
     return False
-
 class MarcoDict():
     def __init__(self, strlist):
         self.marcoDict = {}
-        for str in strlist:
-            key, value = self.parseStr(str)
-            self.marcoDict.update({key:value})
-        self.marcoDict.update({"LV_TOTAL_NUM":"21"})
-        self.marcoDict.update({"ISP_AWB_COLORTEMP_NUM":"2"})
-        self.marcoDict.update({"ISP_BAYER_CHN_NUM":"4"})
-        self.marcoDict.update({"AWB_ZONE_WT_NUM":"1024"})
-        self.marcoDict.update({"ISP_RLSC_COLOR_TEMPERATURE_SIZE":"7"})
-        self.marcoDict.update({"ISP_MLSC_COLOR_TEMPERATURE_SIZE":"7"})
-        self.marcoDict.update({"CVI_ISP_LSC_GRID_POINTS":"1369"})
-        self.marcoDict.update({"ISP_LBLC_GRID_POINTS":"64"})
-        self.marcoDict.update({"ISP_CHANNEL_MAX_NUM":"3"})
-        self.marcoDict.update({"MAX_HIST_BINS":"256"})
-        self.marcoDict.update({"AWB_ZONE_NUM":"1024"})
-        self.marcoDict.update({"ISP_WDR_FRAME_IDX_SIZE":"4"})
-        self.marcoDict.update({"VO_LVDS_LANE_MAX":"5"})
-        self.addViNumMarcoDict()
-    def parseStr(self, str):
-        str = re.sub("\s+"," ",str)
-        name = str.split(" ")[1]
-        if is_number(str.split(" ")[2]):
-            if "0x" in str.split(" ")[2]:
-                num =  int(str.split(" ")[2].replace("(","").replace(")",""),16)
-            else:
-                num =  int(str.split(" ")[2].replace("(","").replace(")",""),10)
-        else:
-            num = str.split(" ")[2].replace("(","").replace(")","")
-            if "UL" in num:
-                num = num.replace("UL","")
-
-        return name,num
+        # self.marcoDict.update({"LV_TOTAL_NUM":"21"})
+        # self.marcoDict.update({"ISP_AWB_COLORTEMP_NUM":"2"})
+        # self.marcoDict.update({"ISP_BAYER_CHN_NUM":"4"})
+        # self.marcoDict.update({"AWB_ZONE_WT_NUM":"1024"})
+        # self.marcoDict.update({"ISP_RLSC_COLOR_TEMPERATURE_SIZE":"7"})
+        # self.marcoDict.update({"ISP_MLSC_COLOR_TEMPERATURE_SIZE":"7"})
+        # self.marcoDict.update({"CVI_ISP_LSC_GRID_POINTS":"1369"})
+        # self.marcoDict.update({"ISP_LBLC_GRID_POINTS":"64"})
+        # self.marcoDict.update({"ISP_CHANNEL_MAX_NUM":"3"})
+        # self.marcoDict.update({"MAX_HIST_BINS":"256"})
+        # self.marcoDict.update({"AWB_ZONE_NUM":"1024"})
+        # self.marcoDict.update({"ISP_WDR_FRAME_IDX_SIZE":"4"})
+        # self.marcoDict.update({"VO_LVDS_LANE_MAX":"5"})
+        self.marcoDict.update(macros_dict)
     def getDict(self):
         return self.marcoDict
-    def addViNumMarcoDict(self):
-        phy_pipe_num = self.marcoDict["VI_MAX_PHY_PIPE_NUM"]
-        vir_pipe_num = self.marcoDict["VI_MAX_VIR_PIPE_NUM"]
-        num = phy_pipe_num + vir_pipe_num
-        self.marcoDict.update({"VI_MAX_PIPE_NUM":num})
-        if is_number(self.marcoDict["AWB_SENSOR_NUM"]) == False:
-            self.marcoDict.update({"AWB_SENSOR_NUM":num})
 
 class EnumJson():
     ID = ""
@@ -325,6 +305,7 @@ class EnumJson():
         if ENABLE_PRINT_ENUMJSON:
             print(Template(template).render(ID=self.ID, ALIAS=self.ALIAS, COMMENT=self.COMMENT, MEMBER=self.MEMBER))
         return Template(template).render(ID=self.ID, ALIAS=self.ALIAS, COMMENT=self.COMMENT, MEMBER=self.MEMBER)
+#将结构体中的宏定义展开
 class StructJson():
     STATUS = False
     ID = ""
@@ -343,7 +324,6 @@ class StructJson():
         RANGE = []
         FORMAT = ""
         LEVEL = 0
-
         def __init__(self, str, manualOrAutoSt, structId, marcoDict):
             self.structId = structId
             self.marcoDict = marcoDict
@@ -386,7 +366,6 @@ class StructJson():
                     print("str: ", str)
                     print("statement: ", statement, " ", len(statement))
                 if len(statement) == 1:
-                    #Replace \t with " "
                     statement[0] = statement[0].replace('\t', ' ')
                     statementArray = statement[0].strip().replace(";", "").split(" ", 100)
                     self.parseID_COUNT_TITLEH(statementArray, manualOrAutoSt)
@@ -431,7 +410,6 @@ class StructJson():
                 self.TYPE = cusTypeDict[self.structId][self.ID][0]
             else:
                 self.TYPE = statementArray[0]
-
         def parseID_COUNT_TITLEH(self, statementArray, manualOrAutoSt):
             pattern = re.compile('\w*\w')
             id = pattern.findall(statementArray[1])
@@ -518,6 +496,7 @@ class StructJson():
         self.parseStructMember(str)
         if ENABLE_STRUCTJSON_LOG:
             print("---------------------------------------------------------------------------------------------------")
+    #获得了ID等信息
     def parseStructInfo(self, str):
         pattern = re.compile('(?<=\}).+(?=\;)', re.DOTALL)
         if len(pattern.findall(str)) == 1:
@@ -628,7 +607,6 @@ class StructJson():
                     ]
                 }
 """
-
         if ENABLE_PRINT_STRUCTJSON:
             print(Template(template).render(ID= self.ID, ALIAS= self.ALIAS, COMMENT= self.COMMENT, MEMBER= self.MEMBER))
         return Template(template).render(ID= self.ID, ALIAS= self.ALIAS, COMMENT= self.COMMENT, MEMBER= self.MEMBER)
@@ -731,7 +709,6 @@ def SaveJson2File(marcoStrs, enumStrs, structStrs, fp, layoutFileName, rpcFileNa
     SaveRpcJson2File(rpcFileName, fp)
     SaveLayoutJson2File(layoutFileName, fp)
     fp.write(endLine)
-
 def readLevelDictFromFile(levelJsonFile):
     global levelDict
     jsonFIle = open(levelJsonFile, "r")
@@ -746,9 +723,8 @@ def readLevelDictFromFile(levelJsonFile):
     for key in tmpDict.keys():
         for member in tmpDict[key]:
             paramNum = paramNum + 1
-
-
 if __name__ == '__main__':
+    init()
     content = ""
     levelFileName = ""
     rpcFileName = ""
@@ -762,7 +738,6 @@ if __name__ == '__main__':
             layoutFileName = sys.argv[idx]
         if idx == 3:
             rpcFileName = sys.argv[idx]
-        print(sys.argv[idx])
         f = open(sys.argv[idx], 'r')
         content += parseContent(f.read())
         f.close

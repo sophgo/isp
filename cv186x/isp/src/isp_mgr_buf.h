@@ -46,6 +46,7 @@
 #include "teaisp_pq_ctrl.h"
 
 #include "teaisp_bnr_ctrl.h"
+#include "teaisp_drc_ctrl.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -258,6 +259,11 @@ struct teaisp_bnr_shared_buffer {
 	TEAISP_BNR_ATTR_S stBNRAttr;
 	TEAISP_BNR_NP_S stNPAttr;
 	struct teaisp_bnr_ctrl_runtime runtime;
+};
+
+struct teaisp_drc_shared_buffer {
+	TEAISP_DRC_ATTR_S stDrcAttr;
+	struct teaisp_drc_ctrl_runtime runtime;
 };
 
 struct teaisp_pq_shared_buffer {

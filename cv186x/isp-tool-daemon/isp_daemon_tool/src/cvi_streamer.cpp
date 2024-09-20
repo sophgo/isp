@@ -121,7 +121,7 @@ static CVI_S32 parseIspToolDaemonIni(void)
 		ret = SAMPLE_COMM_VI_ParseIni(&stIniCfg);
 		if (stIspConfig.isEnableSetPQBin == 1) {
 			// read wdr mode from sensor_cfg.ini
-			if (ret) {
+			if (ret == CVI_SUCCESS) {
 				if (stIniCfg.enWDRMode[0] <= WDR_MODE_QUDRA) {
 					CVI_BIN_SetBinName(stIniCfg.enWDRMode[0], stIspConfig.SDR_PQBinName);
 					ISP_DAEMON_TOOL_LOG(LOG_INFO, "SdrMode[%d] Set SdrPqBin[%s] done",
@@ -157,7 +157,7 @@ static CVI_S32 parseIspToolDaemonIni(void)
 		ISP_DAEMON_TOOL_LOG(LOG_INFO, "%s %d", "CVI_VI_SetDevNum:", stIniCfg.devNum);
 	} else {
 		ret = SAMPLE_COMM_VI_ParseIni(&stIniCfg);
-		if (ret) {
+		if (ret == CVI_SUCCESS) {
 			CVI_VI_SetDevNum(stIniCfg.devNum);
 			ISP_DAEMON_TOOL_LOG(LOG_INFO, "%s %d", "CVI_VI_SetDevNum:", stIniCfg.devNum);
 		} else {

@@ -725,6 +725,9 @@ static CVI_S32 CVI_ISPD2_GetMultiplyYUV(TISPDeviceInfo *ptDevInfo, CVI_U32 u32To
 			+ ptVideoFrame->stVFrame.u32Length[2];
 
 		pvVirAddr = CVI_SYS_Mmap(ptVideoFrame->stVFrame.u64PhyAddr[0], u32MemoryBufSize);
+		if (pvVirAddr == NULL) {
+			return CVI_FAILURE;
+		}
 		CVI_SYS_IonInvalidateCache(ptVideoFrame->stVFrame.u64PhyAddr[0], pvVirAddr, u32MemoryBufSize);
 
 		if (ptFrameData->bTightlyMode) {
@@ -886,7 +889,7 @@ static CVI_S32 CVI_ISPD2_GetMultiplyRAW_ByCustomVBPool(TFrameData *ptFrameData, 
 	ptFrameData->getRawVbPoolID = VB_INVALID_POOLID;
 	ptFrameData->getRawVbBlk = VB_INVALID_HANDLE;
 
-	VB_POOL_CONFIG_S	stVBPoolCfg;
+	VB_POOL_CONFIG_S	stVBPoolCfg = {0};
 
 	stVBPoolCfg.u32BlkCnt = 1;
 	stVBPoolCfg.u32BlkSize = VI_GetRawBufferSize(
@@ -1862,7 +1865,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetMultipleYUVFrames(TJSONRpcContentIn *ptContentIn,
 	CVI_BOOL			bSetVPSSDefault;
 	CVI_S32				ViPipe, ViChn, VpssGrp, VpssChn;
 	CVI_S32				s32ImageSrcVipeState = CVI_SUCCESS;
-	CVI_S32				s32ImageSrcVipe = 0, s32TempVipe = 0;
+	CVI_S32				s32ImageSrcVipe = 0, s32TempViChn = 0;
 	CVI_S32				s32TempVpssGrp = 0, s32TempVpssChn = 0;
 	CVI_S32				s32DevNum = 0;
 
@@ -1896,10 +1899,10 @@ CVI_S32 CVI_ISPD2_CBFunc_GetMultipleYUVFrames(TJSONRpcContentIn *ptContentIn,
 		CVI_VI_GetDevNum((CVI_U32 *)&s32DevNum);
 		if (s32ImageSrcVipeState == CVI_SUCCESS) {
 			if (s32ImageSrcVipe < s32DevNum) {
-				s32TempVipe = ptDevInfo->s32ViPipe;
+				s32TempViChn = ptDevInfo->s32ViChn;
 				s32TempVpssGrp = ptDevInfo->s32VpssGrp;
 				s32TempVpssChn = ptDevInfo->s32VpssChn;
-				ptDevInfo->s32ViPipe = s32ImageSrcVipe;
+				ptDevInfo->s32ViChn = s32ImageSrcVipe;
 				ptDevInfo->s32VpssGrp = s32ImageSrcVipe;
 			} else {
 				CVI_U8 buffer[50];
@@ -2027,7 +2030,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetMultipleYUVFrames(TJSONRpcContentIn *ptContentIn,
 
 	if (s32ImageSrcVipeState == CVI_SUCCESS) {
 		if (s32ImageSrcVipe < s32DevNum) {
-			ptDevInfo->s32ViPipe = s32TempVipe;
+			ptDevInfo->s32ViChn = s32TempViChn;
 			ptDevInfo->s32VpssGrp = s32TempVpssGrp;
 			ptDevInfo->s32VpssChn = s32TempVpssChn;
 		}
@@ -2282,31 +2285,6 @@ static CVI_S32 CVI_ISPD2_Update3AData(TFrameData *ptFrameData, TISPDeviceInfo *p
 }
 
 // -----------------------------------------------------------------------------
-static CVI_S32 CVI_ISPD2_IsRawReplayMode(TJSONRpcContentIn *ptContentIn)
-{
-	//In cv181x chips, we can't dump raw when in raw replay mode
-	//raw frame in pre be, raw dump in pre fe
-	TISPDeviceInfo		*ptDevInfo = ptContentIn->ptDeviceInfo;
-	VI_PIPE_FRAME_SOURCE_E frameSource = VI_PIPE_FRAME_SOURCE_DEV;
-	CVI_S32				ViPipe = 0;
-
-	ViPipe = ptDevInfo->s32ViPipe;
-	if (CVI_VI_GetPipeFrameSource(ViPipe, &frameSource) != CVI_SUCCESS) {
-		ISP_DAEMON2_DEBUG(LOG_WARNING, "Get Vi PipeFrameSource fail\n");
-		return CVI_FALSE;
-	}
-
-	if (frameSource != VI_PIPE_FRAME_SOURCE_DEV) {
-		//raw replay mode
-		return CVI_TRUE;
-
-	} else {
-		//normal mode
-		return CVI_FALSE;
-	}
-}
-
-// -----------------------------------------------------------------------------
 CVI_S32 CVI_ISPD2_CBFunc_GetMultipleRAWFrames(TJSONRpcContentIn *ptContentIn,
 	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
 {
@@ -2430,7 +2408,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetMultipleRAWFrames(TJSONRpcContentIn *ptContentIn,
 		}
 	}
 
-	if (!CVI_ISPD2_IsRawReplayMode(ptContentIn) && bDumpRaw) {
+	if (!CVI_ISPD2_Utils_IsRawReplayMode() && bDumpRaw) {
 		// Get RAW info.
 		if (CVI_ISPD2_UpdateRAWInfo(ptFrameData) != CVI_SUCCESS) {
 			CVI_ISPD2_ReleaseFrameData(ptDevInfo);
@@ -3134,6 +3112,12 @@ CVI_S32 CVI_ISPD2_CBFunc_SetBinaryData(TJSONRpcContentIn *ptContentIn,
 		GET_INT_FROM_JSON(ptContentIn->pParams, "/size", u32DataSize, s32Ret);
 	}
 
+	if (s32ContentID == EBINARYDATA_RAW_DATA && !CVI_ISPD2_Utils_IsRawReplayMode()) {
+		CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INVALID_REQUEST,
+				"Not replay mode!!!");
+		return CVI_FAILURE;
+	}
+
 	if (u32DataSize == 0) {
 		ISP_DAEMON2_DEBUG(LOG_DEBUG, "Binary size => 0");
 		CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INVALID_PARAMS,
@@ -3160,6 +3144,9 @@ CVI_S32 CVI_ISPD2_CBFunc_SetBinaryData(TJSONRpcContentIn *ptContentIn,
 		break;
 	case EBINARYDATA_RAW_DATA:
 		s32Ret = CVI_ISPD2_CBFunc_RecvRawReplayDataInfo(ptContentIn, ptContentOut, pJsonResponse);
+		if (s32Ret != CVI_SUCCESS) {
+			return s32Ret;
+		}
 
 		ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "set to recv raw data: %u", u32DataSize);
 

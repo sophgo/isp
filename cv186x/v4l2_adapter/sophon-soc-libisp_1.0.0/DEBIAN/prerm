@@ -1,0 +1,10 @@
+unset V4L2_ISP_INSTALL
+unset V4L2_ISP_LIB
+unset V4L2_ISP_BIN
+unset V4L2_ISP_DOC
+unset V4L2_ISP_DATA
+
+rm -f /etc/ld.so.conf.d/sophon-isp.conf
+ldconfig
+rm -f /etc/profile.d/sophon-isp-autoconf.sh
+. /etc/profile

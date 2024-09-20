@@ -18,7 +18,8 @@
 								"ISP_TOP_ATTR_S.ViPipe",
 								"ISP_TOP_ATTR_S.ViChn",
 								"ISP_TOP_ATTR_S.VpssGrp",
-								"ISP_TOP_ATTR_S.VpssChn"
+								"ISP_TOP_ATTR_S.VpssChn",
+								"ISP_TOP_ATTR_S.VoDev"
 							]
 						}
 					]
@@ -70,11 +71,13 @@
 								"TEAISP_BNR_ATTR_S.stManual.FilterMotionStr2D",
 								"TEAISP_BNR_ATTR_S.stManual.FilterStaticStr2D",
 								"TEAISP_BNR_ATTR_S.stManual.FilterStr3D",
+								"TEAISP_BNR_ATTR_S.stManual.FilterStr2D",
 								"TEAISP_BNR_ATTR_S.stManual.NoiseLevel",
 								"TEAISP_BNR_ATTR_S.stManual.NoiseHiLevel",
 								"TEAISP_BNR_ATTR_S.stAuto.FilterMotionStr2D",
 								"TEAISP_BNR_ATTR_S.stAuto.FilterStaticStr2D",
 								"TEAISP_BNR_ATTR_S.stAuto.FilterStr3D",
+								"TEAISP_BNR_ATTR_S.stAuto.FilterStr2D",
 								"TEAISP_BNR_ATTR_S.stAuto.NoiseLevel",
 								"TEAISP_BNR_ATTR_S.stAuto.NoiseHiLevel"
 							]
@@ -83,6 +86,46 @@
 							"TITLE": "TEAISP.bnr Noise Profile",
 							"MEMBER": [
 								"TEAISP_BNR_NP_S.CalibrationCoef"
+							]
+						}
+					]
+				}
+			},
+			{
+				"ID": "TEAISP.drc",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"TEAISP_DRC_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "TEAISP.drc attr",
+							"MEMBER": [
+								"TEAISP_DRC_ATTR_S.enable",
+								"TEAISP_DRC_ATTR_S.enOpType",
+								"TEAISP_DRC_ATTR_S.UpdateInterval",
+								"TEAISP_DRC_ATTR_S.DeflickStrength",
+								"TEAISP_DRC_ATTR_S.DetailStrength",
+								"TEAISP_DRC_ATTR_S.DarkThreshold",
+								"TEAISP_DRC_ATTR_S.BrightStrength",
+								"TEAISP_DRC_ATTR_S.GlobalLuma",
+								"TEAISP_DRC_ATTR_S.MaxvStrength"
+							]
+						},
+						{
+							"TITLE": "TEAISP.drc attr",
+							"MEMBER": [
+								"TEAISP_DRC_ATTR_S.stAuto.DarkStrength",
+								"TEAISP_DRC_ATTR_S.stAuto.DarkCompensateRatio",
+								"TEAISP_DRC_ATTR_S.stAuto.StrengthMin",
+								"TEAISP_DRC_ATTR_S.stAuto.StrengthMax",
+								"TEAISP_DRC_ATTR_S.stManual.DarkStrength",
+								"TEAISP_DRC_ATTR_S.stManual.BrightThreshold",
+								"TEAISP_DRC_ATTR_S.stManual.SatuStrength"
 							]
 						}
 					]
@@ -105,6 +148,7 @@
 								"TEAISP_PQ_ATTR_S.Enable",
 								"TEAISP_PQ_ATTR_S.enOpType",
 								"TEAISP_PQ_ATTR_S.UpdateInterval",
+								"TEAISP_PQ_ATTR_S.SmoothThr",
 								"TEAISP_PQ_ATTR_S.TuningMode",
 								"TEAISP_PQ_ATTR_S.SceneBypass",
 								"TEAISP_PQ_ATTR_S.SceneConfThres"
@@ -753,6 +797,7 @@
 								"ISP_WDR_EXPOSURE_ATTR_S.u16Speed",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16RatioBias",
 								"ISP_WDR_EXPOSURE_ATTR_S.u8SECompensation",
+								"ISP_WDR_EXPOSURE_ATTR_S.enExpMainChn",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHisThr",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHis255CntThr1",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHis255CntThr2",
@@ -2484,7 +2529,7 @@
 				"TYPE": "REG_API_MPI",
 				"CONTENTS": {
 					"CONTENT": [
-						"ISP_LDCI_ATTR_S" 
+						"ISP_LDCI_ATTR_S"
 					]
 				},
 				"LAYOUTS": {
@@ -2672,6 +2717,7 @@
 							"TITLE": "HSL Adjust",
 							"MEMBER": [
 								"ISP_CLUT_HSL_ATTR_S.Enable",
+								"ISP_CLUT_HSL_ATTR_S.Sigma",
 								"ISP_CLUT_HSL_ATTR_S.HByH",
 								"ISP_CLUT_HSL_ATTR_S.SByH",
 								"ISP_CLUT_HSL_ATTR_S.LByH",
