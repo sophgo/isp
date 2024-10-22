@@ -41,7 +41,7 @@ int open_device(const char *dev_name, int *fd)
 {
 	struct stat st;
 
-	*fd = open(dev_name, O_RDWR | O_NONBLOCK);
+	*fd = open(dev_name, O_RDWR | O_NONBLOCK | O_CLOEXEC, 0);
 	if (-1 == *fd) {
 		fprintf(stderr, "Cannot open '%s': %d, %s\n", dev_name, errno,
 			strerror(errno));
@@ -116,7 +116,7 @@ int get_vpss_fd(void)
 CVI_S32 base_dev_open(CVI_VOID)
 {
 	if (base_fd != -1) {
-		printf("%s: %s, base dev has already opened.\n", __FILE__, __func__);
+		CVI_TRACE_SYS(CVI_DBG_DEBUG, "base dev has already opened\n");
 		return CVI_SUCCESS;
 	}
 
@@ -131,7 +131,7 @@ CVI_S32 base_dev_open(CVI_VOID)
 CVI_S32 base_dev_close(CVI_VOID)
 {
 	if (base_fd == -1) {
-		printf("%s: %s, base dev is not opened.\n", __FILE__, __func__);
+		CVI_TRACE_SYS(CVI_DBG_INFO, "base dev is not opened\n");
 		return CVI_SUCCESS;
 	}
 

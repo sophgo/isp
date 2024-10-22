@@ -286,30 +286,6 @@ static CVI_S32 _global_init(VI_PIPE ViPipe)
 	pstIspCtx->frameCnt = 0;
 
 	// os param initial
-#ifdef ENABLE_ISP_IPC
-	pthread_mutexattr_t attrmutex;
-
-	pthread_mutexattr_init(&attrmutex);
-	pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
-	s32Ret = pthread_mutex_init(&pstIspCtx->ispEventLock, &attrmutex);
-	if (s32Ret < 0) {
-		ISP_LOG_ERR("ispEventLock initial fail with %#x.\n", s32Ret);
-		return CVI_FAILURE;
-	}
-
-	pthread_condattr_t attrcond;
-
-	pthread_condattr_init(&attrcond);
-	pthread_condattr_setpshared(&attrcond, PTHREAD_PROCESS_SHARED);
-
-	for (i = 0 ; i < ISP_VD_MAX ; i++) {
-		s32Ret = pthread_cond_init(&pstIspCtx->ispEventCond[i], &attrcond);
-		if (s32Ret < 0) {
-			ISP_LOG_ERR("ispEventCond %d initial fail with %#x.\n", i, s32Ret);
-			return CVI_FAILURE;
-		}
-	}
-#else
 	s32Ret = pthread_mutex_init(&pstIspCtx->ispEventLock, 0);
 	if (s32Ret < 0) {
 		ISP_LOG_ERR("ispEventLock initial fail with %#x.\n", s32Ret);
@@ -322,7 +298,7 @@ static CVI_S32 _global_init(VI_PIPE ViPipe)
 			return CVI_FAILURE;
 		}
 	}
-#endif
+
 	pstIspCtx->frameInfo.u32Again = pstIspCtx->frameInfo.u32Dgain =
 		pstIspCtx->frameInfo.u32IspDgain = 0;
 

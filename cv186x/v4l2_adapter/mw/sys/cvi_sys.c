@@ -23,22 +23,11 @@
 #define UNUSED(x) ((void)(x))
 
 static int devm_fd = -1, devm_cached_fd = -1;
-static Hashmap *ionHashmap = NULL;
 CVI_S32 *log_levels;
 CVI_CHAR const *log_name[8] = {
 	(CVI_CHAR *)"EMG", (CVI_CHAR *)"ALT", (CVI_CHAR *)"CRI", (CVI_CHAR *)"ERR",
 	(CVI_CHAR *)"WRN", (CVI_CHAR *)"NOT", (CVI_CHAR *)"INF", (CVI_CHAR *)"DBG"
 };
-
-static int _ion_hash_key(void *key)
-{
-	return (((uintptr_t)key) >> 10);
-}
-
-static bool _ion_hash_equals(void *keyA, void *keyB)
-{
-	return (keyA == keyB);
-}
 
 CVI_S32 CVI_SYS_Bind(const MMF_CHN_S *pstSrcChn, const MMF_CHN_S *pstDestChn)
 {
@@ -99,6 +88,11 @@ CVI_S32 CVI_SYS_DevMem_Close(void)
 
 void *CVI_SYS_Mmap(CVI_U64 u64PhyAddr, CVI_U32 u32Size)
 {
+	if (u32Size == 0 || u64PhyAddr <= 0) {
+		CVI_TRACE_SYS(CVI_DBG_ERR, "only u64PhyAddr > 0 and u32Size > 0 alloed!\n");
+		return NULL;
+	}
+
 	CVI_SYS_DevMem_Open();
 
 	return devm_map(devm_fd, u64PhyAddr, u32Size);
@@ -106,6 +100,11 @@ void *CVI_SYS_Mmap(CVI_U64 u64PhyAddr, CVI_U32 u32Size)
 
 void *CVI_SYS_MmapCache(CVI_U64 u64PhyAddr, CVI_U32 u32Size)
 {
+	if (u32Size == 0 || u64PhyAddr <= 0) {
+		CVI_TRACE_SYS(CVI_DBG_ERR, "only u64PhyAddr > 0 and u32Size > 0 alloed!\n");
+		return NULL;
+	}
+
 	CVI_SYS_DevMem_Open();
 
 	void *addr = devm_map(devm_cached_fd, u64PhyAddr, u32Size);
@@ -160,28 +159,27 @@ CVI_S32 ionFree(struct sys_ion_data *para)
 static CVI_S32 _SYS_IonAlloc(CVI_U64 *pu64PhyAddr, CVI_VOID **ppVirAddr,
 			     CVI_U32 u32Len, CVI_BOOL cached, const CVI_CHAR *name)
 {
-	struct sys_ion_data *ion_data;
+	struct sys_ion_data ion_data;
 
-	if (!ionHashmap)
-		ionHashmap = hashmapCreate(20, _ion_hash_key, _ion_hash_equals);
+	if (u32Len == 0) {
+		return CVI_ERR_SYS_ILLEGAL_PARAM;
+	}
 
-	ion_data = malloc(sizeof(*ion_data));
-	ion_data->size = u32Len;
-	ion_data->cached = cached;
+	ion_data.size = u32Len;
+	ion_data.cached = cached;
 	// Set buffer as "anonymous" when user is passing null pointer.
 	if (name)
-		strncpy((char *)(ion_data->name), name, MAX_ION_BUFFER_NAME);
-	else
-		strncpy((char *)(ion_data->name), "anonymous", MAX_ION_BUFFER_NAME);
+		snprintf((char *)(ion_data.name), MAX_ION_BUFFER_NAME, "%s", name);
 
-	if (ionMalloc(ion_data) != CVI_SUCCESS) {
-		free(ion_data);
-		printf("%s: %s, alloc failed.\n", __FILE__, __func__);
+	else
+		snprintf((char *)(ion_data.name), MAX_ION_BUFFER_NAME, "%s", "anonymous");
+
+	if (ionMalloc(&ion_data) != CVI_SUCCESS) {
+		CVI_TRACE_SYS(CVI_DBG_ERR, "alloc failed.\n");
 		return CVI_ERR_SYS_NOMEM;
 	}
 
-	*pu64PhyAddr = ion_data->addr_p;
-	hashmapPut(ionHashmap, (void *)(uintptr_t)*pu64PhyAddr, ion_data);
+	*pu64PhyAddr = ion_data.addr_p;
 
 	if (ppVirAddr) {
 		if (cached)
@@ -189,10 +187,8 @@ static CVI_S32 _SYS_IonAlloc(CVI_U64 *pu64PhyAddr, CVI_VOID **ppVirAddr,
 		else
 			*ppVirAddr = CVI_SYS_Mmap(*pu64PhyAddr, u32Len);
 		if (*ppVirAddr == NULL) {
-			hashmapGet(ionHashmap, (void *)(uintptr_t)*pu64PhyAddr);
-			ionFree(ion_data);
-			free(ion_data);
-			printf("%s: %s, mmap failed.\n", __FILE__, __func__);
+			ionFree(&ion_data);
+			CVI_TRACE_SYS(CVI_DBG_ERR, "mmap failed. (%s)\n", strerror(errno));
 			return CVI_ERR_SYS_REMAPPING;
 		}
 	}
@@ -209,28 +205,19 @@ CVI_S32 CVI_SYS_IonAlloc_Cached(CVI_U64 *pu64PhyAddr, CVI_VOID **ppVirAddr,
 
 CVI_S32 CVI_SYS_IonFree(CVI_U64 u64PhyAddr, CVI_VOID *pVirAddr)
 {
-	struct sys_ion_data *ion_data;
+	struct sys_ion_data ion_data;
+	int ret;
 
-	if (ionHashmap == NULL) {
-		printf("%s: %s, ion not alloc before.\n", __FILE__, __func__);
-		return CVI_ERR_SYS_NOTREADY;
-	}
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, u64PhyAddr);
 
-	ion_data = hashmapGet(ionHashmap, (void *)(uintptr_t)u64PhyAddr);
-	if (ion_data == NULL) {
-		printf("%s: %s, u64PhyAddr(0x%"PRIx64") not found in ion.\n", __FILE__, __func__, u64PhyAddr);
-		return CVI_ERR_SYS_ILLEGAL_PARAM;
+	ion_data.addr_p = u64PhyAddr;
+	ret = ionFree(&ion_data);
+	if (ret) {
+		CVI_TRACE_SYS(CVI_DBG_ERR, "ionFree failed\n");
+		return ret;
 	}
-	hashmapRemove(ionHashmap, (void *)(uintptr_t)u64PhyAddr);
 	if (pVirAddr)
-		devm_unmap(pVirAddr, ion_data->size);
-	ionFree(ion_data);
-	free(ion_data);
-
-	if (hashmapSize(ionHashmap) == 0) {
-		hashmapFree(ionHashmap);
-		ionHashmap = NULL;
-	}
+		devm_unmap(pVirAddr, ion_data.size);
 
 	return CVI_SUCCESS;
 }
@@ -241,13 +228,12 @@ CVI_S32 CVI_SYS_IonFlushCache(CVI_U64 u64PhyAddr, CVI_VOID *pVirAddr, CVI_U32 u3
 	CVI_S32 ret = CVI_SUCCESS;
 	struct sys_cache_op cache_cfg;
 
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, u64PhyAddr);
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, pVirAddr);
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, u32Len);
+
 	if ((fd = get_base_fd()) == -1)
 		return CVI_ERR_SYS_NOTREADY;
-
-	if (pVirAddr == NULL) {
-		printf("%s: %s, pVirAddr Null.\n", __FILE__, __func__);
-		return CVI_ERR_SYS_NULL_PTR;
-	}
 
 	cache_cfg.addr_p = u64PhyAddr;
 	cache_cfg.addr_v = pVirAddr;
@@ -255,7 +241,7 @@ CVI_S32 CVI_SYS_IonFlushCache(CVI_U64 u64PhyAddr, CVI_VOID *pVirAddr, CVI_U32 u3
 
 	ret = ioctl(fd, BASE_CACHE_FLUSH, &cache_cfg);
 	if (ret < 0) {
-		printf("%s: %s, ion flush err.\n", __FILE__, __func__);
+		CVI_TRACE_SYS(CVI_DBG_ERR, "ion flush err.\n");
 		ret = CVI_ERR_SYS_NOTREADY;
 	}
 	return ret;
@@ -267,13 +253,12 @@ CVI_S32 CVI_SYS_IonInvalidateCache(CVI_U64 u64PhyAddr, CVI_VOID *pVirAddr, CVI_U
 	CVI_S32 ret = CVI_SUCCESS;
 	struct sys_cache_op cache_cfg;
 
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, u64PhyAddr);
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, pVirAddr);
+	MOD_CHECK_NULL_PTR(CVI_ID_SYS, u32Len);
+
 	if ((fd = get_base_fd()) == -1)
 		return CVI_ERR_SYS_NOTREADY;
-
-	if (pVirAddr == NULL) {
-		printf("%s: %s, pVirAddr Null.\n", __FILE__, __func__);
-		return CVI_ERR_SYS_NULL_PTR;
-	}
 
 	cache_cfg.addr_p = u64PhyAddr;
 	cache_cfg.addr_v = pVirAddr;
@@ -281,7 +266,7 @@ CVI_S32 CVI_SYS_IonInvalidateCache(CVI_U64 u64PhyAddr, CVI_VOID *pVirAddr, CVI_U
 
 	ret = ioctl(fd, BASE_CACHE_INVLD, &cache_cfg);
 	if (ret < 0) {
-		printf("%s: %s, ion invalid err.\n", __FILE__, __func__);
+		CVI_TRACE_SYS(CVI_DBG_ERR, "ion invalid err.\n");
 		ret = CVI_ERR_SYS_NOTREADY;
 	}
 	return ret;

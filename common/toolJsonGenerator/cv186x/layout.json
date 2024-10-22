@@ -2812,7 +2812,7 @@
 			},
 			{
 				"ID": "LDC",
-				"READY": true,
+				"READY": false,
 				"TYPE": "EXTERNAL",
 				"CONTENTS": {
 					"CONTENT": [

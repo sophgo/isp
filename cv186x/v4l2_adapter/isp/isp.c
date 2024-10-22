@@ -26,6 +26,7 @@
 #include "cvi_sys.h"
 
 static pthread_t g_IspPid[VI_MAX_DEV_NUM];
+static pthread_mutex_t vi_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int open_v4l2_sensor(int pipe)
 {
@@ -1470,7 +1471,9 @@ int CVI_ISP_V4L2_Init(int pipe, int fd)
 		return -1;
 	}
 
+	pthread_mutex_lock(&vi_mutex);
 	CVI_SYS_Init();
+	pthread_mutex_unlock(&vi_mutex);
 	CVI_ISP_V4L2_SetFd(pipe, fd);
 	set_dev_attr(pipe);
 	reg_sensor(pipe);
@@ -1489,7 +1492,9 @@ int CVI_ISP_V4L2_Exit(int pipe)
 	}
 
 	isp_stop(pipe);
+	pthread_mutex_lock(&vi_mutex);
 	CVI_SYS_Exit();
+	pthread_mutex_unlock(&vi_mutex);
 
 	return 0;
 }
