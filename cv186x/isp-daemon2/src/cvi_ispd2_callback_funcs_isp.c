@@ -948,6 +948,19 @@ CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_GetNP(TJSONRpcContentIn *ptContentIn,
 }
 
 // -----------------------------------------------------------------------------
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_DRC_SetAttr(TJSONRpcContentIn *ptContentIn,
+	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
+{
+	CVI_ISP_SET_API(CVI_TEAISP_DRC_SetAttr, CVI_TEAISP_DRC_GetAttr, TEAISP_DRC_ATTR_S);
+}
+
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_DRC_GetAttr(TJSONRpcContentIn *ptContentIn,
+	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
+{
+	CVI_ISP_GET_API(CVI_TEAISP_DRC_GetAttr, TEAISP_DRC_ATTR_S);
+}
+
+// -----------------------------------------------------------------------------
 CVI_S32 CVI_ISPD2_CBFunc_TEAISP_PQ_SetAttr(TJSONRpcContentIn *ptContentIn,
 	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
 {

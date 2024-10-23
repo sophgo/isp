@@ -86,6 +86,8 @@ typedef struct {
 	TEAISP_BNR_ATTR_S teaisp_bnr;
 	TEAISP_BNR_NP_S teaisp_bnr_np;
 
+	TEAISP_DRC_ATTR_S teaisp_drc;
+
 	TEAISP_PQ_ATTR_S teaisp_pq;
 
 	// other

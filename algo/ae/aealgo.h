@@ -744,8 +744,7 @@ CVI_S32 AE_MallocRawReplayExpBuf(CVI_U8 sID, CVI_U16 frmNum);
 CVI_S32 AE_GetRawReplayExpBuf(CVI_U8 sID, CVI_U8 *buf, CVI_U32 *bufSize);
 CVI_S32 AE_SetRawReplayExposure(CVI_U8 sID, const ISP_EXP_INFO_S *pstExpInfo);
 void AE_SetRawReplayMode(CVI_U8 sID, CVI_BOOL mode);
-CVI_S32 AE_isRawReplayMode(CVI_U8 sID);
-CVI_S32 AE_GetRawReplayFrmNum(CVI_U8 sID, CVI_U8 *bootFrmNum, CVI_U8 *ispDgainPeriodNum);
+CVI_BOOL AE_isRawReplayMode(CVI_U8 sID);
 
 
 

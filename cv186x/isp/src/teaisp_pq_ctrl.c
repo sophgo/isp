@@ -6,6 +6,7 @@
  *
  */
 
+#include "isp_3a.h"
 #include "isp_main_local.h"
 #include "isp_debug.h"
 #include "isp_defines.h"
@@ -14,6 +15,8 @@
 #include "teaisp_pq_ctrl.h"
 #include "isp_mgr_buf.h"
 #include "cvi_ae.h"
+#include "isp_algo_teaisp_pq.h"
+#include <math.h>
 
 #define AR_EQ(arr0, arr1, arr2, size) \
 ({ \
@@ -97,6 +100,7 @@ static void scene_snow_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime
 static void scene_fog_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *runtime);
 static void scene_grass_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *runtime);
 static void scene_backlight_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *runtime);
+static void scene_backlight_tuning_algo_auto(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *runtime);
 //static void scene_common_tuning_algo(struct teaisp_pq_ctrl_runtime *runtime);
 
 static ENTER_LEAVE_FUNC enter_scene_func[TEAISP_SCENE_NUM] = {
@@ -115,6 +119,13 @@ static ENTER_LEAVE_FUNC leave_scene_func[TEAISP_SCENE_NUM] = {
 	leave_scene_common
 };
 
+typedef void (*SCENE_BACKLIGHT_TUNING_ALGO)(VI_PIPE, struct teaisp_pq_ctrl_runtime *);
+
+static SCENE_BACKLIGHT_TUNING_ALGO scene_backlight_tuning_algo_ls[] = {
+	scene_backlight_tuning_algo,
+	scene_backlight_tuning_algo_auto
+};
+
 CVI_S32 teaisp_pq_ctrl_init(VI_PIPE ViPipe)
 {
 	ISP_LOG_DEBUG("+\n");
@@ -130,9 +141,17 @@ CVI_S32 teaisp_pq_ctrl_init(VI_PIPE ViPipe)
 	runtime->postprocess_updated = CVI_FALSE;
 	runtime->is_module_bypass = CVI_FALSE;
 
+	runtime->is_module_update_scene = CVI_FALSE;
+	runtime->last_scene_info.scene =
+	runtime->module_set_scene_info.scene =
+	runtime->module_algo_scene_info.scene =
 	runtime->cur_scene_info.scene = SCENE_COMMON;
-	runtime->last_scene_info.scene = SCENE_COMMON;
 	runtime->algo_result = NULL;
+
+	for (int i = 0; i < TEAISP_SCENE_NUM; ++i) {
+		runtime->continue_scene_cnt[i] = 0;
+		runtime->module_detect_sence_cfd[i] = 0.0f;
+	}
 
 	return ret;
 }
@@ -242,18 +261,6 @@ static CVI_S32 teaisp_pq_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algo
 	if (!pteaisppq_attr->Enable || runtime->is_module_bypass)
 		return ret;
 
-	// cur_scene_info -> last_scene_info
-	memcpy(&runtime->last_scene_info, &runtime->cur_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
-	memcpy(&runtime->cur_scene_info, &runtime->module_set_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
-
-	// TuningMode to set the scene: 1~5: snow, fog, backlight, grass, common
-	if (pteaisppq_attr->TuningMode != 0) {
-		runtime->cur_scene_info.scene = (pteaisppq_attr->TuningMode - 1) % TEAISP_SCENE_NUM;
-		for (int i = 0; i < TEAISP_SCENE_NUM; ++i) {
-			runtime->cur_scene_info.scene_score[i] = 100;
-		}
-	}
-
 	// ParamIn
 	// ParamOut
 
@@ -265,7 +272,10 @@ static CVI_S32 teaisp_pq_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algo
 static CVI_S32 teaisp_pq_ctrl_process(VI_PIPE ViPipe)
 {
 	CVI_S32 ret = CVI_SUCCESS;
+	const TEAISP_PQ_ATTR_S *pteaisppq_attr = NULL;
 	struct teaisp_pq_ctrl_runtime *runtime = _get_teaisp_pq_ctrl_runtime(ViPipe);
+
+	teaisp_pq_ctrl_get_pq_attr(ViPipe, &pteaisppq_attr);
 
 	if (runtime == CVI_NULL)
 		return CVI_FAILURE;
@@ -273,9 +283,50 @@ static CVI_S32 teaisp_pq_ctrl_process(VI_PIPE ViPipe)
 	if (runtime->process_updated == CVI_FALSE)
 		return ret;
 
-	// RESERVE: algo, pam_in -> pam_out
+	if (runtime->is_module_update_scene) {
+		runtime->is_module_update_scene = CVI_FALSE;
+		int current_detect_scene = runtime->module_set_scene_info.scene;
+		unsigned int max_cnt = runtime->continue_scene_cnt[current_detect_scene] + 1;
 
-	runtime->process_updated = CVI_FALSE;
+		for (int i = 0; i < TEAISP_SCENE_NUM; ++i) {
+			if (i == current_detect_scene) {
+				runtime->continue_scene_cnt[i]++;
+				runtime->module_detect_sence_cfd[i] += log(max_cnt) / log(2.0);
+			} else {
+				if (runtime->module_detect_sence_cfd[i] > 0.0f) {
+					runtime->module_detect_sence_cfd[i] -= pow(2, max_cnt);
+					if (runtime->module_detect_sence_cfd[i] < 0.0f) {
+						runtime->module_detect_sence_cfd[i] = 0.0f;
+						runtime->continue_scene_cnt[i] = 0;
+					} else {
+						if (runtime->continue_scene_cnt[i] > 0) {
+							runtime->continue_scene_cnt[i] -= 1;
+						}
+					}
+				} else {
+					runtime->continue_scene_cnt[i] = 0;
+				}
+			}
+		}
+
+		if (runtime->continue_scene_cnt[current_detect_scene] >= pteaisppq_attr->SmoothThr) {
+			memcpy(&runtime->module_algo_scene_info, &runtime->module_set_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
+		}
+	}
+
+	if (pteaisppq_attr->TuningMode != 0) {
+		// use TuningMode to set the scene: 1~5: snow, fog, backlight, grass, common
+		memcpy(&runtime->last_scene_info, &runtime->cur_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
+		runtime->cur_scene_info.scene = (pteaisppq_attr->TuningMode - 1) % TEAISP_SCENE_NUM;
+		runtime->cur_scene_info.scene_score = 100;
+	} else {
+		// use the module detect algo result
+		if (!pteaisppq_attr->SceneBypass[runtime->module_algo_scene_info.scene] ||
+				runtime->module_algo_scene_info.scene_score >= pteaisppq_attr->SceneConfThres[runtime->module_set_scene_info.scene]) {
+			memcpy(&runtime->last_scene_info, &runtime->cur_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
+			memcpy(&runtime->cur_scene_info, &runtime->module_algo_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
+		}
+	}
 
 	return ret;
 }
@@ -289,18 +340,12 @@ static CVI_S32 teaisp_pq_ctrl_postprocess(VI_PIPE ViPipe)
 		return CVI_FAILURE;
 
 	const TEAISP_PQ_ATTR_S *pteaisppq_attr = NULL;
-	bool is_bypass_this_scene = false;
 
 	teaisp_pq_ctrl_get_pq_attr(ViPipe, &pteaisppq_attr);
 
-	// bypass: disable || scene bypass || (auto && score < socre_thres)
-	is_bypass_this_scene = (!pteaisppq_attr->Enable || runtime->is_module_bypass)
-		|| (pteaisppq_attr->SceneBypass[runtime->cur_scene_info.scene])
-		|| (pteaisppq_attr->enOpType == OP_TYPE_AUTO &&
-			runtime->cur_scene_info.scene_score[runtime->cur_scene_info.scene] < pteaisppq_attr->SceneConfThres[runtime->cur_scene_info.scene]);
-
-	if (is_bypass_this_scene)
+	if (!pteaisppq_attr->Enable) {
 		runtime->cur_scene_info.scene = SCENE_COMMON;
+	}
 
 	CVI_BOOL is_postprocess_update = runtime->postprocess_updated;
 
@@ -573,7 +618,7 @@ static void enter_scene_backlight(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime 
 	}
 
 	// update: [0] -> [1]
-	scene_backlight_tuning_algo(ViPipe, runtime);
+	scene_backlight_tuning_algo_ls[1](ViPipe, runtime);
 
 	// set drc attribute
 	ISP_DRC_ATTR_S drc_attr_set;
@@ -634,6 +679,8 @@ static void enter_scene_grass(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *run
 
 	memcpy(clut_hsl_attr_set.LByH, p1->LByH, ISP_CLUT_HUE_LENGTH * sizeof(CVI_U16));
 	memcpy(clut_hsl_attr_set.SByH, p1->SByH, ISP_CLUT_HUE_LENGTH * sizeof(CVI_U16));
+
+	clut_hsl_attr_set.Enable = p1->clut_hsl_enable;
 
 	isp_clut_ctrl_set_clut_hsl_attr(ViPipe, &clut_hsl_attr_set);
 }
@@ -744,13 +791,19 @@ static void scene_backlight_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_ru
 	struct backlight_tuning_attr *p0 = &(runtime->backlight_tun_attr[0]);
 	struct backlight_tuning_attr *p1 = &(runtime->backlight_tun_attr[1]);
 	ISP_ALGO_RESULT_S *p_algo_ret = runtime->algo_result;
-	ISP_EXP_INFO_S isp_exp_info;
-
-	CVI_ISP_QueryExposureInfo(ViPipe, &isp_exp_info);
 
 	CVI_BOOL is_wdr_mode = (p_algo_ret->enFSWDRMode == WDR_MODE_NONE) ? 0 : 1;
-	CVI_U32 *p_hist256_val = isp_exp_info.au32AE_Hist256Value;
-	CVI_U32 wdr_exp_ratio = isp_exp_info.u32WDRExpRatio;
+	CVI_U32 wdr_exp_ratio = p_algo_ret->au32ExpRatio[0];
+	CVI_U32 *p_hist256_val;
+	ISP_AE_STATISTICS_COMPAT_S *p_ae_sts = NULL;
+
+	isp_sts_ctrl_get_ae_sts(ViPipe, &p_ae_sts);
+
+	if (p_ae_sts == NULL) {
+		return;
+	}
+
+	p_hist256_val = p_ae_sts->aeStat1[0].au32HistogramMemArray[0];
 
 	if (is_wdr_mode) {
 		// exp ratio -> drc: auto.targetyscale, auto.deadaptargetgain
@@ -782,6 +835,70 @@ static void scene_backlight_tuning_algo(VI_PIPE ViPipe, struct teaisp_pq_ctrl_ru
 			AR_MUL(p1->SdrTargetYGain, p0->SdrTargetYGain, 1.2f, ISP_AUTO_LV_NUM, 0x80);
 			AR_MUL(p1->SdrDEAdaptTargetGain, p0->SdrDEAdaptTargetGain, 1.2f, ISP_AUTO_LV_NUM, 0x40);
 		} else if (hist_ge_255_ratio > 0.4f && hist_ge_255_ratio <= 0.7f) {
+			AR_MUL(p1->SdrTargetYGain, p0->SdrTargetYGain, 1.4f, ISP_AUTO_LV_NUM, 0x80);
+			AR_MUL(p1->SdrDEAdaptTargetGain, p0->SdrDEAdaptTargetGain, 1.4f, ISP_AUTO_LV_NUM, 0x40);
+
+		} else {
+			AR_MUL(p1->SdrTargetYGain, p0->SdrTargetYGain, 1.6f, ISP_AUTO_LV_NUM, 0x80);
+			AR_MUL(p1->SdrDEAdaptTargetGain, p0->SdrDEAdaptTargetGain, 1.6f, ISP_AUTO_LV_NUM, 0x40);
+		}
+		ISP_LOG_DEBUG("hist ge 255 ratio: %f\n", hist_ge_255_ratio);
+	}
+}
+
+static void scene_backlight_tuning_algo_auto(VI_PIPE ViPipe, struct teaisp_pq_ctrl_runtime *runtime)
+{
+	struct backlight_tuning_attr *p0 = &(runtime->backlight_tun_attr[0]);
+	struct backlight_tuning_attr *p1 = &(runtime->backlight_tun_attr[1]);
+	ISP_ALGO_RESULT_S *p_algo_ret = runtime->algo_result;
+
+
+	CVI_BOOL is_wdr_mode = (p_algo_ret->enFSWDRMode == WDR_MODE_NONE) ? 0 : 1;
+	CVI_U32 wdr_exp_ratio = p_algo_ret->au32ExpRatio[0];
+
+	if (is_wdr_mode) {
+		// exp ratio -> drc: auto.targetyscale, auto.deadaptargetgain
+		if (wdr_exp_ratio <= 1000) {
+			AR_MUL(p1->TargetYScale, p0->TargetYScale, 1.2f, ISP_AUTO_LV_NUM, 0x800);
+			AR_MUL(p1->DEAdaptTargetGain, p0->DEAdaptTargetGain, 1.2f, ISP_AUTO_LV_NUM, 0x60);
+		} else if (wdr_exp_ratio > 1000 && wdr_exp_ratio <= 1500) {
+			AR_MUL(p1->TargetYScale, p0->TargetYScale, 1.4f, ISP_AUTO_LV_NUM, 0x800);
+			AR_MUL(p1->DEAdaptTargetGain, p0->DEAdaptTargetGain, 1.4f, ISP_AUTO_LV_NUM, 0x60);
+		} else {
+			AR_MUL(p1->TargetYScale, p0->TargetYScale, 1.6f, ISP_AUTO_LV_NUM, 0x800);
+			AR_MUL(p1->DEAdaptTargetGain, p0->DEAdaptTargetGain, 1.6f, ISP_AUTO_LV_NUM, 0x60);
+		}
+
+		ISP_LOG_DEBUG("wdr exp ratio's value: %d\n", wdr_exp_ratio);
+	} else {
+		// count AE Hist256 value -> drc: auto.sdrtargetygain, sdrdeadapttargetgain
+		float avg_ratio = 1.0;
+		int dark_th = 64;
+		float dark_compensate_ratio = 50.0f;
+		int luma_th_left = 128;
+		int luma_th_right = 192;
+		float luma_compensate_ratio = 0.0;
+		CVI_U32 *p_hist256_val;
+
+		ISP_AE_STATISTICS_COMPAT_S *p_ae_sts = NULL;
+
+		isp_sts_ctrl_get_ae_sts(ViPipe, &p_ae_sts);
+
+		if (p_ae_sts == NULL) {
+			return;
+		}
+
+		p_hist256_val = p_ae_sts->aeStat1[0].au32HistogramMemArray[0];
+
+		float drc_level = auto_drc(p_hist256_val, avg_ratio, dark_th,
+				dark_compensate_ratio, luma_th_left, luma_th_right, luma_compensate_ratio);
+
+		drc_level = drc_level / 255;
+
+		if (drc_level <= 0.3f) {
+			AR_MUL(p1->SdrTargetYGain, p0->SdrTargetYGain, 1.2f, ISP_AUTO_LV_NUM, 0x80);
+			AR_MUL(p1->SdrDEAdaptTargetGain, p0->SdrDEAdaptTargetGain, 1.2f, ISP_AUTO_LV_NUM, 0x40);
+		} else if (drc_level > 0.3f && drc_level <= 0.7f) {
 			AR_MUL(p1->SdrTargetYGain, p0->SdrTargetYGain, 1.4f, ISP_AUTO_LV_NUM, 0x80);
 			AR_MUL(p1->SdrDEAdaptTargetGain, p0->SdrDEAdaptTargetGain, 1.4f, ISP_AUTO_LV_NUM, 0x40);
 
@@ -916,6 +1033,7 @@ CVI_S32 teaisp_pq_ctrl_set_pq_scene(VI_PIPE ViPipe, const TEAISP_PQ_SCENE_INFO *
 		return CVI_FAILURE;
 
 	memcpy(&runtime->module_set_scene_info, pstTEAISPPQSceneInfo, sizeof(TEAISP_PQ_SCENE_INFO));
+	runtime->is_module_update_scene = CVI_TRUE;
 
 	return ret;
 }
@@ -931,7 +1049,7 @@ CVI_S32 teaisp_pq_ctrl_get_pq_detect_scene(VI_PIPE ViPipe, TEAISP_PQ_SCENE_INFO 
 	if (runtime == CVI_NULL)
 		return CVI_FAILURE;
 
-	memcpy(pstTEAISPPQSceneInfo, &runtime->module_set_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
+	memcpy(pstTEAISPPQSceneInfo, &runtime->module_algo_scene_info, sizeof(TEAISP_PQ_SCENE_INFO));
 
 	return ret;
 }

@@ -36,6 +36,7 @@ typedef struct _RAW_REPLAY_INFO {
 	CVI_S32 longExposure;
 	CVI_S32 shortExposure;
 	CVI_S32 WB_RGain;
+	CVI_S32 WB_GGain;
 	CVI_S32 WB_BGain;
 	CVI_S32 CCM[9];
 	CVI_S32 BLC_Offset[4];
@@ -50,6 +51,8 @@ typedef struct _RAW_REPLAY_INFO {
 	CVI_S32 AGainSF;
 	CVI_S32 DGainSF;
 	CVI_S32 ispDGainSF;
+
+	CVI_S32 pixFormat;
 } RAW_REPLAY_INFO;
 
 typedef enum _RAWPLAY_OP_MODE {

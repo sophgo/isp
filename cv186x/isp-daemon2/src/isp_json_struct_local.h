@@ -93,6 +93,7 @@ void ISP_YCONTRAST_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_YCONTRAST_A
 // -----------------------------------------------------------------------------
 void TEAISP_BNR_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_ATTR_S *data);
 void TEAISP_BNR_NP_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_BNR_NP_S *data);
+void TEAISP_DRC_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_DRC_ATTR_S *data);
 
 void TEAISP_PQ_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, TEAISP_PQ_ATTR_S *data);
 

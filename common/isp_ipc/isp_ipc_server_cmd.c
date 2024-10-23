@@ -249,6 +249,19 @@ static CVI_S32 server_cmd_bin_get_total_len(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8
 	return CVI_SUCCESS;
 }
 
+static CVI_S32 server_cmd_bin_get_single_len(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *res, CVI_U32 res_len)
+{
+	CVI_U32 binSize = 0;
+
+	UNUSED(arg_len);
+
+	binSize = CVI_BIN_GetSingleISPBinLen(*arg);
+
+	memcpy(res, &binSize, res_len);
+
+	return CVI_SUCCESS;
+}
+
 static CVI_S32 server_cmd_bin_export_bin(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *res, CVI_U32 res_len)
 {
 	CVI_S32 s32Ret = CVI_SUCCESS;
@@ -257,6 +270,18 @@ static CVI_S32 server_cmd_bin_export_bin(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *r
 	UNUSED(arg_len);
 
 	s32Ret = CVI_BIN_ExportBinData(res, res_len);
+
+	return s32Ret;
+}
+
+static CVI_S32 server_cmd_bin_export_single_bin(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *res, CVI_U32 res_len)
+{
+	CVI_S32 s32Ret = CVI_SUCCESS;
+
+	// UNUSED(arg);
+	UNUSED(arg_len);
+
+	s32Ret = CVI_BIN_ExportSingleISPBinData(*arg, res, res_len);
 
 	return s32Ret;
 }
@@ -288,6 +313,18 @@ static CVI_S32 server_cmd_bin_import_bin(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *r
 	return s32Ret;
 }
 
+static CVI_S32 server_cmd_bin_import_single_bin(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *res, CVI_U32 res_len)
+{
+	CVI_S32 s32Ret = CVI_SUCCESS;
+
+	// UNUSED(res);
+	UNUSED(res_len);
+
+	s32Ret = CVI_BIN_LoadParamFromBinEx(*arg, res, arg_len);
+
+	return s32Ret;
+}
+
 static ISP_IPC_CMD_ITEM_S server_cmd_list[] = {
 	{ISP_IPC_INIT, server_cmd_init},
 	{ISP_IPC_EXIT, server_cmd_exit},
@@ -304,9 +341,12 @@ static ISP_IPC_CMD_ITEM_S server_cmd_list[] = {
 	{ISP_IPC_GET_AWB_DBG_BIN_BUF_SIZE, server_cmd_get_awb_dbg_bin_buf_size},
 	{ISP_IPC_GET_AWB_DBG_BIN_BUF, server_cmd_get_awb_dbg_bin_buf},
 	{ISP_IPC_BIN_GET_TOTAL_LEN, server_cmd_bin_get_total_len},
+	{ISP_IPC_BIN_GET_SINGLE_LEN, server_cmd_bin_get_single_len},
 	{ISP_IPC_BIN_EXPORT_BIN, server_cmd_bin_export_bin},
+	{ISP_IPC_BIN_EXPORT_SINGLE_BIN, server_cmd_bin_export_single_bin},
 	{ISP_IPC_BIN_GET_BIN_NAME, server_cmd_bin_get_bin_name},
 	{ISP_IPC_BIN_IMPORT_BIN, server_cmd_bin_import_bin},
+	{ISP_IPC_BIN_IMPORT_SINGLE_BIN, server_cmd_bin_import_single_bin},
 };
 
 void isp_ipc_server_cmd_init(void)

@@ -17,7 +17,7 @@ INCS += -I../../common/clog
 INCS += -I../../common/isp_ipc
 INCS += -I$(TOP_DIR)/libsophon/bmlib/include
 INCS += -I$(TOP_DIR)/libsophon/tpu-runtime/include
-TPU_SDK_PATH = $(TOP_DIR)/libsophon/install/libsophon-0.4.9/lib
+TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
 
 SRCS = $(wildcard $(SDIR)/*.c)
 

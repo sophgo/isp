@@ -578,7 +578,7 @@ static CVI_S32 dump_smooth_raw(VI_PIPE ViPipe, const RAW_DUMP_INFO_S *pstRawDump
 	FILE *output = NULL;
 
 	VB_POOL fullVbPoolID = VB_INVALID_POOLID;
-	VB_POOL_CONFIG_S cfg;
+	VB_POOL_CONFIG_S cfg = {0};
 	CVI_U32 fullVbBlkSize;
 	CVI_U32 tileWidth, tileIdx;
 

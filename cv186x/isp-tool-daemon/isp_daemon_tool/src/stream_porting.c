@@ -64,6 +64,7 @@ CVI_BOOL stream_porting_run(void)
 
 	if (input) {
 		strncpy(rtspJsonFile, input, PATH_SIZE);
+		rtspJsonFile[PATH_SIZE - 1] = '\0';
 	}
 
 	ret = CVI_RTSP_SERVICE_CreateFromJsonFile(&hdl, rtspJsonFile);
@@ -143,6 +144,7 @@ CVI_BOOL stream_porting_init(void)
 CVI_BOOL stream_porting_run(void)
 {
 	SAMPLE_INI_CFG_S	stIniCfg = {};
+	CVI_S32 s32Ret = CVI_SUCCESS;
 
 	stIniCfg.enSource = VI_PIPE_FRAME_SOURCE_DEV;
 	stIniCfg.devNum = 1;
@@ -158,13 +160,15 @@ CVI_BOOL stream_porting_run(void)
 	stIniCfg.MipiDev[1] = 0xFF;
 
 	// Get config from ini if found.
-	if (SAMPLE_COMM_VI_ParseIni(&stIniCfg)) {
+	s32Ret = SAMPLE_COMM_VI_ParseIni(&stIniCfg);
+	if (s32Ret == CVI_SUCCESS) {
 		ISP_DAEMON_TOOL_LOG(LOG_INFO, "%s", "INI Parse complete");
+	} else {
+		ISP_DAEMON_TOOL_LOG(LOG_INFO, "%s", "INI Parse failed");
 	}
 
 	SIZE_S stSize;
 	PIC_SIZE_E enPicSize;
-	CVI_S32 s32Ret = CVI_SUCCESS;
 	/************************************************
 	 * step1:  Config VI
 	 ************************************************/

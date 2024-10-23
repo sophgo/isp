@@ -163,10 +163,10 @@ CVI_S32 teaisp_bnr_ctrl_ctrl(VI_PIPE ViPipe, enum isp_module_cmd cmd, CVI_VOID *
 		teaisp_bnr_ctrl_post_eof(ViPipe, (ISP_ALGO_RESULT_S *)input);
 		break;
 	case MOD_CMD_SET_MODCTRL:
-		runtime->is_module_bypass = ((ISP_MODULE_CTRL_U *)input)->bitBypassBnr;
+		runtime->is_module_bypass = ((ISP_MODULE_CTRL_U *)input)->bitBypassAiBnr;
 		break;
 	case MOD_CMD_GET_MODCTRL:
-		((ISP_MODULE_CTRL_U *)input)->bitBypassBnr = runtime->is_module_bypass;
+		((ISP_MODULE_CTRL_U *)input)->bitBypassAiBnr = runtime->is_module_bypass;
 		break;
 	default:
 		break;
@@ -462,6 +462,7 @@ static CVI_S32 teaisp_bnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *alg
 		MANUAL(bnr_attr, FilterMotionStr2D);
 		MANUAL(bnr_attr, FilterStaticStr2D);
 		MANUAL(bnr_attr, FilterStr3D);
+		MANUAL(bnr_attr, FilterStr2D);
 		MANUAL(bnr_attr, NoiseLevel);
 		MANUAL(bnr_attr, NoiseHiLevel);
 
@@ -473,6 +474,7 @@ static CVI_S32 teaisp_bnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *alg
 		AUTO(bnr_attr, FilterMotionStr2D, INTPLT_POST_ISO);
 		AUTO(bnr_attr, FilterStaticStr2D, INTPLT_POST_ISO);
 		AUTO(bnr_attr, FilterStr3D, INTPLT_POST_ISO);
+		AUTO(bnr_attr, FilterStr2D, INTPLT_POST_ISO);
 		AUTO(bnr_attr, NoiseLevel, INTPLT_POST_ISO);
 		AUTO(bnr_attr, NoiseHiLevel, INTPLT_POST_ISO);
 
@@ -559,6 +561,9 @@ static CVI_S32 teaisp_bnr_ctrl_postprocess(VI_PIPE ViPipe)
 
 		temp_f = (CVI_FLOAT) (255 - runtime->bnr_attr.FilterStr3D) / 255.0;
 		bnr_cfg->filter_str_3d = *temp;
+
+		temp_f = (CVI_FLOAT) (255 - runtime->bnr_attr.FilterStr2D) / 255.0;
+		bnr_cfg->filter_str_2d = *temp;
 
 		struct lblc_info lblcInfo;
 
@@ -780,4 +785,3 @@ CVI_S32 teaisp_bnr_ctrl_set_np_attr(VI_PIPE ViPipe, const TEAISP_BNR_NP_S *np)
 
 	return ret;
 }
-

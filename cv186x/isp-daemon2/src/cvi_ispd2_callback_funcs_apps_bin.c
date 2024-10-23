@@ -107,8 +107,8 @@ static CVI_S32 CVI_ISPD2_WriteSingleISPRegToBinBuffer(enum CVI_BIN_SECTION_ID id
 	CVI_S32			s32Ret;
 
 	#ifdef ENABLE_ISP_IPC
-	UNUSED(id);
-	u32BinLen = CVI_BIN_GetBinTotalLenWrap();
+	// UNUSED(id);
+	u32BinLen = CVI_BIN_GetSingleISPBinLenWrap(id);
 	#else
 	u32BinLen = CVI_BIN_GetSingleISPBinLen(id);
 	#endif
@@ -124,7 +124,7 @@ static CVI_S32 CVI_ISPD2_WriteSingleISPRegToBinBuffer(enum CVI_BIN_SECTION_ID id
 	memcpy(pu8Buffer, &stBinHeader, sizeof(CVI_BIN_HEADER));
 
 	#ifdef ENABLE_ISP_IPC
-	s32Ret = CVI_BIN_ExportBinDataWrap(pu8Buffer, u32BinLen);
+	s32Ret = CVI_BIN_ExportSingleISPBinDataWrap(id, pu8Buffer, u32BinLen);
 	#else
 	s32Ret = CVI_BIN_ExportSingleISPBinData(id, pu8Buffer, u32BinLen);
 	#endif
@@ -185,6 +185,8 @@ CVI_S32 CVI_ISPD2_CBFunc_ExportBinFile(TJSONRpcContentIn *ptContentIn,
 		GET_STRING_FROM_JSON(ptContentIn->pParams, "/bin_type", pszTemp, s32RetTmp);
 		if (s32RetTmp == CVI_SUCCESS) {
 			id = CVI_ISPD2_GetModuleIdFromString(pszTemp);
+		} else {
+			return CVI_FAILURE;
 		}
 
 		ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "Author:\n%s\nDescription:\n%s\nTime:\n%s",
@@ -193,13 +195,14 @@ CVI_S32 CVI_ISPD2_CBFunc_ExportBinFile(TJSONRpcContentIn *ptContentIn,
 
 	CVI_ISPD2_ReleaseBinaryData(ptBinaryOutData);
 
-	if (s32RetTmp == CVI_SUCCESS) {
+	if (id != CVI_BIN_ID_MAX) {
 		#ifdef ENABLE_ISP_IPC
-		u32BinLen = CVI_BIN_GetBinTotalLenWrap();
+		u32BinLen = CVI_BIN_GetSingleISPBinLenWrap(id);
 		#else
 		u32BinLen = CVI_BIN_GetSingleISPBinLen(id);
 		#endif
 		u32BinBufSize = MULTIPLE_4(u32BinLen);
+
 		if (u32BinBufSize == 0) {
 			ISP_DAEMON2_DEBUG(LOG_DEBUG, "Allocate size of internal buffer is 0!");
 			CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
@@ -437,6 +440,7 @@ CVI_S32 CVI_ISPD2_CBFunc_FixBinToFlash(TJSONRpcContentIn *ptContentIn,
 }
 
 // -----------------------------------------------------------------------------
+
 CVI_S32 CVI_ISPD2_CBFunc_ImportBinFile(TISPDeviceInfo *ptIn,
 	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
 {

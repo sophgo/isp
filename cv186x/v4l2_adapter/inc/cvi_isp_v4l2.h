@@ -16,9 +16,9 @@ int CVI_ISP_V4L2_GetVoFd(int *pfd);
 
 int CVI_ISP_V4L2_Init(int pipe, int fd);
 int CVI_ISP_V4L2_Exit(int pipe);
+void CVI_ISP_SetDISInfoCallback(void *pcallbackFunc);
 
-CVI_VOID CVI_ISP_SetDISInfoCallback(CVI_VOID *pcallbackFunc);
-
+void *get_sensor_obj(int pipe);
 #ifdef __cplusplus
 #if __cplusplus
 }

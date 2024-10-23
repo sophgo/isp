@@ -14,5 +14,5 @@ HEADERLIST+=" ${MW_INCLUDE_PATH}/cvi_comm_sns.h"
 ISP_JSON_STRUCTFILE="${ISP_BASE_PATH}/${CHIP_ID}/isp_bin/src/isp_json_struct.c"
 APP=checkPqBinJsonIntegrity.py
 cd ${CUR_PATH}
-python ${APP} ${ISP_JSON_STRUCTFILE} ${HEADERLIST}
+python3 ${APP} ${ISP_JSON_STRUCTFILE} ${HEADERLIST}
 

@@ -546,7 +546,7 @@ static void *server_loop(void *param)
 	CVI_S32 ret = CVI_SUCCESS;
 	fd_set read_fds;
 
-	g_server_fifo_fd = open(__SERVER_FIFO_NAME, O_RDWR);
+	g_server_fifo_fd = open(__SERVER_FIFO_NAME, O_RDONLY);
 
 	if (g_server_fifo_fd < 0) {
 		ISP_LOG_ERR("open %s fail\n", __SERVER_FIFO_NAME);

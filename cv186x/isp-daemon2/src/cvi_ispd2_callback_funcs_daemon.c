@@ -84,19 +84,21 @@ CVI_S32 CVI_ISPD2_CBFunc_SetTopInfo(TJSONRpcContentIn *ptContentIn,
 {
 	TISPDeviceInfo	*ptDevInfo = ptContentIn->ptDeviceInfo;
 
-	CVI_S32			ViPipe, ViChn, VpssGrp, VpssChn;
+	CVI_S32			ViPipe, ViChn, VpssGrp, VpssChn, VoDev;
 	CVI_S32			s32Ret;
 
 	ViPipe = ptDevInfo->s32ViPipe;
 	ViChn = ptDevInfo->s32ViChn;
 	VpssGrp = ptDevInfo->s32VpssGrp;
 	VpssChn = ptDevInfo->s32VpssChn;
+	VoDev = ptDevInfo->s32VoDev;
 
 	s32Ret = CVI_SUCCESS;
 	GET_INT_FROM_JSON(ptContentIn->pParams, "/ViPipe", ViPipe, s32Ret);
 	GET_INT_FROM_JSON(ptContentIn->pParams, "/ViChn", ViChn, s32Ret);
 	GET_INT_FROM_JSON(ptContentIn->pParams, "/VpssGrp", VpssGrp, s32Ret);
 	GET_INT_FROM_JSON(ptContentIn->pParams, "/VpssChn", VpssChn, s32Ret);
+	GET_INT_FROM_JSON(ptContentIn->pParams, "/VoDev", VoDev, s32Ret);
 
 	if (s32Ret != CVI_SUCCESS) {
 		CVI_ISPD2_Utils_ComposeMissParameterErrorMessage(ptContentOut);
@@ -111,6 +113,7 @@ CVI_S32 CVI_ISPD2_CBFunc_SetTopInfo(TJSONRpcContentIn *ptContentIn,
 	ptDevInfo->s32ViChn = ViChn;
 	ptDevInfo->s32VpssGrp = VpssGrp;
 	ptDevInfo->s32VpssChn = VpssChn;
+	ptDevInfo->s32VoDev = VoDev;
 
 	ptContentOut->s32StatusCode = JSONRPC_CODE_OK;
 
@@ -125,7 +128,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetTopInfo(TJSONRpcContentIn *ptContentIn,
 {
 	TISPDeviceInfo	*ptDevInfo = ptContentIn->ptDeviceInfo;
 
-	CVI_S32			VpssGrp, VpssChn;
+	CVI_S32			VpssGrp, VpssChn, VoDev;
 	MMF_CHN_S		stSrcChn;
 	MMF_BIND_DEST_S	stBindDest;
 	VI_VPSS_MODE_S stVIVPSSMode;
@@ -136,6 +139,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetTopInfo(TJSONRpcContentIn *ptContentIn,
 
 	VpssGrp = ptDevInfo->s32VpssGrp;
 	VpssChn = ptDevInfo->s32VpssChn;
+	VoDev = ptDevInfo->s32VoDev;
 
 	CVI_SYS_GetVIVPSSMode(&stVIVPSSMode);
 
@@ -157,6 +161,7 @@ CVI_S32 CVI_ISPD2_CBFunc_GetTopInfo(TJSONRpcContentIn *ptContentIn,
 	SET_INT_TO_JSON("ViChn", ptDevInfo->s32ViChn, pDataOut);
 	SET_INT_TO_JSON("VpssGrp", VpssGrp, pDataOut);
 	SET_INT_TO_JSON("VpssChn", VpssChn, pDataOut);
+	SET_INT_TO_JSON("VoDev", VoDev, pDataOut);
 
 	ISPD2_json_object_object_add(pJsonResponse, GET_RESPONSE_KEY_NAME, pDataOut);
 

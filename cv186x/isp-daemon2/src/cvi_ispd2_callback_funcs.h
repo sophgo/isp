@@ -319,6 +319,10 @@ CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_SetNP(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_TEAISP_BNR_GetNP(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_DRC_SetAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_TEAISP_DRC_GetAttr(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 
 CVI_S32 CVI_ISPD2_CBFunc_TEAISP_PQ_SetAttr(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);

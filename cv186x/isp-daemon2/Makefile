@@ -62,6 +62,8 @@ else
 	$(error Un-support SOC Architecture)
 endif
 
+CFLAGS += -Wno-format-truncation
+
 .PHONY: all clean cleanall install uninstall upload prepare_3rdparty_module
 .SILENT: clean cleanall install uninstall upload prepare_3rdparty_module
 

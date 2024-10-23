@@ -88,6 +88,7 @@ static void setCscDefault(VI_PIPE ViPipe);
 
 static CVI_S32 setIspIqParamDefault(VI_PIPE ViPipe, CVI_U32 wdrEn);
 static CVI_VOID setTEAISPBnr(VI_PIPE ViPipe);
+static CVI_VOID setTEAISPDrc(VI_PIPE ViPipe);
 static CVI_VOID setTEAISPPQ(VI_PIPE ViPipe);
 static CVI_VOID setRgbir(VI_PIPE ViPipe);
 static CVI_VOID setDemosaicDemoire(VI_PIPE ViPipe);
@@ -136,6 +137,7 @@ static CVI_S32 setIspIqParamDefault(VI_PIPE ViPipe, CVI_U32 wdrEn)
 	// setBlcDefault(ViPipe);
 	//setRlscDefault(ViPipe);
 	setTEAISPBnr(ViPipe);
+	setTEAISPDrc(ViPipe);
 	setTEAISPPQ(ViPipe);
 	setRgbir(ViPipe);
 	setGammaDefault(ViPipe, wdrEn);
@@ -443,6 +445,9 @@ static CVI_VOID setTEAISPBnr(VI_PIPE ViPipe)
 	INIT_A(attr, FilterStr3D, 230,
 	230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230);
 
+	INIT_A(attr, FilterStr2D, 230,
+	230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230);
+
 	INIT_A(attr, NoiseLevel, 1024,
 	1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024);
 
@@ -545,6 +550,33 @@ static CVI_VOID setTEAISPBnr(VI_PIPE ViPipe)
 	CVI_TEAISP_BNR_SetNoiseProfileAttr(ViPipe, &np);
 }
 
+static CVI_VOID setTEAISPDrc(VI_PIPE ViPipe)
+{
+	ISP_LOG_DEBUG("(%d)\n", ViPipe);
+
+	TEAISP_DRC_ATTR_S attr = {0};
+
+	INIT_V(attr, enable, 0)
+	INIT_V(attr, enOpType, 0);
+	INIT_V(attr, UpdateInterval, 1);
+	INIT_V(attr, DeflickStrength, 96);
+	INIT_V(attr, DetailStrength, 90);
+	INIT_V(attr, GlobalLuma, 18);
+	INIT_V(attr, DarkThreshold, 1);
+	INIT_V(attr, BrightStrength, 128);
+	INIT_V(attr, MaxvStrength, 50);
+
+	INIT_A(attr, DarkStrength, 90,
+	90, 90, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128);
+	attr.stAuto.DarkCompensateRatio = 50;
+	attr.stAuto.StrengthMin = 32;
+	attr.stAuto.StrengthMax = 100;
+	attr.stManual.BrightThreshold = 5;
+	attr.stManual.SatuStrength = 50;
+
+	CVI_TEAISP_DRC_SetAttr(ViPipe, &attr);
+}
+
 static CVI_VOID setTEAISPPQ(VI_PIPE ViPipe)
 {
 	ISP_LOG_DEBUG("(%d)\n", ViPipe);
@@ -555,6 +587,7 @@ static CVI_VOID setTEAISPPQ(VI_PIPE ViPipe)
 	INIT_V(attr, enOpType, 0);
 	INIT_V(attr, UpdateInterval, 1);
 
+	INIT_V(attr, SmoothThr, 1);
 	INIT_V_ARRAY(attr, SceneBypass, 0, 0, 0, 0, 0);
 	INIT_V_ARRAY(attr, SceneConfThres, 80, 80, 80, 80, 80);
 
@@ -2198,7 +2231,7 @@ CVI_VOID setExposureAttrDefault(VI_PIPE ViPipe)
 	INIT_V(attr, bAERouteExValid, 0);
 	INIT_V(attr, enMeterMode, 0);
 	INIT_V(attr, u8DebugMode, 0);
-	INIT_V(attr, bAEGainSepCfg, 0);
+	INIT_V(attr, bAEGainSepCfg, 1);
 
 	INIT_V(attr.stManual, enExpTimeOpType, 0);
 	INIT_V(attr.stManual, enAGainOpType, 0);
@@ -2286,6 +2319,7 @@ CVI_VOID setWdrExposureAttrDefault(VI_PIPE ViPipe)
 	INIT_V(attr, u16Speed, 32);
 	INIT_V(attr, u16RatioBias, 1024);
 	INIT_V(attr, u8SECompensation, 56);
+	INIT_V(attr, enExpMainChn, 0);
 	INIT_V(attr, u16SEHisThr, 64);
 	INIT_V(attr, u16SEHisCntRatio1, 20);
 	INIT_V(attr, u16SEHisCntRatio2, 10);
@@ -2524,7 +2558,7 @@ static CVI_VOID setClutHsl(VI_PIPE ViPipe)
 	ISP_CLUT_HSL_ATTR_S attr = {0};
 
 	INIT_V(attr, Enable, 0);
-
+	INIT_V(attr, Sigma, 1);
 	INIT_V_ARRAY(attr, HByH, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	);

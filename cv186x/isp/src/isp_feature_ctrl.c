@@ -50,6 +50,7 @@ static const struct isp_module_ctrl *mod[ISP_IQ_BLOCK_MAX] = {
 	[ISP_IQ_BLOCK_YCONTRAST] = &ycontrast_mod,
 	[ISP_IQ_BLOCK_MONO] = &mono_mod,
 	[ISP_IQ_BLOCK_TEAISP_PQ] = &teaisp_pq_mod,
+	[ISP_IQ_BLOCK_TEAISP_DRC] = &teaisp_drc_mod,
 };
 #define MAX_ALGO_RESULT_QUEUE_NUM 10
 // #define ISP_DGAIN_APPLY_DELAY 3        // When ae Set ISP Dgain. Need count 3 frame to apply to ISP.
@@ -158,6 +159,20 @@ CVI_S32 isp_feature_ctrl_pre_be_eof(VI_PIPE ViPipe)
 	return ret;
 }
 
+static CVI_BOOL IsRawReplayMode(void)
+{
+	CVI_S32  mode = 0;
+	const char *input = getenv("CVI_REPLAY_MODE");
+
+	if (input)
+		mode = atoi(input);
+
+	if (mode)
+		return CVI_TRUE;
+
+	return CVI_FALSE;
+}
+
 CVI_S32 isp_feature_ctrl_post_eof(VI_PIPE ViPipe)
 {
 	CVI_S32 ret = CVI_SUCCESS;
@@ -245,6 +260,9 @@ CVI_S32 isp_feature_ctrl_post_eof(VI_PIPE ViPipe)
 	// TODO@mason.zou, if fe offline (dual sensor), different at 15fps or 25fps
 	ispPrerawDelayIdx = (currentFrameIdx + pstAeResult->u8MeterFramePeriod
 		- (ISP_DGAIN_APPLY_DELAY + u8IspSceneDelay) - u8IspTimingDelay) % MAX_ALGO_RESULT_QUEUE_NUM;
+
+	if (IsRawReplayMode())
+		aeDelayIdx = ispPrerawDelayIdx = currentFrameIdx;
 
 	if (pstIspCtx->u8SnsWDRMode == WDR_MODE_NONE)
 		expRatio = 64;

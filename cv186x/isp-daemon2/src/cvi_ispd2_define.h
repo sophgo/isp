@@ -66,6 +66,7 @@ typedef struct {
 	CVI_S32				s32ViChn;
 	CVI_S32				s32VpssGrp;
 	CVI_S32				s32VpssChn;
+	CVI_S32				s32VoDev;
 	CVI_BOOL			bVPSSBindCtrl;
 	TFrameData			tFrameData;
 	TExportDataInfo		tExportDataInfo;

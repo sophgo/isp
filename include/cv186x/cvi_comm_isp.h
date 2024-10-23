@@ -44,6 +44,7 @@ extern "C" {
 #define CVI_ISP_LSC_GRID_ROW (37)
 #define CVI_ISP_LSC_GRID_POINTS (CVI_ISP_LSC_GRID_COL * CVI_ISP_LSC_GRID_ROW)
 #define DCI_BINS_NUM (256)
+#define TEAISP_DRC_BINS_NUM (256)
 #define ISP_MAX_SNS_REGS 32
 #define ISP_MAX_WDR_FRAME_NUM 2
 #define BAYER_PATTERN_NUM 4
@@ -296,7 +297,9 @@ typedef union _ISP_MODULE_CTRL_U {
 		CVI_U64 bitBypassMono : 1;		/*RW:[31]*/
 		CVI_U64 bitBypassRgbir : 1;		/*RW:[32]*/
 		CVI_U64 bitBypassLblc : 1;		/*RW:[33]*/
-		CVI_U64 bitRsv : 30;			/*H; [34:63] */
+		CVI_U64 bitBypassAiBnr : 1;		/*RW:[34]*/
+		CVI_U64 bitBypassAiDrc : 1;		/*RW:[35]*/
+		CVI_U64 bitRsv : 28;			/*H; [36:63] */
 	};
 } ISP_MODULE_CTRL_U;
 
@@ -569,6 +572,7 @@ typedef struct _ISP_SMART_INFO_S {
 //-----------------------------------------------------------------------------
 //  WDR Exposure Attr
 //-----------------------------------------------------------------------------
+
 #define WDR_EXP_RATIO_NUM (3)
 typedef struct _ISP_WDR_EXPOSURE_ATTR_S {
 	ISP_OP_TYPE_E enExpRatioType;
@@ -579,6 +583,7 @@ typedef struct _ISP_WDR_EXPOSURE_ATTR_S {
 	CVI_U16 u16Speed; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U16 u16RatioBias; /*RW; Range:[0x0, 0xFFFF]*/
 	CVI_U8 u8SECompensation; /*RW; Range:[0x0, 0xFF]*/
+	ISP_CHANNEL_LIST_E enExpMainChn;
 	CVI_U16 u16SEHisThr; /*RW; Range:[0x0, 0xFFFF]*/
 	CVI_U16 u16SEHisCntRatio1; /*RW; Range:[0x0, 0xFFFF]*/
 	CVI_U16 u16SEHisCntRatio2; /*RW; Range:[0x0, 0xFFFF]*/
@@ -1980,6 +1985,7 @@ typedef struct _ISP_CLUT_ATTR_S {
 #define ISP_CLUT_SAT_LENGTH (21)
 typedef struct _ISP_CLUT_HSL_ATTR_S {
 	CVI_BOOL Enable;
+	CVI_FLOAT Sigma; /*RW; Range:[0x0, 0x40]*/
 	CVI_S16 HByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[-0x1E, 0x1E]*/
 	CVI_U16 SByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[0x0, 0x64]*/
 	CVI_U16 LByH[ISP_CLUT_HUE_LENGTH]; /*RW; Range:[0x0, 0x64]*/
@@ -2768,6 +2774,7 @@ typedef struct _TEAISP_BNR_MANUAL_ATTR_S {
 	CVI_U8 FilterMotionStr2D; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 FilterStaticStr2D; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 FilterStr3D; /*RW; Range:[0x0, 0xFF]*/
+	CVI_U8 FilterStr2D; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U16 NoiseLevel; /*RW; Range:[0x0, 0x3FFF]*/
 	CVI_U16 NoiseHiLevel; /*RW; Range:[0x0, 0x3FFF]*/
 } TEAISP_BNR_MANUAL_ATTR_S;
@@ -2776,6 +2783,7 @@ typedef struct _TEAISP_BNR_AUTO_ATTR_S {
 	CVI_U8 FilterMotionStr2D[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 FilterStaticStr2D[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 FilterStr3D[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFF]*/
+	CVI_U8 FilterStr2D[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U16 NoiseLevel[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x3FFF]*/
 	CVI_U16 NoiseHiLevel[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x3FFF]*/
 } TEAISP_BNR_AUTO_ATTR_S;
@@ -2791,6 +2799,39 @@ typedef struct _TEAISP_BNR_ATTR_S {
 typedef struct _TEAISP_BNR_NP_S {
 	CVI_FLOAT CalibrationCoef[2][ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xFF]*/
 } TEAISP_BNR_NP_S;
+
+//-----------------------------------------------------------------------------
+//  TEAISP DRC
+//-----------------------------------------------------------------------------
+#define TEAISP_DRC_PARAM_LENGHT  (23)
+typedef int (*TEAISP_DRC_PARAM_UPDATE_CALLBACK)(int pipe, void *param);
+
+typedef struct _TEAISP_DRC_MANUAL_ATTR_S {
+	CVI_U8 DarkStrength; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 BrightThreshold; /*RW; Range:[0x0, 0x05]*/
+	CVI_U8 SatuStrength; /*RW; Range:[0x0, 0x40]*/
+} TEAISP_DRC_MANUAL_ATTR_S;
+
+typedef struct _TEAISP_DRC_AUTO_ATTR_S {
+	CVI_U8 DarkStrength[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 DarkCompensateRatio; /*RW; Range:[0x0, 0x64]*/
+	CVI_U8 StrengthMin; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 StrengthMax; /*RW; Range:[0x0, 0x80]*/
+} TEAISP_DRC_AUTO_ATTR_S;
+
+typedef struct _TEAISP_DRC_ATTR_S {
+	CVI_BOOL enable; /*RW; Range:[0x0, 0x1]*/
+	ISP_OP_TYPE_E enOpType;
+	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U8 DeflickStrength; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 DetailStrength; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 GlobalLuma; /*RW; Range:[0x0F, 0x19]*/
+	CVI_U8 DarkThreshold; /*RW; Range:[0x0, 0x05]*/
+	CVI_U8 BrightStrength; /*RW; Range:[0x0, 0x80]*/
+	CVI_U8 MaxvStrength; /*RW; Range:[0x0, 0x80]*/
+	TEAISP_DRC_MANUAL_ATTR_S stManual;
+	TEAISP_DRC_AUTO_ATTR_S stAuto;
+} TEAISP_DRC_ATTR_S;
 
 //-----------------------------------------------------------------------------
 //  DIS
@@ -2859,7 +2900,7 @@ typedef enum _TEAISP_PQ_SCENE {
 
 typedef struct _TEAISP_PQ_SCENE_INFO {
 	TEAISP_PQ_SCENE scene;
-	CVI_U8 scene_score[TEAISP_SCENE_NUM];
+	CVI_U8 scene_score;
 } TEAISP_PQ_SCENE_INFO;
 
 typedef struct _TEAISP_PQ_MANUAL_ATTR_S {
@@ -2876,6 +2917,7 @@ typedef struct _TEAISP_PQ_ATTR_S {
 	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
 	CVI_U8 TuningMode; /*RW; Range:[0x0, 0x5]*/
 
+	CVI_U8 SmoothThr; /*RW; Range:[0x0, 0xff]*/
 	CVI_BOOL SceneBypass[TEAISP_SCENE_NUM];
 	CVI_U8 SceneConfThres[TEAISP_SCENE_NUM];
 

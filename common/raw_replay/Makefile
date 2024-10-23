@@ -42,6 +42,8 @@ TARGET_SO = $(MW_LIB)/libraw_replay.so
 EXTRA_CFLAGS = $(INCS)
 EXTRA_CFLAGS += $(DEFS)
 
+EXTRA_CFLAGS += -Wno-format-truncation
+
 .PHONY: clean all sdk_release
 ifeq ($(ISP_SRC_RELEASE),1)
 all: $(TARGET_A) $(TARGET_SO) sdk_release

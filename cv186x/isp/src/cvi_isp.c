@@ -3930,6 +3930,67 @@ CVI_S32 CVI_TEAISP_BNR_GetNoiseProfileAttr(VI_PIPE ViPipe, TEAISP_BNR_NP_S *np)
 }
 
 //-----------------------------------------------------------------------------
+//  TEAISP.drc
+//-----------------------------------------------------------------------------
+CVI_S32 CVI_TEAISP_DRC_RegParamUpdateCallback(VI_PIPE ViPipe, TEAISP_DRC_PARAM_UPDATE_CALLBACK callback)
+{
+	if ((ViPipe < 0) || (ViPipe >= VI_MAX_PIPE_NUM)) {
+		ISP_LOG_ERR("ViPipe %d value error\n", ViPipe);
+		return -ENODEV;
+	}
+
+	if (callback == CVI_NULL) {
+		return CVI_FAILURE;
+	}
+
+	CVI_S32 ret = CVI_SUCCESS;
+
+	ret = teaisp_drc_ctrl_reg_callback(ViPipe, callback);
+
+	return ret;
+}
+
+CVI_S32 CVI_TEAISP_DRC_SetAttr(VI_PIPE ViPipe, const TEAISP_DRC_ATTR_S *pstTEAISPDrcAttr)
+{
+	if ((ViPipe < 0) || (ViPipe >= VI_MAX_PIPE_NUM)) {
+		ISP_LOG_ERR("ViPipe %d value error\n", ViPipe);
+		return -ENODEV;
+	}
+
+	if (pstTEAISPDrcAttr == CVI_NULL) {
+		return CVI_FAILURE;
+	}
+
+	CVI_S32 ret = CVI_SUCCESS;
+
+	ret = teaisp_drc_ctrl_set_drc_attr(ViPipe, pstTEAISPDrcAttr);
+
+	return ret;
+}
+
+CVI_S32 CVI_TEAISP_DRC_GetAttr(VI_PIPE ViPipe, TEAISP_DRC_ATTR_S *pstTEAISPDrcAttr)
+{
+	if ((ViPipe < 0) || (ViPipe >= VI_MAX_PIPE_NUM)) {
+		ISP_LOG_ERR("ViPipe %d value error\n", ViPipe);
+		return -ENODEV;
+	}
+
+	if (pstTEAISPDrcAttr == CVI_NULL) {
+		return CVI_FAILURE;
+	}
+
+	CVI_S32 ret = CVI_SUCCESS;
+	const TEAISP_DRC_ATTR_S *pTemp = NULL;
+
+	ret = teaisp_drc_ctrl_get_drc_attr(ViPipe, &pTemp);
+	if (pTemp != NULL) {
+		memcpy(pstTEAISPDrcAttr, pTemp, sizeof(TEAISP_DRC_ATTR_S));
+	}
+
+	return ret;
+}
+
+//-----------------------------------------------------------------------------
 //  DIS
 //-----------------------------------------------------------------------------
 CVI_S32 CVI_ISP_SetDisAttr(VI_PIPE ViPipe, const ISP_DIS_ATTR_S *pstDisAttr)

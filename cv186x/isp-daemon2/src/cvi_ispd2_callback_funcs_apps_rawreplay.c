@@ -15,6 +15,7 @@
 #include "cvi_ispd2_callback_funcs_apps_local.h"
 
 #include "raw_replay.h"
+#include "cvi_isp.h"
 
 // -----------------------------------------------------------------------------
 CVI_S32 CVI_ISPD2_InitialRawReplayHandle(TRawReplayHandle *ptHandle)
@@ -28,6 +29,10 @@ CVI_S32 CVI_ISPD2_ReleaseRawReplayHandle(TRawReplayHandle *ptHandle)
 {
 	if (ptHandle->pSoHandle == NULL) {
 		return CVI_SUCCESS;
+	}
+
+	if (ptHandle->stop_raw_replay != NULL) {
+		ptHandle->stop_raw_replay();
 	}
 
 	dlclose(ptHandle->pSoHandle);
@@ -140,47 +145,72 @@ CVI_S32 CVI_ISPD2_CBFunc_RecvRawReplayDataInfo(TJSONRpcContentIn *ptIn,
 
 	int lightValueX100 = 0;
 
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_numFrame", pHeader->numFrame, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_curFrame", pHeader->curFrame, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_width", pHeader->width, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_height", pHeader->height, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_bayerID", pHeader->bayerID, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_enWDR", pHeader->enWDR, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_ISO", pHeader->ISO, s32Ret);
+	GET_INT_FROM_JSON(ptIn->pParams, "/pixformat", pHeader->pixFormat, s32Ret);
+	if (pHeader->pixFormat) {
+		GET_INT_FROM_JSON(ptIn->pParams, "/yuv_numFrame", pHeader->numFrame, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/yuv_curFrame", pHeader->curFrame, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/yuv_width", pHeader->width, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/yuv_height", pHeader->height, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/yuv_size", pHeader->size, s32Ret);
+	} else {
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_numFrame", pHeader->numFrame, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_curFrame", pHeader->curFrame, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_width", pHeader->width, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_height", pHeader->height, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_bayerID", pHeader->bayerID, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_enWDR", pHeader->enWDR, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_ISO", pHeader->ISO, s32Ret);
 
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_lightValueX100", lightValueX100, s32Ret);
-	pHeader->lightValue = ((CVI_FLOAT) lightValueX100 / (CVI_FLOAT) 100);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_lightValueX100", lightValueX100, s32Ret);
+		pHeader->lightValue = ((CVI_FLOAT) lightValueX100 / (CVI_FLOAT) 100);
 
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_colorTemp", pHeader->colorTemp, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_ispDGain", pHeader->ispDGain, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureRatio", pHeader->exposureRatio, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureAGain", pHeader->exposureAGain, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureDGain", pHeader->exposureDGain, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_longExposure", pHeader->longExposure, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_shortExposure", pHeader->shortExposure, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_AGainSF", pHeader->AGainSF, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_DGainSF", pHeader->DGainSF, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_ispDGainSF", pHeader->ispDGainSF, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_WB_RGain", pHeader->WB_RGain, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_WB_BGain", pHeader->WB_BGain, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_size", pHeader->size, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_roiFrameNum", pHeader->roiFrameNum, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.s32X", pHeader->stRoiRect.s32X, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.s32Y", pHeader->stRoiRect.s32Y, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.u32Width", pHeader->stRoiRect.u32Width, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.u32Height", pHeader->stRoiRect.u32Height, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_roiFrameSize", pHeader->roiFrameSize, s32Ret);
-	GET_INT_FROM_JSON(ptIn->pParams, "/raw_op_mode", pHeader->op_mode, s32Ret);
-	GET_INT_ARRAY_FROM_JSON(ptIn->pParams, "/raw_BLCOffset", 4, CVI_S32, pHeader->BLC_Offset, s32Ret);
-	GET_INT_ARRAY_FROM_JSON(ptIn->pParams, "/raw_BLCGain", 4, CVI_S32, pHeader->BLC_Gain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_colorTemp", pHeader->colorTemp, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_ispDGain", pHeader->ispDGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureRatio", pHeader->exposureRatio, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureAGain", pHeader->exposureAGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_exposureDGain", pHeader->exposureDGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_longExposure", pHeader->longExposure, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_shortExposure", pHeader->shortExposure, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_AGainSF", pHeader->AGainSF, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_DGainSF", pHeader->DGainSF, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_ispDGainSF", pHeader->ispDGainSF, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_WB_RGain", pHeader->WB_RGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_WB_GGain", pHeader->WB_GGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_WB_BGain", pHeader->WB_BGain, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_size", pHeader->size, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_roiFrameNum", pHeader->roiFrameNum, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.s32X", pHeader->stRoiRect.s32X, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.s32Y", pHeader->stRoiRect.s32Y, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.u32Width", pHeader->stRoiRect.u32Width, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_stRoiRect.u32Height", pHeader->stRoiRect.u32Height, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_roiFrameSize", pHeader->roiFrameSize, s32Ret);
+		GET_INT_FROM_JSON(ptIn->pParams, "/raw_op_mode", pHeader->op_mode, s32Ret);
+		GET_INT_ARRAY_FROM_JSON(ptIn->pParams, "/raw_BLCOffset", 4, CVI_S32, pHeader->BLC_Offset, s32Ret);
+		GET_INT_ARRAY_FROM_JSON(ptIn->pParams, "/raw_BLCGain", 4, CVI_S32, pHeader->BLC_Gain, s32Ret);
+	}
 
 	if (s32Ret != CVI_SUCCESS) {
 		CVI_ISPD2_Utils_ComposeMissParameterErrorMessage(ptOut);
 		return CVI_FAILURE;
 	}
 
-	//ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "raw replay params: %s",
-	//	ISPD2_json_object_to_json_string_ext(ptIn->pParams, JSON_C_TO_STRING_SPACED));
+	if (pHeader->pixFormat) {
+		pHeader->roiFrameNum = 0;
+		pHeader->enWDR = 0;
+		pHeader->bayerID = 0;
+	}
+
+	ISP_PUB_ATTR_S stPubAttr = {0};
+
+	CVI_ISP_GetPubAttr(0, &stPubAttr);
+
+	if (stPubAttr.enBayer != (ISP_BAYER_FORMAT_E)pHeader->bayerID ||
+		stPubAttr.enWDRMode != (pHeader->enWDR ? WDR_MODE_2To1_LINE : WDR_MODE_NONE) ||
+		stPubAttr.stSnsSize.u32Width != (CVI_U32)(pHeader->enWDR ? pHeader->width / 2 : pHeader->width) ||
+		stPubAttr.stSnsSize.u32Height != (CVI_U32)pHeader->height) {
+		CVI_ISPD2_Utils_ComposeAPIErrorMessageEX(ptOut, "Image data not right!");
+		return CVI_FAILURE;
+	}
 
 	ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "raw replay, totalFrame: %d, curFrame: %d, enWDR: %d, op_mode: %d",
 		pHeader->numFrame,
@@ -227,7 +257,7 @@ CVI_S32 CVI_ISPD2_CBFunc_SendRawReplayData(TISPDeviceInfo *ptIn,
 		|| (ptBinaryData->pu8Buffer == NULL)
 		|| (ptBinaryData->u32Size == 0)
 	) {
-		ISP_DAEMON2_DEBUG(LOG_DEBUG, "Invalid binary info.");
+		ISP_DAEMON2_DEBUG(LOG_ERR, "Invalid binary info.");
 		CVI_ISPD2_Utils_ComposeAPIErrorMessage(ptOut);
 		return CVI_FAILURE;
 	}
@@ -237,7 +267,7 @@ CVI_S32 CVI_ISPD2_CBFunc_SendRawReplayData(TISPDeviceInfo *ptIn,
 			pHeader->numFrame,
 			pHeader->curFrame,
 			pHeader->size) != CVI_SUCCESS) {
-		ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "set raw repaly data fail");
+		ISP_DAEMON2_DEBUG_EX(LOG_ERR, "set raw repaly data fail");
 		CVI_ISPD2_Utils_ComposeAPIErrorMessageEX(ptOut, "set raw replay data fail");
 		return CVI_FAILURE;
 	}
@@ -254,6 +284,11 @@ CVI_S32 CVI_ISPD2_CBFunc_StartRawReplay(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes)
 {
 	CVI_S32 s32Ret = CVI_SUCCESS;
+
+	if (!CVI_ISPD2_Utils_IsRawReplayMode()) {
+		CVI_ISPD2_Utils_ComposeAPIErrorMessageEX(ptOut, "Not replay mode!!!");
+		return CVI_FAILURE;
+	}
 
 	TRawReplayHandle *pRawReplayHandle = &(ptIn->ptDeviceInfo->tRawReplayHandle);
 
@@ -277,6 +312,11 @@ CVI_S32 CVI_ISPD2_CBFunc_CancelRawReplay(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes)
 {
 	CVI_S32 s32Ret = CVI_SUCCESS;
+
+	if (!CVI_ISPD2_Utils_IsRawReplayMode()) {
+		CVI_ISPD2_Utils_ComposeAPIErrorMessageEX(ptOut, "Not replay mode!!!");
+		return CVI_FAILURE;
+	}
 
 	TRawReplayHandle *pRawReplayHandle = &(ptIn->ptDeviceInfo->tRawReplayHandle);
 
