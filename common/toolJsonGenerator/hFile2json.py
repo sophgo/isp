@@ -229,12 +229,12 @@ class EnumJson():
             if ENABLE_ENUMJSON_LOG:
                 print("member ID:",self.ID,"member value:",self.VALUE)
         def parseID(self, str):
-            pattern = re.compile("\w+", re.DOTALL)
+            pattern = re.compile(r'\w+', re.DOTALL)
             self.ID = pattern.findall(str)[0]
             #str = str.strip().replace(",", "").replace(" ", "").replace("=", "")
             #self.ID = ''.join([i for i in str if not i.isdigit()])
         def parseValue(self, str):
-            pattern = re.compile('(?<=\=).*', re.DOTALL)
+            pattern = re.compile(r'(?<=\=).*', re.DOTALL)
             if len(pattern.findall(str)) == 1:
                 if "0x" in pattern.findall(str)[0]:
                     num = int(pattern.findall(str)[0],16)
@@ -252,7 +252,7 @@ class EnumJson():
         if ENABLE_ENUMJSON_LOG:
             print("---------------------------------------------------------------------------------------------------")
     def parseEnumInfo(self, str):
-        pattern = re.compile('(?<=\}).+(?=\;)', re.DOTALL)
+        pattern = re.compile(r'(?<=\}).+(?=\;)', re.DOTALL)
         if len(pattern.findall(str)) == 1:
             self.ID = pattern.findall(str)[0].strip()
             self.ALIAS = self.ID
@@ -260,7 +260,7 @@ class EnumJson():
         else:
             #enum xxx {
             # }; format
-            pattern = re.compile('\w+\s*(?=\{)', re.DOTALL)
+            pattern = re.compile(r'\w+\s*(?=\{)', re.DOTALL)
             if len(pattern.findall(str)) == 1:
                 self.ID = pattern.findall(str)[0].strip()
                 self.ALIAS = self.ID
@@ -268,10 +268,10 @@ class EnumJson():
             else:
                 print(str + "is err")
     def parseEnumMember(self, str):
-        pattern1 = re.compile('(?<=\{).*(?=\})', re.DOTALL)
+        pattern1 = re.compile(r'(?<=\{).*(?=\})', re.DOTALL)
         str = pattern1.findall(str)
         if len(str) == 1:
-            pattern2 = re.compile('[a-zA-Z0-9_= ]+_[a-zA-Z0-9_= ]+', re.DOTALL)
+            pattern2 = re.compile(r'[a-zA-Z0-9_= ]+_[a-zA-Z0-9_= ]+', re.DOTALL)
             str = pattern2.findall(str[0])
             if "BUTT" in str[-1] or "MAX" in str[-1] or "NUM" in str[-1] or "SIZE" in str[-1]:
                 if len(str) != 1:
@@ -341,11 +341,11 @@ class StructJson():
                 print("---------------------------------------------------------------------------------------------------")
         def id2alias(self, str):
             pattern = []
-            pattern.append(re.compile(r"(?<=^b|^f)[A-Z].*"))
-            pattern.append(re.compile(r"(?<=^en|^st)[A-Z].*"))
-            pattern.append(re.compile(r"(?<=^u8|^s8).*"))
-            pattern.append(re.compile(r"(?<=^u16|^u32|^u64|^s16|^s32|^s64|^au8|^as8|^f32|^ast).*"))
-            pattern.append(re.compile(r"(?<=^au16|^au32|^au64|^as16|^as32|^as64).*"))
+            pattern.append(re.compile(r'(?<=^b|^f)[A-Z].*'))
+            pattern.append(re.compile(r'(?<=^en|^st)[A-Z].*'))
+            pattern.append(re.compile(r'(?<=^u8|^s8).*'))
+            pattern.append(re.compile(r'(?<=^u16|^u32|^u64|^s16|^s32|^s64|^au8|^as8|^f32|^ast).*'))
+            pattern.append(re.compile(r'(?<=^au16|^au32|^au64|^as16|^as32|^as64).*'))
             if self.structId in cusaliasDict.keys() and str in cusaliasDict[self.structId].keys():
                 if ENABLE_STRUCTJSON_LOG:
                     print("id->alias:",str,"->",cusaliasDict[self.structId][str])
@@ -360,7 +360,7 @@ class StructJson():
                 return str[:1].upper() + str[1:]
         def parseParam(self, str, manualOrAutoSt):
             if len(str) != 0 and ";" in str:
-                pattern = re.compile("\w+\s+\**\s*\S+\S(?=\;)")
+                pattern = re.compile(r'\w+\s+\**\s*\S+\S(?=\;)')
                 statement = pattern.findall(str)
                 if ENABLE_STRUCTJSON_LOG:
                     print("str: ", str)
@@ -372,16 +372,16 @@ class StructJson():
                     self.parseType(statementArray)
                 else:
                     print(str, statement, "statement count = {}".format(len(statement)))
-            pattern = re.compile("(?<=\/\*).+(?=\*\/)")
+            pattern = re.compile(r'(?<=\/\*).+(?=\*\/)')
             annotations = pattern.findall(str)
             if ENABLE_STRUCTJSON_LOG:
                 print("annotations: ", annotations, "len:", len(annotations))
             if len(annotations) == 1:
-                pattern = re.compile("\w+(?=\;)", re.DOTALL)
+                pattern = re.compile(r'\w+(?=\;)', re.DOTALL)
                 access = pattern.findall(annotations[0])
                 if len(access) == 1:
                     self.parseAccess(access[0])
-                pattern = re.compile("(?<=\[).*(?=\])")
+                pattern = re.compile(r'(?<=\[).*(?=\])')
                 range = pattern.findall(annotations[0])
                 if len(range) == 1:
                     range = range[0].replace(" ", "").split(",", 100)
@@ -393,7 +393,7 @@ class StructJson():
                         self.parseRange(typeDict[self.TYPE])
                     else:
                         self.parseRange("")
-                #pattern = re.compile("(?<=Level\:)\d+")
+                #pattern = re.compile(r'(?<=Level\:)\d+')
                 #level = pattern.findall(annotations[0])
                 self.parseLevel()
             else:
@@ -411,7 +411,7 @@ class StructJson():
             else:
                 self.TYPE = statementArray[0]
         def parseID_COUNT_TITLEH(self, statementArray, manualOrAutoSt):
-            pattern = re.compile('\w*\w')
+            pattern = re.compile(r'\w*\w')
             id = pattern.findall(statementArray[1])
             if len(id) >= 1:
                 self.ID = id[0]
@@ -498,7 +498,7 @@ class StructJson():
             print("---------------------------------------------------------------------------------------------------")
     #获得了ID等信息
     def parseStructInfo(self, str):
-        pattern = re.compile('(?<=\}).+(?=\;)', re.DOTALL)
+        pattern = re.compile(r'(?<=\}).+(?=\;)', re.DOTALL)
         if len(pattern.findall(str)) == 1:
             self.ID = pattern.findall(str)[0].strip()
             if self.ID in cusaliasDict.keys():
@@ -518,7 +518,7 @@ class StructJson():
         else :
             #struct xxx {
             # }; format
-            pattern = re.compile('\w+\s*(?=\{)', re.DOTALL)
+            pattern = re.compile(r'\w+\s*(?=\{)', re.DOTALL)
             if len(pattern.findall(str)) == 1:
                 self.ID = pattern.findall(str)[0].strip()
                 self.ALIAS = self.ID
@@ -611,22 +611,22 @@ class StructJson():
             print(Template(template).render(ID= self.ID, ALIAS= self.ALIAS, COMMENT= self.COMMENT, MEMBER= self.MEMBER))
         return Template(template).render(ID= self.ID, ALIAS= self.ALIAS, COMMENT= self.COMMENT, MEMBER= self.MEMBER)
 def parseContent(str):
-    # pattern = re.compile('\n\/\/\-TJS\-.*\/\/\-TJE\-', re.DOTALL)
+    # pattern = re.compile(r'\n\/\/\-TJS\-.*\/\/\-TJE\-', re.DOTALL)
     # return pattern.findall(str)
     return str
 def parseMarco(str):
-    pattern = re.compile("#define\s+\w+\s+\w+")
+    pattern = re.compile(r'#define\s+\w+\s+\w+')
     list1 = pattern.findall(str)
-    pattern = re.compile("#define\s+\w+\s+\(\w+\)")
+    pattern = re.compile(r'#define\s+\w+\s+\(\w+\)')
     list2 = pattern.findall(str)
-    pattern = re.compile("#define\s+\w+\s+\(\w+\s*\*\s*\w\)")
+    pattern = re.compile(r'#define\s+\w+\s+\(\w+\s*\*\s*\w\)')
     list3 = pattern.findall(str)
     return list1 + list2 + list3
 def parseStruct(str):
-    pattern = re.compile('struct\s*\w+\s*\{[^\}\{\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
+    pattern = re.compile(r'struct\s*\w+\s*\{[^\}\{\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
     return pattern.findall(str)
 def parseEnum(str):
-    pattern = re.compile('enum[^\{\#\}]*\{[^\}\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
+    pattern = re.compile(r'enum[^\{\#\}]*\{[^\}\#]*\}[^\}\{\#\/\*]*\;', re.DOTALL)
     return pattern.findall(str)
 def SaveEnumJson2File(fp, enumStrs):
     startLine = """

@@ -5,22 +5,22 @@
 #include "rtsp.h"
 #include "venc.h"
 
-#include "json-c/json.h"
+#include "cvi_json.h"
 
 #define UNUSED(x) ((void)(x))
 
 #define GET_VC_KEY_VAL(p_vc_cfg, sub_cfg, key, sub_key)\
 {\
-	if (json_object_object_get_ex(json_obj, key, &json_val)) {\
-		if (json_object_object_get_ex(json_val, "items", &items_val)) {\
-			arr_len = json_object_array_length(items_val);\
+	if (cvi_json_object_object_get_ex(json_obj, key, &json_val)) {\
+		if (cvi_json_object_object_get_ex(json_val, "items", &items_val)) {\
+			arr_len = cvi_json_object_array_length(items_val);\
 			for (int i = 0; i < arr_len; ++i) {\
-				item_obj = json_object_array_get_idx(items_val, i);\
-				if (json_object_object_get_ex(item_obj, "key", &item_key_val)) {\
-					key_val_str = json_object_get_string(item_key_val);\
+				item_obj = cvi_json_object_array_get_idx(items_val, i);\
+				if (cvi_json_object_object_get_ex(item_obj, "key", &item_key_val)) {\
+					key_val_str = cvi_json_object_get_string(item_key_val);\
 					if (strcmp(key_val_str, #sub_key) == 0) {\
-						if (json_object_object_get_ex(item_obj, "value", &value)) {\
-							p_vc_cfg->sub_cfg.sub_key = json_object_get_int(value);\
+						if (cvi_json_object_object_get_ex(item_obj, "value", &value)) {\
+							p_vc_cfg->sub_cfg.sub_key = cvi_json_object_get_int(value);\
 						} \
 					} \
 				} \
@@ -35,7 +35,7 @@
 } \
 
 
-int get_json_object_from_file(const char *json_path, struct json_object **json_obj)
+int get_json_object_from_file(const char *json_path, struct cvi_json_object **json_obj)
 {
 	FILE *fp = fopen(json_path, "r");
 
@@ -62,7 +62,7 @@ int get_json_object_from_file(const char *json_path, struct json_object **json_o
 	fclose(fp);
 	buffer[file_size] = '\0';
 
-	*json_obj = json_tokener_parse(buffer);
+	*json_obj = cvi_json_tokener_parse(buffer);
 
 	if (*json_obj == NULL) {
 		fprintf(stderr, "Error parsing JSON.\n");
@@ -77,7 +77,7 @@ int get_json_object_from_file(const char *json_path, struct json_object **json_o
 
 int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 {
-	struct json_object *json_obj = NULL;
+	struct cvi_json_object *json_obj = NULL;
 
 	if (get_json_object_from_file(json_path, &json_obj) != 0) {
 		printf("parse rstp json fail!\n");
@@ -85,32 +85,32 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 	}
 
 	memset(p_rtsp_cfg, 0, sizeof(RTSP_CFG));
-	struct json_object *val_json_object = json_object_new_object();
+	struct cvi_json_object *val_json_object = cvi_json_object_new_object();
 
-	if (json_object_object_get_ex(json_obj, "dev-num", &val_json_object)) {
-		p_rtsp_cfg->dev_num = json_object_get_int(val_json_object);
+	if (cvi_json_object_object_get_ex(json_obj, "dev-num", &val_json_object)) {
+		p_rtsp_cfg->dev_num = cvi_json_object_get_int(val_json_object);
 	}
 
-	if (json_object_object_get_ex(json_obj, "rtsp-port", &val_json_object)) {
-		p_rtsp_cfg->rtsp_port = json_object_get_int(val_json_object);
+	if (cvi_json_object_object_get_ex(json_obj, "rtsp-port", &val_json_object)) {
+		p_rtsp_cfg->rtsp_port = cvi_json_object_get_int(val_json_object);
 	}
 
-	if (json_object_object_get_ex(json_obj, "rtsp-max-buf-size", &val_json_object)) {
-		p_rtsp_cfg->rtsp_max_buf_size = json_object_get_int(val_json_object);
+	if (cvi_json_object_object_get_ex(json_obj, "rtsp-max-buf-size", &val_json_object)) {
+		p_rtsp_cfg->rtsp_max_buf_size = cvi_json_object_get_int(val_json_object);
 	}
 
 	// video src info
 	printf("run the video_src_info\n");
-	if (json_object_object_get_ex(json_obj, "video-src-info", &val_json_object)) {
-		int ch_num = json_object_array_length(val_json_object);
+	if (cvi_json_object_object_get_ex(json_obj, "video-src-info", &val_json_object)) {
+		int ch_num = cvi_json_object_array_length(val_json_object);
 
 		if (p_rtsp_cfg->dev_num > ch_num) {
 			printf("rtsp cfg error: dev_num must greater than video src info array length!\n");
 			return -1;
 		}
 
-		struct json_object *array_ele = NULL;
-		struct json_object *arr_val_json_object = NULL;
+		struct cvi_json_object *array_ele = NULL;
+		struct cvi_json_object *arr_val_json_object = NULL;
 
 		p_rtsp_cfg->pa_video_src_cfg = (VIDEO_SRC_CFG *)calloc(p_rtsp_cfg->dev_num, sizeof(VIDEO_SRC_CFG));
 		if (p_rtsp_cfg->pa_video_src_cfg == NULL) {
@@ -119,15 +119,15 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 		}
 
 		for (int i = 0; i < p_rtsp_cfg->dev_num; ++i) {
-			array_ele = json_object_array_get_idx(val_json_object, i);
+			array_ele = cvi_json_object_array_get_idx(val_json_object, i);
 			p_rtsp_cfg->pa_video_src_cfg[i].chn = i;
 
-			if (json_object_object_get_ex(array_ele, "buf-blk-cnt", &arr_val_json_object)) {
-				p_rtsp_cfg->pa_video_src_cfg[i].buf_blk_cnt = json_object_get_int(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "buf-blk-cnt", &arr_val_json_object)) {
+				p_rtsp_cfg->pa_video_src_cfg[i].buf_blk_cnt = cvi_json_object_get_int(arr_val_json_object);
 			}
 
-			if (json_object_object_get_ex(array_ele, "is_wdr_mode", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "is_wdr_mode", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				if (strcmp(tmp_str, "true") == 0) {
 					p_rtsp_cfg->pa_video_src_cfg[i].is_wdr_mode = 1;
@@ -136,8 +136,8 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 				}
 			}
 
-			if (json_object_object_get_ex(array_ele, "enable-hdmi", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "enable-hdmi", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				if (strcmp(tmp_str, "true") == 0) {
 					p_rtsp_cfg->pa_video_src_cfg[i].enable_hdmi = 1;
@@ -146,8 +146,8 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 				}
 			}
 
-			if (json_object_object_get_ex(array_ele, "enable-teaisp-bnr", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "enable-teaisp-bnr", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				if (strcmp(tmp_str, "true") == 0) {
 					p_rtsp_cfg->pa_video_src_cfg[i].enable_teaisp_bnr = 1;
@@ -156,36 +156,36 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 				}
 			}
 
-			if (json_object_object_get_ex(array_ele, "teaisp_model_list", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "teaisp_model_list", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				snprintf(p_rtsp_cfg->pa_video_src_cfg[i].bnr_model_list, MAX_BNR_MODEL_LIST_PATH_LEN,
 				 "%s",  tmp_str);
 			}
 
-			if (json_object_object_get_ex(array_ele, "venc_json", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "venc_json", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				snprintf(p_rtsp_cfg->pa_video_src_cfg[i].venc_json, MAX_VC_JSON_PATH_LEN,
 				 "%s",  tmp_str);
 			}
 
-			if (json_object_object_get_ex(array_ele, "codec", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "codec", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				snprintf(p_rtsp_cfg->pa_video_src_cfg[i].codec, MAX_CODEC_LEN, "%s", tmp_str);
 			}
 
-			if (json_object_object_get_ex(array_ele, "gop", &arr_val_json_object)) {
-				p_rtsp_cfg->pa_video_src_cfg[i].gop = json_object_get_int(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "gop", &arr_val_json_object)) {
+				p_rtsp_cfg->pa_video_src_cfg[i].gop = cvi_json_object_get_int(arr_val_json_object);
 			}
 
-			if (json_object_object_get_ex(array_ele, "bitrate", &arr_val_json_object)) {
-				p_rtsp_cfg->pa_video_src_cfg[i].bitrate = json_object_get_int(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "bitrate", &arr_val_json_object)) {
+				p_rtsp_cfg->pa_video_src_cfg[i].bitrate = cvi_json_object_get_int(arr_val_json_object);
 			}
 
-			if (json_object_object_get_ex(array_ele, "compress-mode", &arr_val_json_object)) {
-				const char *tmp_str = json_object_get_string(arr_val_json_object);
+			if (cvi_json_object_object_get_ex(array_ele, "compress-mode", &arr_val_json_object)) {
+				const char *tmp_str = cvi_json_object_get_string(arr_val_json_object);
 
 				snprintf(p_rtsp_cfg->pa_video_src_cfg[i].compress_mode, MAX_COMPRESS_MODE_LEN, "%s", tmp_str);
 			}
@@ -202,7 +202,7 @@ int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg)
 	}
 
 	// free
-	json_object_put(json_obj);
+	cvi_json_object_put(json_obj);
 
 	return 0;
 }
@@ -240,12 +240,12 @@ int print_rtsp_cfg(RTSP_CFG *p_rtsp_cfg)
 
 int init_vc_from_json(const char *json_path, VC_CFG *p_vc_cfg)
 {
-	struct json_object *json_obj = NULL;
-	struct json_object *json_val = NULL;
-	struct json_object *items_val = NULL;
-	struct json_object *item_obj = NULL;
-	struct json_object *item_key_val = NULL;
-	struct json_object *value = NULL;
+	struct cvi_json_object *json_obj = NULL;
+	struct cvi_json_object *json_val = NULL;
+	struct cvi_json_object *items_val = NULL;
+	struct cvi_json_object *item_obj = NULL;
+	struct cvi_json_object *item_key_val = NULL;
+	struct cvi_json_object *value = NULL;
 	const char *key_val_str;
 	int arr_len = 0;
 
@@ -305,7 +305,7 @@ int init_vc_from_json(const char *json_path, VC_CFG *p_vc_cfg)
 	GET_VC_KEY_VAL(p_vc_cfg, st_rc_param, "RC Param", AvbrFrmGap);
 
 	// free
-	json_object_put(json_obj);
+	cvi_json_object_put(json_obj);
 
 	return 0;
 }

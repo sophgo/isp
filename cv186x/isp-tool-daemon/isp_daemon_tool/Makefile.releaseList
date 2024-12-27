@@ -21,7 +21,6 @@ file += $(MW_LIB)/libteaisp.so
 file += $(MW_LIB)/libisp_algo.so
 file += $(MW_LIB)/libsample.so
 file += $(MW_LIB)/libcvi_bin.so
-file += $(MW_LIB)/libcvi_bin_isp.so
 file += $(MW_LIB)/libsns_full.so
 file += $(MW_LIB)/libsys.so
 file += $(MW_LIB)/libvdec.so
@@ -33,6 +32,7 @@ file += $(MW_LIB)/libhdmitx.so
 file += $(MW_LIB)/libgdc.so
 file += $(MW_LIB)/librgn.so
 file += $(MW_LIB)/libraw_replay.so
+file += $(MW_LIB)/libraw_replay_offline.so
 file += $(MW_LIB)/libraw_dump.so
 file += $(MW_LIB)/3rd/libini.so
 

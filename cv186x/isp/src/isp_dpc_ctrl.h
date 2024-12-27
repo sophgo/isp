@@ -43,8 +43,6 @@ CVI_S32 isp_dpc_ctrl_get_dpc_dynamic_attr(VI_PIPE ViPipe, const ISP_DP_DYNAMIC_A
 CVI_S32 isp_dpc_ctrl_set_dpc_dynamic_attr(VI_PIPE ViPipe, const ISP_DP_DYNAMIC_ATTR_S *pstDPCDynamicAttr);
 CVI_S32 isp_dpc_ctrl_get_dpc_static_attr(VI_PIPE ViPipe, const ISP_DP_STATIC_ATTR_S **pstDPStaticAttr);
 CVI_S32 isp_dpc_ctrl_set_dpc_static_attr(VI_PIPE ViPipe, const ISP_DP_STATIC_ATTR_S *pstDPStaticAttr);
-CVI_S32 isp_dpc_ctrl_get_dpc_calibrate(VI_PIPE ViPipe, const ISP_DP_CALIB_ATTR_S **pstDPCalibAttr);
-CVI_S32 isp_dpc_ctrl_set_dpc_calibrate(VI_PIPE ViPipe, const ISP_DP_CALIB_ATTR_S *pstDPCalibAttr);
 
 extern const struct isp_module_ctrl dpc_mod;
 

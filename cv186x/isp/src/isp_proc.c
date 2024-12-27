@@ -794,21 +794,15 @@ CVI_S32 _isp_proc_formatShading(VI_PIPE ViPipe, CVI_CHAR *buffer, CVI_S32 buffer
 
 CVI_S32 _isp_proc_formatDCI(VI_PIPE ViPipe, CVI_CHAR *buffer, CVI_S32 bufferSize, CVI_S32 *actualSize)
 {
-#define PROC_DCI_VARIABLE_COUNT		(9)
+#define PROC_DCI_VARIABLE_COUNT		(2)
 
 	ISP_DEBUGINFO_PROC_S *pProc = g_pIspProcST[ViPipe];
 	CVI_S32 writeSize = 0;
 
 	const CVI_CHAR *VariableName[PROC_DCI_VARIABLE_COUNT] = {
-		"Enable", "isManualMode", "Speed", "DciStrength",
-		"ContrastGain", "BlcThr", "WhtThr", "BlcCtrl",
-		"WhtCtrl"};
+		"Enable", "DciStrength"};
 	CVI_U32 VariableValue[PROC_DCI_VARIABLE_COUNT] = {
-		pProc->DCIEnable, pProc->DCIisManualMode,
-		pProc->DCISpeed, pProc->DCIDciStrength,
-		pProc->DCIContrastGain, pProc->DCIBlcThr,
-		pProc->DCIWhtThr, pProc->DCIBlcCtrl,
-		pProc->DCIWhtCtrl};
+		pProc->DCIEnable, pProc->DCIDciStrength};
 
 	CHECK_FUNC_RET(_isp_formatModuleTitle("DCI Info",
 						buffer, bufferSize, &writeSize));

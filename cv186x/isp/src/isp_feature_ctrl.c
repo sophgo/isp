@@ -295,16 +295,27 @@ CVI_S32 isp_feature_ctrl_post_eof(VI_PIPE ViPipe)
 		(pstAeResult->u32IspDgain == 0) ? DGAIN_UNIT : pstAeResult->u32IspDgain;
 	runtime->algoResultSave[aeDelayIdx].u32IspPostDgainSE = pstAeResult->u32IspDgainSF;
 	runtime->algoResultSave[aeDelayIdx].u32PostNpIso = pstIspCtx->stAeResult.u32BlcIso;
-	runtime->algoResultSave[aeDelayIdx].afAEEVRatio[ISP_CHANNEL_LE] = pstAeResult->fEvRatio[ISP_CHANNEL_LE];
-	runtime->algoResultSave[aeDelayIdx].afAEEVRatio[ISP_CHANNEL_SE] = pstAeResult->fEvRatio[ISP_CHANNEL_SE];
+	//remove motion map ispDgain comensation
+	CVI_U32 preDelayIdx = aeDelayIdx == 0 ? MAX_ALGO_RESULT_QUEUE_NUM - 1 : aeDelayIdx - 1;
+	CVI_FLOAT ispDGainRatio = (CVI_FLOAT)runtime->algoResultSave[aeDelayIdx].u32IspPostDgain /
+								runtime->algoResultSave[preDelayIdx].u32IspPostDgain;
+	CVI_FLOAT ispDGainRatioSE = (CVI_FLOAT)runtime->algoResultSave[aeDelayIdx].u32IspPostDgainSE /
+								runtime->algoResultSave[preDelayIdx].u32IspPostDgainSE;
+	runtime->algoResultSave[aeDelayIdx].fTnrComRatio[ISP_CHANNEL_LE] =
+								pstAeResult->fEvRatio[ISP_CHANNEL_LE] * ispDGainRatio;
+	runtime->algoResultSave[aeDelayIdx].fTnrComRatio[ISP_CHANNEL_SE] =
+								pstAeResult->fEvRatio[ISP_CHANNEL_SE] * ispDGainRatioSE;
 
 	// dgain info.
-	runtime->algoResultSave[ispPrerawDelayIdx].u32IspPreDgain =
-		(pstAeResult->u32IspDgain == 0) ? DGAIN_UNIT : pstAeResult->u32IspDgain;
-	runtime->algoResultSave[ispPrerawDelayIdx].u32IspPreDgainSE = pstAeResult->u32IspDgainSF;
-	runtime->algoResultSave[ispPrerawDelayIdx].u32PreIso = pstAeResult->u32Iso;
-	runtime->algoResultSave[ispPrerawDelayIdx].u32PreBlcIso = pstIspCtx->stAeResult.u32BlcIso;
-	runtime->algoResultSave[ispPrerawDelayIdx].u32PreNpIso = pstIspCtx->stAeResult.u32BlcIso;
+	runtime->algoResultSave[ispPrerawDelayIdx].u32IspPreDgain = DGAIN_UNIT;
+		//(pstAeResult->u32IspDgain == 0) ? DGAIN_UNIT : pstAeResult->u32IspDgain;
+	runtime->algoResultSave[ispPrerawDelayIdx].u32IspPreDgainSE = DGAIN_UNIT;//pstAeResult->u32IspDgainSF;
+	runtime->algoResultSave[ispPrerawDelayIdx].u32PreIso =
+			pstAeResult->u32Iso / (pstAeResult->u32IspDgain / DGAIN_UNIT);
+	runtime->algoResultSave[ispPrerawDelayIdx].u32PreBlcIso =
+			pstIspCtx->stAeResult.u32BlcIso / (pstAeResult->u32IspDgain / DGAIN_UNIT);
+	runtime->algoResultSave[ispPrerawDelayIdx].u32PreNpIso =
+			pstIspCtx->stAeResult.u32BlcIso / (pstAeResult->u32IspDgain / DGAIN_UNIT);
 	// ispPrerawDelayIdx = aeDelayIdx = currentFrameIdx;
 
 	isp_interpolate_update(ViPipe,
@@ -416,7 +427,7 @@ static CVI_S32 isp_feature_ctrl_init_param(VI_PIPE ViPipe)
 		runtime->algoResultSave[idx].u32IspPostDgainSE = 1024;
 		runtime->algoResultSave[idx].u32IspPreDgainSE = 1024;
 		for (CVI_U32 i = 0 ; i < ISP_CHANNEL_MAX_NUM ; i++) {
-			runtime->algoResultSave[idx].afAEEVRatio[i] = 1.0;
+			runtime->algoResultSave[idx].fTnrComRatio[i] = 1.0;
 		}
 		runtime->algoResultSave[idx].u32PostIso = 100;
 		runtime->algoResultSave[idx].u32PreIso = 100;

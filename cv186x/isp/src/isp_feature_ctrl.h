@@ -29,7 +29,7 @@ typedef struct _ISP_ALGO_RESULT_S {
 	CVI_U32 u32IspPreDgain;
 	CVI_U32 u32IspPostDgainSE;
 	CVI_U32 u32IspPreDgainSE;
-	CVI_FLOAT afAEEVRatio[ISP_CHANNEL_MAX_NUM];
+	CVI_FLOAT fTnrComRatio[ISP_CHANNEL_MAX_NUM];
 //	CVI_U32 u32Again;
 //	CVI_U32 u32Dgain;
 	CVI_U32 u32PreIso;

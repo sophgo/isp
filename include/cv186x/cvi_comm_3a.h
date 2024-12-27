@@ -119,23 +119,18 @@ typedef struct _ISP_AE_ATTR_S {
 	CVI_U16 u16ISOCalCoef;
 	ISP_AE_GAIN_TYPE_E enGainType;
 	ISP_AE_RANGE_S stISONumRange; /*RW; Range:[0x64, 0x7FFFFFFF]*/
-	CVI_S16 s16IRCutOnLv;
-	CVI_S16	s16IRCutOffLv;
-	ISP_AE_IR_CUT_FORCE_STATUS enIRCutStatus;
 	CVI_U8 au8AdjustTargetMin[LV_TOTAL_NUM];
 	CVI_U8 au8AdjustTargetMax[LV_TOTAL_NUM];
-	CVI_U16 u16LowBinThr; /*RW; Range:[0x0, 0x100]*/
-	CVI_U16 u16HighBinThr; /*RW; Range:[0x0, 0x100]*/
 	CVI_BOOL bEnableFaceAE;
 	CVI_U8 u8FaceTargetLuma; /*RW; Range:[0x1, 0xFF]*/
 	CVI_U8 u8FaceWeight; /*RW; Range:[0x0, 0x64]*/
-	CVI_U8 u8GridBvWeight; /*RW; Range:[0x0, 0x64]*/
-	CVI_U32	au32Reserve[RESERVE_SIZE]; /*RW; Range:[0x0, 0x7FFFFFFF]*/
 	CVI_U8 u8HighLightLumaThr;
 	CVI_U8 u8HighLightBufLumaThr;
 	CVI_U8 u8LowLightLumaThr;
 	CVI_U8 u8LowLightBufLumaThr;
 	CVI_BOOL bHistogramAssist;
+	CVI_U16 u16AEStrategyThr; /*RW; Range:[0x1, 0x3E8]*/
+	CVI_U32	au32Reserve[RESERVE_SIZE]; /*RW; Range:[0x0, 0x7FFFFFFF]*/
 } ISP_AE_ATTR_S;
 
 
@@ -147,9 +142,9 @@ typedef struct _ISP_EXPOSURE_ATTR_S {
 	CVI_BOOL bAERouteExValid;
 	ISP_ME_ATTR_S stManual;
 	ISP_AE_ATTR_S stAuto;
-	CVI_U8	u8DebugMode;
-	ISP_AE_METER_MODE_E	enMeterMode;
-	CVI_BOOL	bAEGainSepCfg;
+	CVI_U8 u8DebugMode;
+	CVI_BOOL bAEGainSepCfg;
+	CVI_S8 s8SensorSensitivity; /*RW; Range:[-0xA, 0xA]*/
 } ISP_EXPOSURE_ATTR_S;
 
 typedef struct ISP_STITCH_ATTR_T {

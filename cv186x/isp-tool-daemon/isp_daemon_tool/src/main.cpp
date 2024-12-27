@@ -20,7 +20,9 @@ extern "C" {
 #include "cvi_ispd2.h"
 #include "raw_dump.h"
 #include "raw_dump_internal.h"
+#include "uart_utils.h"
 #include <string.h>
+#include "raw_replay_offline.h"
 }
 
 using std::shared_ptr;
@@ -138,7 +140,7 @@ static bool init_raw_dump(void);
 static char gRawDumpPath[MAX_RAW_DUMP_PATH_LEN];
 static char *get_raw_dump_path(void);
 
-int main(void)
+int main(int argc, char **argv)
 {
 	openlog("ISP Tool Daemon", 0, LOG_USER);
 
@@ -159,7 +161,33 @@ int main(void)
 
 	isp_daemon2_enable_device_bind_control(single_output ? 1 : 0);
 
+	int uart_flag = 0;
+
+	if (argc >= 2 && strncmp(argv[1], "/dev/", 5) == 0) {
+		if(isp_daemon2_init_uart(argv[1], single_output) >= 0) {
+			uart_flag = 1;
+		}
+	}
+
 	bool bEnableRawDump = init_raw_dump();
+
+	char *boardPath = getenv("REPLAY_FROM_BOARD_PATH");
+	if (boardPath != NULL) {
+		printf("Loading Raw Replay Path: %s\n", boardPath);
+		if (raw_replay_offline_init(boardPath) != CVI_SUCCESS) {
+			printf("raw_replay_offline_init failed!\n");
+			raw_replay_offline_uninit();
+			return CVI_FAILURE;
+		}
+		if (start_raw_replay_offline(0)) {
+			printf("start_raw_replay_offline failed!\n");
+			raw_replay_offline_uninit();
+			return CVI_FAILURE;
+		} else {
+			printf("Start Raw Replay by Path: %s\n", boardPath);
+		}
+
+	}
 
 	gLoopRun = 1;
 	while (gLoopRun) {
@@ -175,11 +203,21 @@ int main(void)
 				}
 			}
 		}
+		if (uart_flag && !isp_daemon2_get_uart_run_state()) {
+			console_recover();
+			uart_flag = 0;
+		}
+
+	}
+	if (boardPath != NULL) {
+		raw_replay_offline_uninit();
 	}
 
 	cvi_raw_dump_uninit();
 
 	isp_daemon2_uninit();
+
+	isp_daemon2_uninit_uart();
 
 	closelog();
 	return 0;

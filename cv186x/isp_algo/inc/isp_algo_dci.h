@@ -20,38 +20,23 @@ extern "C" {
 
 struct dci_param_in {
 	ISP_U32_PTR pHist;
-	ISP_U16_PTR pCntCurve;		// DCI curve
-	ISP_U32_PTR pPreDCILut;	// IIR curve lut
-	CVI_U32 dci_bins_num;
-	CVI_U16 img_width;
-	CVI_U16 img_height;
-	CVI_U16 ContrastGain;
-	CVI_U16 DciStrength;
-	CVI_U16 DciGamma;
-	CVI_U8 DciOffset;
-	CVI_U8 BlcThr;
-	CVI_U8 WhtThr;
-	CVI_U16 BlcCtrl;
-	CVI_U16 WhtCtrl;
-	CVI_U32 Speed;
-	CVI_U8 ToleranceY;
-	CVI_U16 DciGainMax;
-	CVI_U8 Method;
+	ISP_U16_PTR curLut;
+	ISP_U32_PTR preLut;
+	ISP_DCI_CURVE_MODE_E mode;
+	CVI_U8 method;
+	CVI_U8 speed;
+	CVI_U16 strength;
 	CVI_BOOL bUpdateCurve;
-	//CVI_U32 rsv[32];
 };
 
 struct dci_param_out {
-	ISP_U16_PTR map_lut;
+	ISP_U16_PTR outLut;
 };
 
 CVI_S32 isp_algo_dci_main(
 	struct dci_param_in *dci_param_in, struct dci_param_out *dci_param_out);
 CVI_S32 isp_algo_dci_init(void);
 CVI_S32 isp_algo_dci_uninit(void);
-
-CVI_S32 DCI_wbuf_alloc(uint32_t num);
-CVI_S32 DCI_wbuf_free(void);
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -49,15 +49,7 @@ typedef struct _ISP_DEBUGINFO_PROC1_S {
 	// DCI
 	//common
 	CVI_BOOL DCIEnable;
-	CVI_BOOL DCIisManualMode;
-	CVI_U16 DCISpeed;
 	CVI_U16 DCIDciStrength;
-	//manual or auto
-	CVI_U16 DCIContrastGain;
-	CVI_U8 DCIBlcThr;
-	CVI_U8 DCIWhtThr;
-	CVI_U16 DCIBlcCtrl;
-	CVI_U16 DCIWhtCtrl;
 
 	// LDCI
 	//common

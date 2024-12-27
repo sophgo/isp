@@ -45,8 +45,13 @@ CVI_S32 isp_dci_ctrl_init(VI_PIPE ViPipe)
 
 	struct isp_dci_ctrl_runtime *runtime = _get_dci_ctrl_runtime(ViPipe);
 
-	memset(runtime->pre_dci_data, 0, sizeof(CVI_U16) * DCI_BINS_NUM);
-	memset(runtime->pre_dci_lut, 0, sizeof(CVI_U32) * DCI_BINS_NUM);
+	if (runtime == CVI_NULL) {
+		return CVI_FAILURE;
+	}
+
+	memset(runtime->cur_lut, 0, sizeof(CVI_U16) * DCI_BINS_NUM);
+	memset(runtime->pre_lut, 0, sizeof(CVI_U32) * DCI_BINS_NUM);
+	memset(runtime->out_lut, 0, sizeof(CVI_U16) * DCI_BINS_NUM);
 	memset(&runtime->dciStatsInfoBuf, 0, sizeof(ISP_DCI_STATISTICS_S));
 	runtime->reset_iir = CVI_TRUE;
 
@@ -157,7 +162,6 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 	isp_dci_ctrl_get_dci_attr(ViPipe, &dci_attr);
 
 	CVI_U32 speed = dci_attr->Speed;
-
 	CVI_BOOL checkSkipDCIGenCurveStep = CVI_TRUE;
 
 	if (dci_attr->Enable && !runtime->is_module_bypass) {
@@ -169,10 +173,6 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 	} else {
 		runtime->reset_iir = CVI_TRUE;
 	}
-
-	ISP_CTX_S *pstIspCtx = NULL;
-
-	ISP_GET_CTX(ViPipe, pstIspCtx);
 
 	CVI_BOOL is_preprocess_update = CVI_FALSE;
 	CVI_U8 intvl = MAX(dci_attr->UpdateInterval, 1);
@@ -191,31 +191,6 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 	if (!dci_attr->Enable || runtime->is_module_bypass)
 		return ret;
 
-	if (dci_attr->enOpType == OP_TYPE_MANUAL) {
-		#define MANUAL(_attr, _param) \
-		runtime->_attr._param = _attr->stManual._param
-
-		MANUAL(dci_attr, ContrastGain);
-		MANUAL(dci_attr, BlcThr);
-		MANUAL(dci_attr, WhtThr);
-		MANUAL(dci_attr, BlcCtrl);
-		MANUAL(dci_attr, WhtCtrl);
-		MANUAL(dci_attr, DciGainMax);
-
-		#undef MANUAL
-	} else {
-		#define AUTO(_attr, _param, type) \
-		runtime->_attr._param = INTERPOLATE_LINEAR(ViPipe, type, _attr->stAuto._param)
-
-		AUTO(dci_attr, ContrastGain, INTPLT_POST_ISO);
-		AUTO(dci_attr, BlcThr, INTPLT_POST_ISO);
-		AUTO(dci_attr, WhtThr, INTPLT_POST_ISO);
-		AUTO(dci_attr, BlcCtrl, INTPLT_POST_ISO);
-		AUTO(dci_attr, WhtCtrl, INTPLT_POST_ISO);
-		AUTO(dci_attr, DciGainMax, INTPLT_POST_ISO);
-
-		#undef AUTO
-	}
 
 	// ParamIn
 	ISP_DCI_STATISTICS_S *dciStatsInfo;
@@ -223,31 +198,19 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 	isp_sts_ctrl_get_dci_sts(ViPipe, &dciStatsInfo);
 
 	runtime->dci_param_in.pHist = ISP_PTR_CAST_PTR(dciStatsInfo->hist);
-	runtime->dci_param_in.pCntCurve = ISP_PTR_CAST_PTR(runtime->pre_dci_data);
-	runtime->dci_param_in.pPreDCILut = ISP_PTR_CAST_PTR(runtime->pre_dci_lut);
-	runtime->dci_param_in.dci_bins_num = DCI_BINS_NUM;
-	runtime->dci_param_in.img_width = pstIspCtx->stSysRect.u32Width;
-	runtime->dci_param_in.img_height = pstIspCtx->stSysRect.u32Height;
-	runtime->dci_param_in.ContrastGain = runtime->dci_attr.ContrastGain;
-	runtime->dci_param_in.DciStrength = dci_attr->DciStrength;
-	runtime->dci_param_in.DciGamma = dci_attr->DciGamma;
-	runtime->dci_param_in.DciOffset = dci_attr->DciOffset;
-	runtime->dci_param_in.BlcThr = runtime->dci_attr.BlcThr;
-	runtime->dci_param_in.WhtThr = runtime->dci_attr.WhtThr;
-	runtime->dci_param_in.BlcCtrl = runtime->dci_attr.BlcCtrl;
-	runtime->dci_param_in.WhtCtrl = runtime->dci_attr.WhtCtrl;
-	runtime->dci_param_in.DciGainMax = runtime->dci_attr.DciGainMax;
-	runtime->dci_param_in.Speed = speed;
-	runtime->dci_param_in.ToleranceY = dci_attr->ToleranceY;
-	runtime->dci_param_in.Method = dci_attr->Method;
+	runtime->dci_param_in.curLut = ISP_PTR_CAST_PTR(runtime->cur_lut);
+	runtime->dci_param_in.preLut = ISP_PTR_CAST_PTR(runtime->pre_lut);
+	runtime->dci_param_in.mode = dci_attr->CurveMode;
+	runtime->dci_param_in.method = dci_attr->Method;
+	runtime->dci_param_in.speed = speed;
+	runtime->dci_param_in.strength = dci_attr->DciStrength;
 	runtime->dci_param_in.bUpdateCurve = CVI_TRUE;
 
 	// ParamOut
-	runtime->dci_param_out.map_lut = ISP_PTR_CAST_PTR(runtime->map_lut);
+	runtime->dci_param_out.outLut = ISP_PTR_CAST_PTR(runtime->out_lut);
 
 	if (checkSkipDCIGenCurveStep) {
 		CVI_U32 threshold = (0xFF - dci_attr->Sensitivity) << 4;
-
 		CVI_U32 diff;
 
 		runtime->dci_param_in.bUpdateCurve = CVI_FALSE;
@@ -268,8 +231,6 @@ static CVI_S32 isp_dci_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 	}
 
 	runtime->process_updated = CVI_TRUE;
-
-	UNUSED(algoResult);
 
 	return ret;
 }
@@ -324,8 +285,11 @@ static CVI_S32 isp_dci_ctrl_postprocess(VI_PIPE ViPipe)
 		dci_cfg->enable = dci_attr->Enable && !runtime->is_module_bypass;
 		dci_cfg->map_enable = dci_attr->Enable && !runtime->is_module_bypass;
 		dci_cfg->demo_mode = dci_attr->TuningMode;
-
-		memcpy(dci_cfg->map_lut, runtime->map_lut, sizeof(CVI_U16) * DCI_BINS_NUM);
+		if (dci_attr->CurveMode) {
+			memcpy(dci_cfg->map_lut, dci_attr->DciGammaCurve, sizeof(CVI_U16) * DCI_BINS_NUM);
+		} else {
+			memcpy(dci_cfg->map_lut, runtime->out_lut, sizeof(CVI_U16) * DCI_BINS_NUM);
+		}
 
 		dci_cfg->per1sample_enable = 1;
 		dci_cfg->hist_enable = 1;
@@ -355,15 +319,7 @@ static CVI_S32 set_dci_proc_info(VI_PIPE ViPipe)
 
 		//common
 		pProcST->DCIEnable = dci_attr->Enable;
-		pProcST->DCISpeed = dci_attr->Speed;
 		pProcST->DCIDciStrength = dci_attr->DciStrength;
-		pProcST->DCIisManualMode = (CVI_BOOL)dci_attr->enOpType;
-		//manual or auto
-		pProcST->DCIContrastGain = runtime->dci_param_in.ContrastGain;
-		pProcST->DCIBlcThr = runtime->dci_param_in.BlcThr;
-		pProcST->DCIWhtThr = runtime->dci_param_in.WhtThr;
-		pProcST->DCIBlcCtrl = runtime->dci_param_in.BlcCtrl;
-		pProcST->DCIWhtCtrl = runtime->dci_param_in.WhtCtrl;
 	}
 
 	return ret;
@@ -392,24 +348,12 @@ static CVI_S32 isp_dci_ctrl_check_dci_attr_valid(const ISP_DCI_ATTR_S *pstDCIAtt
 {
 	CVI_S32 ret = CVI_SUCCESS;
 
-	// CHECK_VALID_CONST(pstDCIAttr, Enable, CVI_FALSE, CVI_TRUE);
-	CHECK_VALID_CONST(pstDCIAttr, enOpType, OP_TYPE_AUTO, OP_TYPE_MANUAL);
-	// CHECK_VALID_CONST(pstDCIAttr, UpdateInterval, 0, 0xff);
-	// CHECK_VALID_CONST(pstDCIAttr, TuningMode, CVI_FALSE, CVI_TRUE);
 	CHECK_VALID_CONST(pstDCIAttr, Method, 0x0, 0x1);
-	CHECK_VALID_CONST(pstDCIAttr, Speed, 0x0, 0x1f4);
-	CHECK_VALID_CONST(pstDCIAttr, DciStrength, 0x0, 0x100);
-	CHECK_VALID_CONST(pstDCIAttr, DciGamma, 0x64, 0x320);
-	// CHECK_VALID_CONST(pstDCIAttr, DciOffset, 0x0, 0xff);
-	// CHECK_VALID_CONST(pstDCIAttr, ToleranceY, 0x0, 0xff);
-	// CHECK_VALID_CONST(pstDCIAttr, Sensitivity, 0x0, 0xff);
-
-	CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, ContrastGain, 0, 0x100);
-	// CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, BlcThr, 0, 0xff);
-	// CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, WhtThr, 0, 0xff);
-	CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, BlcCtrl, 0, 0x200);
-	CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, WhtCtrl, 0, 0x200);
-	CHECK_VALID_AUTO_ISO_1D(pstDCIAttr, DciGainMax, 0, 0x100);
+	CHECK_VALID_CONST(pstDCIAttr, DciStrength, 0x0, 0x2000);
+	CHECK_VALID_CONST(pstDCIAttr, DciGamma, 0x0, 0x1F);
+	CHECK_VALID_CONST(pstDCIAttr, DciOffset, 0x1, 0xf);
+	CHECK_VALID_CONST(pstDCIAttr, DciContrast, 0x0, 0x3);
+	CHECK_VALID_ARRAY_1D(pstDCIAttr, DciGammaCurve, DCI_BINS_NUM, 0x0, 0x3FF);
 
 	return ret;
 }

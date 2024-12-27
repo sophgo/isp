@@ -12,27 +12,21 @@ ISP_COMMON_DIR = $(BASE_DIR)/../../common
 ISP_3A_DIR = $(BASE_DIR)/../../algo
 
 # 3rdparty lib
-OSS_MODULE_INSTALL_PATH = $(OUTPUT_DIR)/mw_$(SDK_VER)/cvitek_mw_sdk
-OSS_MODULE_INCLUDE_PATH = $(OSS_MODULE_INSTALL_PATH)/include
-OSS_MODULE_LIB_PATH = $(OSS_MODULE_INSTALL_PATH)/lib
+TRD_LIB_INCLUDE_PATH = $(PWD)/prebuilt/include
+TRD_LIB_PATH = $(PWD)/prebuilt/$(SDK_VER)
 
 INC_DIRS = $(KERNEL_INC) $(MW_INC) $(ISP_INC) $(VI_INC) $(ISP_DIR)/isp/inc
-
-INC_DIRS += $(BASE_DIR)/inc $(BASE_DIR)/src
-INC_DIRS += $(OSS_MODULE_INCLUDE_PATH) $(OSS_MODULE_INCLUDE_PATH)/json-c
-
+INC_DIRS += $(BASE_DIR)/inc $(BASE_DIR)/src $(BASE_DIR)/json_struct
 INC_DIRS += $(ISP_COMMON_DIR)/raw_replay
-INC_DIRS += $(ISP_DIR)/isp_bin/src		# isp_json_struct_local.h
 INC_DIRS += $(ISP_3A_DIR)
 INC_DIRS += $(ISP_COMMON_DIR)/isp_ipc
+INC_DIRS += $(BIN_INC) $(SYS_INC)
+INC_DIRS += $(TRD_LIB_INCLUDE_PATH)/cvi_json-c
 
-LIB_DIRS = $(MW_LIB) $(OSS_MODULE_LIB_PATH)
-
-LIB_MODULES = json-c
+LIB_DIRS = $(MW_LIB) $(TRD_LIB_PATH)
 
 CINCS = $(foreach incdir, $(INC_DIRS), -I$(incdir))
 LINCS = $(foreach libdir, $(LIB_DIRS), -L$(libdir))
-LIBS = $(foreach libmodule, $(LIB_MODULES), -l$(libmodule))
 
 TMP_FOLDER = tmp
 OUT_FOLDER = build
@@ -68,8 +62,10 @@ CFLAGS += -Wno-format-truncation
 .SILENT: clean cleanall install uninstall upload prepare_3rdparty_module
 
 OBJS =	$(patsubst src/%.c, $(TMP_FOLDER)/%.o, $(filter-out $(EXCLUDES), $(wildcard src/*.c))) \
+		$(patsubst json_struct/%.c, $(TMP_FOLDER)/%.o, $(wildcard json_struct/*.c)) \
 		$(patsubst %.c, $(TMP_FOLDER)/%.o, $(wildcard *.c))
 DEPS =	$(patsubst src/%.c, $(TMP_FOLDER)/%.d, $(filter-out $(EXCLUDES), $(wildcard src/*.c))) \
+		$(patsubst json_struct/%.c, $(TMP_FOLDER)/%.d, $(wildcard json_struct/*.c)) \
 		$(patsubst %.c, $(TMP_FOLDER)/%.d, $(wildcard *.c))
 
 #ifeq ($(ISP_SRC_RELEASE),1)
@@ -78,40 +74,29 @@ DEPS =	$(patsubst src/%.c, $(TMP_FOLDER)/%.d, $(filter-out $(EXCLUDES), $(wildca
 all: $(TARGET_A) $(TARGET_SO)
 #endif
 
-OSS_BUILD_SRCIPT = $(TOP_DIR)/oss/run_build.sh
-OSS_TARBALL_PATH = $(OUTPUT_DIR)/tpu_$(SDK_VER)/third_party
-OSS_TARBALL_JSONC_PATH = $(OSS_TARBALL_PATH)/json-c.tar.gz
-OSS_MODULE_LIB_JSONC_CHECK_PATH = $(OSS_MODULE_LIB_PATH)/libjson-c.so*
-
-prepare_3rdparty_module:
-# json-c
-ifeq "$(wildcard $(OSS_MODULE_LIB_JSONC_CHECK_PATH))" ""
-ifeq "$(wildcard $(OSS_TARBALL_JSONC_PATH))" ""
-	$(error JSON-C source tarball not exist, please run build_3rd_party first!!)
-endif
-	@mkdir -p $(OSS_MODULE_INSTALL_PATH)
-	@$(OSS_BUILD_SRCIPT) -n json-c -e -t "$(OSS_TARBALL_PATH)" -i "$(OSS_MODULE_INSTALL_PATH)"
-endif
-
-$(TMP_FOLDER)/%.o: $(BASE_DIR)/src/%.c | prepare_3rdparty_module $(TMP_FOLDER)
+$(TMP_FOLDER)/%.o: $(BASE_DIR)/src/%.c $(TMP_FOLDER)
 	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -c $< -o $@
 	@echo [$(notdir $(CC))] $(notdir $@)
 
-$(TMP_FOLDER)/%.o: $(BASE_DIR)/%.c | prepare_3rdparty_module $(TMP_FOLDER)
+$(TMP_FOLDER)/%.o: $(BASE_DIR)/%.c $(TMP_FOLDER)
 	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -c $< -o $@
 	@echo [$(notdir $(CC))] $(notdir $@)
 
-$(TARGET_A): $(OBJS) | prepare_3rdparty_module $(OUT_FOLDER)
+$(TMP_FOLDER)/%.o: $(BASE_DIR)/json_struct/%.c $(TMP_FOLDER)
+	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -c $< -o $@
+	@echo [$(notdir $(CC))] $(notdir $@)
+
+$(TARGET_A): $(OBJS) $(OUT_FOLDER)
 	@$(AR) $(ARFLAGS) $(OUT_FOLDER)/$(TARGET_A) $(OBJS)
 	@echo -e $(YELLOW)[LINK]$(END)[$(notdir $(AR))] $(notdir $(TARGET_A))
 	@cp $(BASE_DIR)/inc/cvi_ispd2.h $(OUT_FOLDER)
-	@cp -a $(OSS_MODULE_LIB_PATH)/libjson-c.a $(OUT_FOLDER)
+	@cp -a $(TRD_LIB_PATH)/libcvi_json-c.a $(OUT_FOLDER)
 
 $(TARGET_SO): $(OBJS) | prepare_3rdparty_module $(OUT_FOLDER)
 	@$(LD) $(LDFLAGS) $(LOCAL_LDFLAGS) -o $(OUT_FOLDER)/$(TARGET_SO) --start-group $(OBJS) --end-group
 	@echo -e $(GREEN)[LINK]$(END)[$(notdir $(LD))] $(notdir $(TARGET_SO))
 	@cp $(BASE_DIR)/inc/cvi_ispd2.h $(OUT_FOLDER)
-	@cp -a $(OSS_MODULE_LIB_PATH)/libjson-c.so* $(OUT_FOLDER)
+	@cp -a $(TRD_LIB_PATH)/libcvi_json-c.a $(OUT_FOLDER)
 
 $(TMP_FOLDER):
 	@echo "Create $(TMP_FOLDER) for object file"
@@ -128,13 +113,11 @@ upload:
 install:
 	@cp $(OUT_FOLDER)/$(TARGET_A) $(MW_LIB)
 	@cp $(OUT_FOLDER)/$(TARGET_SO) $(MW_LIB)
-	@cp -a $(OUT_FOLDER)/libjson-c.so* $(MW_3RD_LIB)
-	@cp -a $(OUT_FOLDER)/libjson-c.a $(MW_3RD_LIB)
+	@cp -a $(OUT_FOLDER)/libcvi_json-c.a $(MW_3RD_LIB)
 
 uninstall:
 	-@rm -f $(MW_LIB)/$(TARGET_A)
 	-@rm -f $(MW_LIB)/$(TARGET_SO)
-	-@rm -f $(MW_3RD_LIB)/libjson-c.so*
 
 sdk_release: $(TARGET_A) $(TARGET_SO)
 	@echo "Create $(RELEASE_FOLDER_BIN)"
@@ -143,7 +126,7 @@ sdk_release: $(TARGET_A) $(TARGET_SO)
 	-@rm -rf $(RELEASE_FOLDER_BIN)/*
 	-@cp $(OUT_FOLDER)/$(TARGET_A) $(RELEASE_FOLDER_BIN)
 	-@cp $(OUT_FOLDER)/$(TARGET_SO) $(RELEASE_FOLDER_BIN)
-	-@cp -a $(OUT_FOLDER)/libjson-c.* $(RELEASE_FOLDER_BIN)
+	-@cp -a $(OUT_FOLDER)/libcvi_json-c.* $(RELEASE_FOLDER_BIN)
 
 	-@rm -f cppcheck.sh .gitignore .vscode
 	-@rm -rf $(TMP_FOLDER)
@@ -156,11 +139,9 @@ clean:
 	@rm -f $(OUT_FOLDER)/$(TARGET_SO)
 	@rm -f $(OUT_FOLDER)/$(TARGET_A)
 	@rm -f $(OUT_FOLDER)/*.h
-	@rm -f $(OUT_FOLDER)/libjson-c.*
-	-@rm -f ./src/cvi_pqtool_json.h
+	@rm -f $(OUT_FOLDER)/libcvi_json-c.*
 	-@rm -f $(MW_LIB)/$(TARGET_SO)
 	-@rm -f $(MW_LIB)/$(TARGET_A)
-	-@rm -f $(MW_3RD_LIB)/libjson-c.so*
 
 cleanall: clean
 	@rm -rf $(TMP_FOLDER) $(OUT_FOLDER)

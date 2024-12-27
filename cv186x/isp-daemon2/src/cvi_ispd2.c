@@ -23,7 +23,7 @@ uint8_t				gu8ISPD2_LogExportLevel = LOG_NOTICE;
 TISPDaemon2Info		gtObject = {0};
 
 // -----------------------------------------------------------------------------
-static void CVI_ISPD2_InitialDaemonInfo(TISPDaemon2Info *ptObject)
+void CVI_ISPD2_InitialDaemonInfo(TISPDaemon2Info *ptObject)
 {
 	TISPDeviceInfo *ptDeviceInfo = &(ptObject->tDeviceInfo);
 
@@ -33,6 +33,7 @@ static void CVI_ISPD2_InitialDaemonInfo(TISPDaemon2Info *ptObject)
 	ptObject->bServiceThreadRunning = CVI_FALSE;
 	ptObject->bDumpThreadRunning = CVI_FALSE;
 	ptObject->u8ClientCount = 0;
+	ptObject->uart_fd = -1;
 
 	memset(&(ptObject->UVServerEx), 0, sizeof(cvi_uv_stream_t_ex));
 
@@ -42,6 +43,7 @@ static void CVI_ISPD2_InitialDaemonInfo(TISPDaemon2Info *ptObject)
 	ptDeviceInfo->s32ViChn = 0;
 	ptDeviceInfo->s32VpssGrp = 0;
 	ptDeviceInfo->s32VpssChn = 0;
+	ptDeviceInfo->s32VoDev = VO_HDMI_DEVICE;
 	ptDeviceInfo->bVPSSBindCtrl = CVI_FALSE;
 
 	CVI_ISPD2_InitialFrameData(&(ptDeviceInfo->tFrameData));
@@ -52,7 +54,7 @@ static void CVI_ISPD2_InitialDaemonInfo(TISPDaemon2Info *ptObject)
 }
 
 // -----------------------------------------------------------------------------
-static void CVI_ISPD2_ReleaseDaemonInfo(TISPDaemon2Info *ptObject)
+void CVI_ISPD2_ReleaseDaemonInfo(TISPDaemon2Info *ptObject)
 {
 	TISPDeviceInfo *ptDeviceInfo = &(ptObject->tDeviceInfo);
 

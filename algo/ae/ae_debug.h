@@ -43,8 +43,13 @@ typedef struct _AEB_RAW_HEADER {
 #define SENSOR_PORTING_START_ITEM	(66)
 #define SENSOR_PORTING_END_ITEM		(81)
 
+#define AE_DEBUG_PRINT_IRIS_INFO     20
 #define AE_DEBUG_ENABLE_LOG_TO_FILE  200
 #define AE_DEBUG_DISABLE_LOG_TO_FILE 201
+// numbers are used by others:
+// default: 0
+// 1, 3, 6, [10 ... 17], 19, 21, 25, [29 ... 35], [42 ... 47]
+// 61, [66 ... 82], 95, 96, 111, 112, 254, 255
 
 extern sEV_S aeb_ev[AE_TEST_RAW_NUM];
 

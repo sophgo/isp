@@ -27,7 +27,7 @@ extern sWBSampleInfo *stSampleInfo[AWB_SENSOR_NUM];
 
 void *AWB_Malloc(CVI_U8 sID, size_t nsize);
 void AWB_Free(CVI_U8 sID, void *ptr);
-void AWB_CheckMemFree(void);
+void AWB_CheckMemFree(CVI_U8 sID);
 
 void AWB_SetParamUpdateFlag(CVI_U8 sID, AWB_PARAMETER_UPDATE flag);
 void AWB_CheckParamUpdateFlag(CVI_U8 sID);

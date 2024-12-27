@@ -25,11 +25,10 @@ struct isp_dci_ctrl_runtime {
 	struct dci_param_out dci_param_out;
 
 	ISP_DCI_STATISTICS_S dciStatsInfoBuf;
-	ISP_DCI_MANUAL_ATTR_S dci_attr;
 
-	CVI_U16 map_lut[DCI_BINS_NUM];
-	CVI_U16 pre_dci_data[DCI_BINS_NUM];
-	CVI_U32 pre_dci_lut[DCI_BINS_NUM];
+	CVI_U16 cur_lut[DCI_BINS_NUM];
+	CVI_U32 pre_lut[DCI_BINS_NUM];
+	CVI_U16 out_lut[DCI_BINS_NUM];
 
 	CVI_BOOL reset_iir;
 

@@ -49,6 +49,7 @@
 CVI_BOOL g_isp_debug_print_mpi = 1;
 CVI_BOOL g_isp_debug_diff_only = 1;
 CVI_BOOL g_isp_thread_run = CVI_FALSE;
+static pthread_mutex_t isp_run_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // AE/AWB Debug callback function
 ISP_AE_DEBUG_FUNC_S aeAlgoInternalLibReg[VI_MAX_PIPE_NUM] = {
@@ -281,10 +282,13 @@ CVI_S32 CVI_ISP_Run(VI_PIPE ViPipe)
 		return -EBADF;
 	}
 
-	if (!__sync_bool_compare_and_swap(&g_isp_thread_run, CVI_FALSE, CVI_TRUE)) {
+	pthread_mutex_lock(&isp_run_mutex);
+	if (g_isp_thread_run) {
 		ISP_LOG_DEBUG("ISP thread already runing, Dev %d return\n", ViPipe);
 		return CVI_SUCCESS;
 	}
+	g_isp_thread_run = CVI_TRUE;
+	pthread_mutex_unlock(&isp_run_mutex);
 
 	pstIspCtx->bIspRun = CVI_TRUE;
 	//isp_snsSync_cfg_set(ViPipe, 0);
@@ -1759,47 +1763,6 @@ CVI_S32 CVI_ISP_GetDPStaticAttr(VI_PIPE ViPipe, ISP_DP_STATIC_ATTR_S *pstDPStati
 	ret = isp_dpc_ctrl_get_dpc_static_attr(ViPipe, &pTemp);
 	if (pTemp != NULL) {
 		memcpy(pstDPStaticAttr, pTemp, sizeof(ISP_DP_STATIC_ATTR_S));
-	}
-
-	return ret;
-}
-
-CVI_S32 CVI_ISP_SetDPCalibrate(VI_PIPE ViPipe, const ISP_DP_CALIB_ATTR_S *pstDPCalibAttr)
-{
-	ISP_LOG_DEBUG("+\n");
-	if ((ViPipe < 0) || (ViPipe >= VI_MAX_PIPE_NUM)) {
-		ISP_LOG_ERR("ViPipe %d value error\n", ViPipe);
-		return -ENODEV;
-	}
-
-	if (pstDPCalibAttr == CVI_NULL) {
-		return CVI_FAILURE;
-	}
-
-	CVI_S32 ret = CVI_SUCCESS;
-
-	ret = isp_dpc_ctrl_set_dpc_calibrate(ViPipe, pstDPCalibAttr);
-
-	return ret;
-}
-
-CVI_S32 CVI_ISP_GetDPCalibrate(VI_PIPE ViPipe, ISP_DP_CALIB_ATTR_S *pstDPCalibAttr)
-{
-	if ((ViPipe < 0) || (ViPipe >= VI_MAX_PIPE_NUM)) {
-		ISP_LOG_ERR("ViPipe %d value error\n", ViPipe);
-		return -ENODEV;
-	}
-
-	if (pstDPCalibAttr == CVI_NULL) {
-		return CVI_FAILURE;
-	}
-
-	CVI_S32 ret = CVI_SUCCESS;
-	const ISP_DP_CALIB_ATTR_S *pTemp = NULL;
-
-	ret = isp_dpc_ctrl_get_dpc_calibrate(ViPipe, &pTemp);
-	if (pTemp != NULL) {
-		memcpy(pstDPCalibAttr, pTemp, sizeof(ISP_DP_CALIB_ATTR_S));
 	}
 
 	return ret;

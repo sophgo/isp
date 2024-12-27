@@ -19,11 +19,14 @@
 #include "cvi_ispd2_event_server.h"
 #include "cvi_ispd2_message.h"
 #include "cvi_ispd2_callback_funcs_apps.h"
+#include "cvi_ispd2_uart.h"
 
-#define MAX_CVI_UV_ALLOCATE_BUFFER_SIZE			(4096)
+#define MAX_CVI_UV_ALLOCATE_BUFFER_SIZE		(4096)
+#define MAX_CVI_UART_ALLOCATE_BUFFER_SIZE	(4096)
 
 // -----------------------------------------------------------------------------
-#define TIME_INTERVAL_CVI_UV_RUN				(40)		// 40 ms
+#define TIME_INTERVAL_CVI_UV_RUN			(40)		// 40 ms
+#define TIME_INTERVAL_CVI_UART_RUN			(40)
 #define	TIME_INTERVAL_PACKET_RECV			(2)			// 2 sec
 
 #define MAX_CLIENTS							(10)
@@ -180,19 +183,24 @@ static void CVI_ISPD2_ES_HandleMessageBuffer(char *pszBuf, CVI_U32 u32BufOffset,
 }
 
 // -----------------------------------------------------------------------------
-static void CVI_ISPD2_ES_HandleSocketPacket(const char *pcBuffer, CVI_U32 u32BufferLen,
+static void CVI_ISPD2_ES_HandleReceivedPacket(const char *pcBuffer, CVI_U32 u32BufferLen,
 	TISPDaemon2ConnectInfo *ptConnectObj)
 {
 	TISPDaemon2Info			*ptObject = ptConnectObj->ptDaemonInfo;
 	TBinaryData				*ptBinaryInData = &(ptObject->tDeviceInfo.tBinaryInData);
 
 	struct timeval	tvCurrentTime;
+	int interval_times = 1;
+
+	if (ptObject->uart_fd >= 0) {
+		interval_times = 10;
+	}
 
 	gettimeofday(&tvCurrentTime, NULL);
 
 	if (
 		(ptConnectObj->u32RecvBufferOffset > 0)
-		&& (tvCurrentTime.tv_sec >= (ptConnectObj->tvLastRecvTime.tv_sec + TIME_INTERVAL_PACKET_RECV))
+		&& (tvCurrentTime.tv_sec >= (ptConnectObj->tvLastRecvTime.tv_sec + TIME_INTERVAL_PACKET_RECV * interval_times))
 	) {
 		ISP_DAEMON2_DEBUG(LOG_DEBUG, "Reset receive buffer");
 		CONNECTINFO_RESET_RECV_BUFFER_STATUS(ptConnectObj);
@@ -258,7 +266,7 @@ static void CVI_ISPD2_ES_CB_SocketRead(cvi_uv_stream_t *pUVClientHandle, ssize_t
 		ISP_DAEMON2_DEBUG_EX(LOG_DEBUG, "===================>>> Recv content: %d, %u\n",
 			readLen, bufLen);
 
-		CVI_ISPD2_ES_HandleSocketPacket(pBuf->base, lReadLength, ptConnectObj);
+		CVI_ISPD2_ES_HandleReceivedPacket(pBuf->base, lReadLength, ptConnectObj);
 	} else if (lReadLength < 0) {
 		if (lReadLength != CVI_UV_EOF) {
 			ISP_DAEMON2_DEBUG_EX(LOG_ERR, "Read error : %s", cvi_uv_err_name(lReadLength));
@@ -275,8 +283,6 @@ static void CVI_ISPD2_ES_CB_SocketRead(cvi_uv_stream_t *pUVClientHandle, ssize_t
 
 		cvi_uv_close((cvi_uv_handle_t *)pUVClient, CVI_ISPD2_ES_CB_Close);
 	}
-
-	SAFE_FREE(pBuf->base);
 }
 
 // -----------------------------------------------------------------------------
@@ -470,3 +476,106 @@ CVI_S32 CVI_ISPD2_ES_DestoryService(TISPDaemon2Info *ptObject)
 }
 
 // -----------------------------------------------------------------------------
+
+// ---------------------------- uart service API -------------------------------
+static void cvi_uart_run(TISPDaemon2ConnectInfo	*ptConnectObj)
+{
+	TISPDaemon2Info *ptObject = ptConnectObj->ptDaemonInfo;
+	char *pBuf = malloc(MAX_CVI_UART_ALLOCATE_BUFFER_SIZE);
+	int len = (pBuf != NULL) ? MAX_CVI_UART_ALLOCATE_BUFFER_SIZE : 0;
+
+	memset(pBuf, 0, len);
+
+	int recv_len = uart_recv(ptObject->uart_fd, pBuf, len);
+	// int recv_len = read(ptObject->uart_fd, pBuf, len);
+
+	if (strncmp(pBuf, "q", 1) == 0) { // forced stop by typing 'q' when use uart tool
+		ptObject->bServiceThreadRunning = CVI_FALSE;
+	}
+	// printf("total_len:%d\n", recv_len);
+	if (recv_len > 0) {
+		// printf("%s\n\n", pBuf);
+		CVI_ISPD2_ES_HandleReceivedPacket(pBuf, recv_len, ptConnectObj);
+	}
+	free(pBuf);
+}
+
+// -----------------------------------------------------------------------------
+static void *CVI_ISPD2_ES_ServiceThread_Uart(void *hHandle)
+{
+	TISPDaemon2Info *ptObject = (TISPDaemon2Info *)hHandle;
+	TISPDaemon2ConnectInfo	*ptConnectObj = NULL;
+
+	prctl(PR_SET_NAME, "ISPD2_ES_Service_uart", 0, 0, 0);
+
+	ptConnectObj = (TISPDaemon2ConnectInfo *)calloc(1, sizeof(TISPDaemon2ConnectInfo));
+	if (ptConnectObj == NULL) {
+		return 0;
+	}
+
+	ptConnectObj->pszRecvBuffer = (char *)calloc(JRPC_SERVER_DEFAULT_BUF_SIZE, sizeof(char));
+	if (ptConnectObj->pszRecvBuffer == NULL) {
+		SAFE_FREE(ptConnectObj);
+		return 0;
+	}
+
+	ptConnectObj->u32RecvBufferOffset = 0;
+	ptConnectObj->u32RecvBufferSize = JRPC_SERVER_DEFAULT_BUF_SIZE;
+	ptConnectObj->eRecvBufferContentType = EEMPTY;
+	gettimeofday(&(ptConnectObj->tvLastRecvTime), NULL);
+	ptConnectObj->ptDaemonInfo = ptObject;
+	ptConnectObj->iFd = ptObject->uart_fd;
+	memset(&(ptConnectObj->stPacketInfo), 0, sizeof(TPACKETINFO));
+
+	ptObject->bServiceThreadRunning = CVI_TRUE;
+	ptObject->u8ClientCount = 1;
+
+	while (ptObject->bServiceThreadRunning) {
+		cvi_uart_run(ptConnectObj);
+		usleep(TIME_INTERVAL_CVI_UART_RUN * 1000);
+	}
+
+	ptObject->u8ClientCount = 0;
+	isp_daemon2_set_uart_run_state(CVI_FALSE);
+	ISP_DAEMON2_DEBUG(LOG_INFO, "exit from pqtool of uart.");
+	pthread_exit(NULL);
+
+	return 0;
+}
+
+// -----------------------------------------------------------------------------
+CVI_S32 CVI_ISPD2_ES_RunService_Uart(TISPDaemon2Info *ptObject)
+{
+	if (ptObject->bServiceThreadRunning == CVI_TRUE) {
+		return CVI_FAILURE;
+	}
+
+	pthread_create(&(ptObject->thDaemonThreadId), NULL, CVI_ISPD2_ES_ServiceThread_Uart, (void *)ptObject);
+
+	return CVI_SUCCESS;
+}
+
+// -----------------------------------------------------------------------------
+CVI_S32 CVI_ISPD2_ES_DestoryService_Uart(TISPDaemon2Info *ptObject)
+{
+	if (ptObject->bServiceThreadRunning != CVI_TRUE) {
+		return CVI_FAILURE;
+	}
+	ptObject->bServiceThreadRunning = CVI_FALSE;
+
+	if (ptObject->pUVLoop) {
+		cvi_uv_stop(ptObject->pUVLoop);
+	}
+
+	pthread_join(ptObject->thDaemonThreadId, NULL);
+	ptObject->thDaemonThreadId = 0;
+
+	if (ptObject->thDumpThreadId != 0) {
+		ptObject->bDumpThreadRunning = CVI_FALSE;
+		pthread_join(ptObject->thDumpThreadId, NULL);
+		ptObject->thDumpThreadId = 0;
+	}
+	memset(&(ptObject->UVServerEx), 0, sizeof(cvi_uv_stream_t_ex));
+
+	return CVI_SUCCESS;
+}

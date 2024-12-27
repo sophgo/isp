@@ -376,43 +376,21 @@ CVI_S32 CVI_ISP_RandomInitDCIAttr(ISP_DCI_ATTR_S *pstDCIAttr)
 {
 	CVI_S32 i = 0;
 
-#if 0
-	// non-auto attributes
 	pstDCIAttr->Enable = rand() % 2;
+	pstDCIAttr->CurveMode = rand() % 2;
+
+	pstDCIAttr->Method = rand() % 2;
+	pstDCIAttr->DciStrength = 50;
 	pstDCIAttr->TuningMode = rand() % 2;
+	pstDCIAttr->UpdateInterval = 1;
+	pstDCIAttr->DciContrast = rand() % 4;
+	pstDCIAttr->DciOffset = 1;
+	pstDCIAttr->DciGamma = rand() % 32;
 
-	// manual attributes
-	pstDCIAttr->stManual.MapEnable = rand() % 2;
-	pstDCIAttr->stManual.ContrastGain = rand() % 1024;
-	// pstDCIAttr->stManual.ContrastGain = 1000;	// TODO delete this
-
-	pstDCIAttr->stManual.BlcThr = rand() % 256;
-	pstDCIAttr->stManual.WhtThr = rand() % 256;
-	pstDCIAttr->stManual.BlcCtrl = rand() % 513;
-	pstDCIAttr->stManual.WhtCtrl = rand() % 513;
-#else	// debug
-	// non-auto attributes
-	pstDCIAttr->Enable = rand() % 2;
-
-	// manual attributes
-	// pstDCIAttr->stManual.ContrastGain = rand() % 1024;
-	pstDCIAttr->stManual.ContrastGain = 1000;	// TODO delete this
-
-	pstDCIAttr->stManual.BlcThr = 0;
-	pstDCIAttr->stManual.WhtThr = 255;
-	pstDCIAttr->stManual.BlcCtrl = 256;
-	pstDCIAttr->stManual.WhtCtrl = 256;
-#endif
-
-	// auto attributes
-	for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++) {
-		pstDCIAttr->stAuto.ContrastGain[i] = rand() % 1024;
-
-		pstDCIAttr->stAuto.BlcThr[i] = rand() % 256;
-		pstDCIAttr->stAuto.WhtThr[i] = rand() % 256;
-		pstDCIAttr->stAuto.BlcCtrl[i] = rand() % 513;
-		pstDCIAttr->stAuto.WhtCtrl[i] = rand() % 513;
+	for (i = 0; i < DCI_BINS_NUM; i++) {
+		pstDCIAttr->DciGammaCurve[i] = rand() % 1024;
 	}
+
 	return CVI_SUCCESS;
 }
 
@@ -420,24 +398,18 @@ void CVI_ISP_PrintDCIAttr(const ISP_DCI_ATTR_S *p1, const ISP_DCI_ATTR_S *p2)
 {
 	CVI_S32 i = 0;
 
-	// non-auto attributes
 	printf("Enable = %d %d\n", p1->Enable, p2->Enable);
 	printf("TuningMode = %d %d\n", p1->TuningMode, p2->TuningMode);
+	printf("CurveMode = %d %d\n", p1->CurveMode, p2->CurveMode);
+	printf("Method = %d %d\n", p1->Method, p2->Method);
+	printf("UpdateInterval = %d %d\n", p1->UpdateInterval, p2->UpdateInterval);
+	printf("DciStrength = %d %d\n", p1->DciStrength, p2->DciStrength);
+	printf("DciGamma = %d %d\n", p1->DciGamma, p2->DciGamma);
+	printf("DciContrast = %d %d\n", p1->DciContrast, p2->DciContrast);
+	printf("DciOffset = %d %d\n", p1->DciOffset, p2->DciOffset);
 
-	// manual attributes
-	printf("stManual.ContrastGain = %d %d\n", p1->stManual.ContrastGain, p2->stManual.ContrastGain);
-	printf("stManual.BlcThr = %d %d\n", p1->stManual.BlcThr, p2->stManual.BlcThr);
-	printf("stManual.WhtThr = %d %d\n", p1->stManual.WhtThr, p2->stManual.WhtThr);
-	printf("stManual.BlcCtrl = %d %d\n", p1->stManual.BlcCtrl, p2->stManual.BlcCtrl);
-	printf("stManual.WhtCtrl = %d %d\n", p1->stManual.WhtCtrl, p2->stManual.WhtCtrl);
-
-	// auto attributes
-	for (i = 0; i < ISP_AUTO_ISO_STRENGTH_NUM; i++) {
-		printf("stAuto.ContrastGain[%d] = %d %d\n", i, p1->stAuto.ContrastGain[i], p2->stAuto.ContrastGain[i]);
-		printf("stAuto.BlcThr[%d] = %d %d\n", i, p1->stAuto.BlcThr[i], p2->stAuto.BlcThr[i]);
-		printf("stAuto.WhtThr[%d] = %d %d\n", i, p1->stAuto.WhtThr[i], p2->stAuto.WhtThr[i]);
-		printf("stAuto.BlcCtrl[%d] = %d %d\n", i, p1->stAuto.BlcCtrl[i], p2->stAuto.BlcCtrl[i]);
-		printf("stAuto.WhtCtrl[%d] = %d %d\n", i, p1->stAuto.WhtCtrl[i], p2->stAuto.WhtCtrl[i]);
+	for (i = 0; i < DCI_BINS_NUM; i++) {
+		printf("DciGammaCurve[%d] = %d %d\n", i, p1->DciGammaCurve[i], p2->DciGammaCurve[i]);
 	}
 }
 
@@ -741,14 +713,6 @@ CVI_S32 CVI_ISP_RandomInitDPStaticAttr(ISP_DP_STATIC_ATTR_S *pstDPStaticAttr)
 {
 	// TODO@Kidd implement
 	UNUSED(pstDPStaticAttr);
-
-	return 0;
-}
-
-CVI_S32 CVI_ISP_RandomInitDPCalibrate(ISP_DP_CALIB_ATTR_S *pstDPCalibAttr)
-{
-	// TODO@Kidd implement
-	UNUSED(pstDPCalibAttr);
 
 	return 0;
 }

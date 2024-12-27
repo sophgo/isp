@@ -344,19 +344,6 @@ typedef enum _ISP_AE_ANTIFLICKER_FREQUENCE_E {
 	AE_FREQUENCE_50HZ,
 } ISP_AE_ANTIFLICKER_FREQUENCE_E;
 
-typedef enum _ISP_AE_METER_MODE_E {
-	AE_METER_MULTI = 0,
-	AE_METER_AVERAGE,
-	AE_METER_HIGHLIGHT_PRIORITY,
-	AE_METER_FISHEYE,
-} ISP_AE_METER_MODE_E;
-
-typedef enum _ISP_AE_IR_CUT_FORCE_STATUS {
-	AE_IR_CUT_FORCE_AUTO = 0,
-	AE_IR_CUT_FORCE_ON,
-	AE_IR_CUT_FORCE_OFF,
-} ISP_AE_IR_CUT_FORCE_STATUS;
-
 typedef enum _ISP_AE_GAIN_TYPE_E {
 	AE_TYPE_GAIN = 0,
 	AE_TYPE_ISO = 1,
@@ -435,13 +422,22 @@ typedef enum _ISP_IRIS_F_NO_E {
 	ISP_IRIS_F_NO_BUTT,
 } ISP_IRIS_F_NO_E;
 
+typedef enum _ISP_IRIS_PID_MODE_E {
+	ISP_IRIS_DELTA_PID,
+	ISP_IRIS_DELTA_INTG_PID,
+	ISP_IRIS_POSITION_PID
+} ISP_IRIS_PID_MODE_E;
+
 typedef struct _ISP_DCIRIS_ATTR_S {
-	CVI_S32 s32Kp; /*RW; Range:[0x0, 0x186A0]*/
-	CVI_S32 s32Ki; /*RW; Range:[0x0, 0x3E8]*/
-	CVI_S32 s32Kd; /*RW; Range:[0x0, 0x186A0]*/
+	CVI_S32 s32Kp; /*RW; Range:[0x0, 0xF4240]*/
+	CVI_S32 s32Ki; /*RW; Range:[0x0, 0xF4240]*/
+	CVI_S32 s32Kd; /*RW; Range:[0x0, 0xF4240]*/
 	CVI_U32 u32MinPwmDuty; /*RW; Range:[0x0, 0x3E8]*/
 	CVI_U32 u32MaxPwmDuty; /*RW; Range:[0x0, 0x3E8]*/
 	CVI_U32 u32OpenPwmDuty; /*RW; Range:[0x0, 0x3E8]*/
+	CVI_U32 u32MaxSafeLuma; /*RW; Range:[0x0, 0x400]*/
+	CVI_U32 u32ToSafePwmDuty; /*RW; Range:[0x0, 0x3E8]*/
+	ISP_IRIS_PID_MODE_E enIrisPIDMode;
 } ISP_DCIRIS_ATTR_S;
 
 #define AI_MAX_STEP_FNO_NUM (1024)
@@ -584,23 +580,10 @@ typedef struct _ISP_WDR_EXPOSURE_ATTR_S {
 	CVI_U16 u16RatioBias; /*RW; Range:[0x0, 0xFFFF]*/
 	CVI_U8 u8SECompensation; /*RW; Range:[0x0, 0xFF]*/
 	ISP_CHANNEL_LIST_E enExpMainChn;
-	CVI_U16 u16SEHisThr; /*RW; Range:[0x0, 0xFFFF]*/
-	CVI_U16 u16SEHisCntRatio1; /*RW; Range:[0x0, 0xFFFF]*/
-	CVI_U16 u16SEHisCntRatio2; /*RW; Range:[0x0, 0xFFFF]*/
-	CVI_U16 u16SEHis255CntThr1; /*RW; Range:[0x0, 0x7FFFFFFF]*/
-	CVI_U16 u16SEHis255CntThr2; /*RW; Range:[0x0, 0x7FFFFFFF]*/
 	CVI_U8 au8LEAdjustTargetMin[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 au8LEAdjustTargetMax[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 au8SEAdjustTargetMin[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U8 au8SEAdjustTargetMax[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
-	CVI_U8 u8AdjustTargetDetectFrmNum; /*RW; Range:[0x0, 0xFF]*/
-	CVI_U32 u32DiffPixelNum; /*RW; Range:[0x0, 0x7FFFFFFF]*/
-	CVI_U16 u16LELowBinThr; /*RW; Range:[0x0, 0x100]*/
-	CVI_U16 u16LEHighBinThr; /*RW; Range:[0x0, 0x100]*/
-	CVI_U16 u16SELowBinThr; /*RW; Range:[0x0, 0x100]*/
-	CVI_U16 u16SEHighBinThr; /*RW; Range:[0x0, 0x100]*/
-	CVI_U8 au8FrameAvgLumaMin[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
-	CVI_U8 au8FrameAvgLumaMax[LV_TOTAL_NUM]; /*RW; Range:[0x0, 0xFF]*/
 } ISP_WDR_EXPOSURE_ATTR_S;
 
 //-----------------------------------------------------------------------------
@@ -1238,33 +1221,6 @@ typedef struct _ISP_DP_STATIC_ATTR_S {
 	CVI_U32 DarkTable[STATIC_DP_COUNT_MAX]; /*RW; Range:[0x0, 0x1fff1fff]*/
 	CVI_BOOL Show; // not support yet
 } ISP_DP_STATIC_ATTR_S;
-
-typedef enum _CVI_STATIC_DP_TYPE_E {
-	ISP_STATIC_DP_BRIGHT,
-	ISP_STATIC_DP_DARK,
-} CVI_STATIC_DP_TYPE_E;
-
-typedef enum _ISP_STATUS_E {
-	ISP_STATUS_INIT,
-	ISP_STATUS_SUCCESS,
-	ISP_STATUS_TIMEOUT,
-	ISP_STATUS_SIZE,
-} ISP_STATUS_E;
-
-typedef struct _ISP_DP_CALIB_ATTR_S {
-	CVI_BOOL EnableDetect;
-	CVI_STATIC_DP_TYPE_E StaticDPType;
-	CVI_U8 StartThresh; /*RW; Range:[0x0, 0xff]*/
-	CVI_U16 CountMax; /*RW; Range:[0x0, 0xfff]*/
-	CVI_U16 CountMin; /*RW; Range:[0x0, 0xfff]*/
-	CVI_U16 TimeLimit; /*RW; Range:[0x0, 0x640]*/
-	CVI_BOOL saveFileEn;
-	// read only
-	CVI_U32 Table[STATIC_DP_COUNT_MAX]; /*R; Range:[0x0, 0x1fff1fff]*/
-	CVI_U8 FinishThresh; /*R; Range:[0x0, 0xff]*/
-	CVI_U16 Count; /*R; Range:[0x0, 0xfff]*/
-	ISP_STATUS_E Status; /*R; Range:[0x0, 0x2]*/
-} ISP_DP_CALIB_ATTR_S;
 
 //-----------------------------------------------------------------------------
 //  Crosstalk
@@ -1995,38 +1951,24 @@ typedef struct _ISP_CLUT_HSL_ATTR_S {
 //-----------------------------------------------------------------------------
 //  DCI
 //-----------------------------------------------------------------------------
-typedef struct _ISP_DCI_MANUAL_ATTR_S {
-	CVI_U16 ContrastGain; /*RW; Range:[0x0, 0x100]*/
-	CVI_U8 BlcThr; /*RW; Range:[0x0, 0xff]*/
-	CVI_U8 WhtThr; /*RW; Range:[0x0, 0xff]*/
-	CVI_U16 BlcCtrl; /*RW; Range:[0x0, 0x200]*/
-	CVI_U16 WhtCtrl; /*RW; Range:[0x0, 0x200]*/
-	CVI_U16 DciGainMax; /*RW; Range:[0x0, 0x100]*/
-} ISP_DCI_MANUAL_ATTR_S;
-
-typedef struct _ISP_DCI_AUTO_ATTR_S {
-	CVI_U16 ContrastGain[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x100]*/
-	CVI_U8 BlcThr[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xff]*/
-	CVI_U8 WhtThr[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xff]*/
-	CVI_U16 BlcCtrl[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x200]*/
-	CVI_U16 WhtCtrl[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x200]*/
-	CVI_U16 DciGainMax[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0x100]*/
-} ISP_DCI_AUTO_ATTR_S;
+typedef enum _ISP_DCI_CURVE_MODE_E {
+	DCI_CURVE_AUTO = 0,
+	DCI_CURVE_MANUAL
+} ISP_DCI_CURVE_MODE_E;
 
 typedef struct _ISP_DCI_ATTR_S {
-	CVI_BOOL Enable; /*RW; Range:[0, 1]*/
-	CVI_BOOL TuningMode; /*RW; Range:[0, 1]*/
-	ISP_OP_TYPE_E enOpType;
+	CVI_BOOL Enable; /*RW; Range:[0x0, 0x1]*/
+	ISP_DCI_CURVE_MODE_E CurveMode;
 	CVI_U8 UpdateInterval; /*RW; Range:[0x1, 0xFF]*/
 	CVI_U8 Method; /*RW; Range:[0x0, 0x1]*/
-	CVI_U32 Speed; /*RW; Range:[0x0, 0x1f4]*/
-	CVI_U16 DciStrength; /*RW; Range:[0x0, 0x100]*/
-	CVI_U16 DciGamma; /*RW; Range:[0x64, 0x320]*/
-	CVI_U8 DciOffset; /*RW; Range:[0x0, 0xff]*/
-	CVI_U8 ToleranceY; /*RW; Range:[0x0, 0xff]*/
-	CVI_U8 Sensitivity; /*RW; Range:[0x0, 0xff]*/
-	ISP_DCI_MANUAL_ATTR_S stManual;
-	ISP_DCI_AUTO_ATTR_S stAuto;
+	CVI_U16 DciStrength; /*Rw; Range:[0x0, 0x2000]*/
+	CVI_BOOL TuningMode; /*RW; Range:[0x0, 0x1]*/
+	CVI_U8 DciGamma; /*Rw; Range:[0x0, 0x1F]*/
+	CVI_U8 DciContrast; /*Rw; Range:[0x0, 0x3]*/
+	CVI_U8 DciOffset; /*Rw; Range:[0x1, 0xF]*/
+	CVI_U8 Sensitivity; /*Rw; Range:[0x0, 0xFF]*/
+	CVI_U16 Speed; /*RW; Range:[0x0, 0x1F4]*/
+	CVI_U16 DciGammaCurve[DCI_BINS_NUM]; /*Rw; Range:[0,  0x3FF]*/
 } ISP_DCI_ATTR_S;
 
 //-----------------------------------------------------------------------------
@@ -2324,12 +2266,16 @@ typedef struct _ISP_TNR_GHOST_MANUAL_ATTR_S {
 	CVI_U8 PrvMotion0[4]; /*RW; Range:[0x0, 0xff]*/
 	CVI_U8 PrtctWgt0[4]; /*RW; Range:[0x0, 0xf]*/
 	CVI_U8 MotionHistoryStr; /*RW; Range:[0x0, 0xf]*/
+	CVI_U8 CompRatioThr; /*RW; Range:[0x40, 0xff]*/
+	CVI_U8 CompRatio; /*RW; Range:[0x0, 0xff]*/
 } ISP_TNR_GHOST_MANUAL_ATTR_S;
 
 typedef struct _ISP_TNR_GHOST_AUTO_ATTR_S {
 	CVI_U8 PrvMotion0[4][ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xff]*/
 	CVI_U8 PrtctWgt0[4][ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xf]*/
 	CVI_U8 MotionHistoryStr[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xf]*/
+	CVI_U8 CompRatioThr[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x40, 0xff]*/
+	CVI_U8 CompRatio[ISP_AUTO_ISO_STRENGTH_NUM]; /*RW; Range:[0x0, 0xff]*/
 } ISP_TNR_GHOST_AUTO_ATTR_S;
 
 typedef struct _ISP_TNR_GHOST_ATTR_S {

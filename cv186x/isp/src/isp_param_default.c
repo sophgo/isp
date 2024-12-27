@@ -85,6 +85,8 @@ static CVI_S32 setNoiseProfile(VI_PIPE ViPipe);
 static CVI_S32 setDisDefault(VI_PIPE ViPipe);
 static void setVCDefault(VI_PIPE ViPipe);
 static void setCscDefault(VI_PIPE ViPipe);
+static void setIrisAttrDefault(VI_PIPE ViPipe);
+static void setDcirisAttrDefault(VI_PIPE ViPipe);
 
 static CVI_S32 setIspIqParamDefault(VI_PIPE ViPipe, CVI_U32 wdrEn);
 static CVI_VOID setTEAISPBnr(VI_PIPE ViPipe);
@@ -98,7 +100,6 @@ static CVI_VOID setMeshShadingGainLut(VI_PIPE ViPipe);
 //static CVI_VOID setRadialShading(VI_PIPE ViPipe);
 //static CVI_VOID setRadialShadingGainLut(VI_PIPE ViPipe);
 static CVI_VOID setDpcDynamic(VI_PIPE ViPipe);
-static CVI_VOID setDpcCalibration(VI_PIPE ViPipe);
 static CVI_VOID setDpcStatic(VI_PIPE ViPipe);
 static CVI_VOID setCnr(VI_PIPE ViPipe);
 static CVI_VOID setCnrMotion(VI_PIPE ViPipe);
@@ -175,6 +176,8 @@ static CVI_S32 setIspIqParamDefault(VI_PIPE ViPipe, CVI_U32 wdrEn)
 	setNoiseProfile(ViPipe);
 	setDisDefault(ViPipe);
 	setCscDefault(ViPipe);
+	setIrisAttrDefault(ViPipe);
+	setDcirisAttrDefault(ViPipe);
 
 	return 0;
 }
@@ -1502,6 +1505,12 @@ static CVI_VOID setTnrGhost(VI_PIPE ViPipe)
 	INIT_A(attr, MotionHistoryStr, 12,
 	12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12
 	);
+	INIT_A(attr, CompRatioThr, 128,
+	128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128
+	);
+	INIT_A(attr, CompRatio, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	);
 	INIT_A(attr, PrvMotion0[0], 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	);
@@ -1778,14 +1787,12 @@ static CVI_VOID setMATF(VI_PIPE ViPipe)
 	isp_tnr_ctrl_set_tnr_matf_attr(ViPipe, &attr);
 }
 
-
 static CVI_VOID setDpcDefault(VI_PIPE ViPipe)
 {
-	ISP_LOG_DEBUG("(%d)\n", ViPipe);
+    ISP_LOG_DEBUG("(%d)\n", ViPipe);
 
-	setDpcDynamic(ViPipe);
-	setDpcCalibration(ViPipe);
-	setDpcStatic(ViPipe);
+    setDpcDynamic(ViPipe);
+    setDpcStatic(ViPipe);
 }
 
 static CVI_VOID setDpcDynamic(VI_PIPE ViPipe)
@@ -1824,36 +1831,6 @@ static CVI_VOID setDpcDynamic(VI_PIPE ViPipe)
 	);
 
 	isp_dpc_ctrl_set_dpc_dynamic_attr(ViPipe, &attr);
-}
-
-static CVI_VOID setDpcCalibration(VI_PIPE ViPipe)
-{
-	ISP_LOG_DEBUG("(%d)\n", ViPipe);
-
-	ISP_DP_CALIB_ATTR_S *pattr = NULL;
-
-	pattr = ISP_CALLOC(1, sizeof(ISP_DP_CALIB_ATTR_S));
-	if (pattr == NULL) {
-		ISP_LOG_ERR("%s\n", "calloc fail");
-		return;
-	}
-
-	INIT_V(*pattr, EnableDetect, 0);
-	INIT_V(*pattr, StaticDPType, 0);
-	INIT_V(*pattr, StartThresh, 3);
-	INIT_V(*pattr, CountMax, 1024);
-	INIT_V(*pattr, CountMin, 1);
-	INIT_V(*pattr, TimeLimit, 1600);
-	INIT_V(*pattr, saveFileEn, 0);
-	for (int i = 0 ; i < STATIC_DP_COUNT_MAX ; i++)
-		INIT_V(*pattr, Table[i], 0);
-	INIT_V(*pattr, FinishThresh, 3);
-	INIT_V(*pattr, Count, 0);
-	INIT_V(*pattr, Status, 0);
-
-	CVI_ISP_SetDPCalibrate(ViPipe, pattr);
-
-	free(pattr);
 }
 
 static CVI_VOID setDpcStatic(VI_PIPE ViPipe)
@@ -2229,7 +2206,6 @@ CVI_VOID setExposureAttrDefault(VI_PIPE ViPipe)
 	INIT_V(attr, enOpType, 0);
 	INIT_V(attr, u8AERunInterval, 1);
 	INIT_V(attr, bAERouteExValid, 0);
-	INIT_V(attr, enMeterMode, 0);
 	INIT_V(attr, u8DebugMode, 0);
 	INIT_V(attr, bAEGainSepCfg, 1);
 
@@ -2284,23 +2260,17 @@ CVI_VOID setExposureAttrDefault(VI_PIPE ViPipe)
 	50, 50, 50, 50, 50, 50, 50, 60, 60, 60, 60, 60, 60, 60, 70,
 	70, 70
 	);
-	INIT_V(attr.stAuto, u16LowBinThr, 2);
-	INIT_V(attr.stAuto, u16HighBinThr, 256);
-	INIT_V(attr.stAuto, s16IRCutOnLv, 0);
-	INIT_V(attr.stAuto, s16IRCutOffLv, 700);
-	INIT_V(attr.stAuto, enIRCutStatus, 0);
 
 	INIT_V(attr.stAuto, bEnableFaceAE, 0);
 	INIT_V(attr.stAuto, u8FaceTargetLuma, 46);
 	INIT_V(attr.stAuto, u8FaceWeight, 80);
-
-	INIT_V(attr.stAuto, u8GridBvWeight, 0);
 
 	INIT_V(attr.stAuto, u8HighLightLumaThr, 224);
 	INIT_V(attr.stAuto, u8HighLightBufLumaThr, 176);
 	INIT_V(attr.stAuto, u8LowLightLumaThr, 16);
 	INIT_V(attr.stAuto, u8LowLightBufLumaThr, 48);
 	INIT_V(attr.stAuto, bHistogramAssist, 0);
+	INIT_V(attr.stAuto, u16AEStrategyThr, 2);
 
 	CVI_ISP_SetExposureAttr(ViPipe, &attr);
 }
@@ -2320,11 +2290,6 @@ CVI_VOID setWdrExposureAttrDefault(VI_PIPE ViPipe)
 	INIT_V(attr, u16RatioBias, 1024);
 	INIT_V(attr, u8SECompensation, 56);
 	INIT_V(attr, enExpMainChn, 0);
-	INIT_V(attr, u16SEHisThr, 64);
-	INIT_V(attr, u16SEHisCntRatio1, 20);
-	INIT_V(attr, u16SEHisCntRatio2, 10);
-	INIT_V(attr, u16SEHis255CntThr1, 20000);
-	INIT_V(attr, u16SEHis255CntThr2, 0);
 	INIT_V_ARRAY(attr, au8LEAdjustTargetMin,
 	20, 20, 20, 25, 35, 40, 40, 40, 40, 40, 40, 45, 50, 70, 80, 90, 100, 110, 120, 135, 150
 	);
@@ -2337,18 +2302,6 @@ CVI_VOID setWdrExposureAttrDefault(VI_PIPE ViPipe)
 	INIT_V_ARRAY(attr, au8SEAdjustTargetMax,
 	10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 15, 15, 20, 20, 20, 20, 20, 20, 25, 30
 	);
-	INIT_V_ARRAY(attr, au8FrameAvgLumaMin,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	);
-	INIT_V_ARRAY(attr, au8FrameAvgLumaMax,
-	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
-	);
-	INIT_V(attr, u8AdjustTargetDetectFrmNum, 2);
-	INIT_V(attr, u32DiffPixelNum, 100000);
-	INIT_V(attr, u16LELowBinThr, 0);
-	INIT_V(attr, u16LEHighBinThr, 256);
-	INIT_V(attr, u16SELowBinThr, 0);
-	INIT_V(attr, u16SEHighBinThr, 256);
 
 	CVI_ISP_SetWDRExposureAttr(ViPipe, &attr);
 }
@@ -2359,35 +2312,20 @@ CVI_VOID setDciDefault(VI_PIPE ViPipe)
 
 	ISP_DCI_ATTR_S attr = {0};
 
-	INIT_V(attr, Enable, 1);
-	INIT_V(attr, TuningMode, 0);
-	INIT_V(attr, enOpType, 0);
-	INIT_V(attr, UpdateInterval, 1);
+	INIT_V(attr, Enable, 0);
+	INIT_V(attr, CurveMode, 0);
 	INIT_V(attr, Method, 0);
 	INIT_V(attr, Speed, 0);
-	INIT_V(attr, DciStrength, 0);
-	INIT_V(attr, DciGamma, 100);
-	INIT_V(attr, DciOffset, 0);
-	INIT_V(attr, ToleranceY, 4);
+	INIT_V(attr, TuningMode, 0);
+	INIT_V(attr, UpdateInterval, 1);
+	INIT_V(attr, DciStrength, 50);
+	INIT_V(attr, DciGamma, 10);
+	INIT_V(attr, DciOffset, 1);
+	INIT_V(attr, DciContrast, 0);
 	INIT_V(attr, Sensitivity, 255);
-	INIT_A(attr, ContrastGain, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	);
-	INIT_A(attr, BlcThr, 60,
-	60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
-	);
-	INIT_A(attr, WhtThr, 200,
-	200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200
-	);
-	INIT_A(attr, BlcCtrl, 256,
-	256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256
-	);
-	INIT_A(attr, WhtCtrl, 256,
-	256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256
-	);
-	INIT_A(attr, DciGainMax, 48,
-	48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48
-	);
+	for (CVI_U32 i = 0; i < DCI_BINS_NUM; i++) {
+		INIT_V(attr, DciGammaCurve[i], i * 4);
+	}
 
 	CVI_ISP_SetDCIAttr(ViPipe, &attr);
 }
@@ -3391,4 +3329,39 @@ static void setCscDefault(VI_PIPE ViPipe)
 	INIT_V(attr, Saturation, 50);
 
 	isp_csc_ctrl_set_csc_attr(ViPipe, &attr);
+}
+
+static void setIrisAttrDefault(VI_PIPE ViPipe)
+{
+	ISP_LOG_DEBUG("(%d)\n", ViPipe);
+
+	ISP_IRIS_ATTR_S attr = {0};
+
+	INIT_V(attr, bEnable, 0);
+	INIT_V(attr, enOpType, 0);
+	INIT_V(attr, enIrisType, 0);
+	INIT_V(attr, enIrisStatus, 0);
+	INIT_V(attr.stMIAttr, u32HoldValue, 500);
+	INIT_V(attr.stMIAttr, enIrisFNO, 0);
+
+	CVI_ISP_SetIrisAttr(ViPipe, &attr);
+}
+
+static void setDcirisAttrDefault(VI_PIPE ViPipe)
+{
+	ISP_LOG_DEBUG("(%d)\n", ViPipe);
+
+	ISP_DCIRIS_ATTR_S attr = {0};
+
+	INIT_V(attr, s32Kp, 11500);
+	INIT_V(attr, s32Ki, 1500);
+	INIT_V(attr, s32Kd, 5000);
+	INIT_V(attr, u32MinPwmDuty, 200);
+	INIT_V(attr, u32MaxPwmDuty, 800);
+	INIT_V(attr, u32OpenPwmDuty, 700);
+	INIT_V(attr, u32MaxSafeLuma, 512);
+	INIT_V(attr, u32ToSafePwmDuty, 475);
+	INIT_V(attr, enIrisPIDMode, 0);
+
+	CVI_ISP_SetDcirisAttr(ViPipe, &attr);
 }

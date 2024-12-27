@@ -8,6 +8,7 @@ CVI_RTSP_PATH := $(MW_PATH)/../../cvi_rtsp
 CVI_RTSP_INC := $(CVI_RTSP_PATH)/include
 #CVI_RTSP_LIB_PATH := $(CVI_RTSP_OUT_PATH)/lib
 TPU_SDK_PATH = $(TOP_DIR)/libsophon
+ISP_D2_PATH=$(MW_PATH)/modules/isp/cv186x/isp-daemon2
 
 TMP_FOLDER = $(PWD)/tmp
 SDIR = $(PWD)/src
@@ -24,8 +25,8 @@ INCS += -I../isp-daemon2/inc
 INCS += -I$(CVI_RTSP_INC)
 INCS += -I$(MW_INC)/3rd/drm
 INCS += -I$(MW_INC)/3rd/drm/libdrm
-# json-c
-INCS += -I$(OUTPUT_DIR)/mw_$(SDK_VER)/cvitek_mw_sdk/include
+# cvi_json-c
+INCS += -I$(ISP_D2_PATH)/prebuilt/include/cvi_json-c
 
 INCS += -I$(TPU_SDK_PATH)/bmlib/include
 INCS += -I$(TPU_SDK_PATH)/libsophav/bmcv/include
@@ -41,11 +42,12 @@ CFLAGS += -MMD -MP -DV4L2_ISP_ENABLE
 ELFFLAGS += -L$(MW_PATH)/lib
 ELFFLAGS += -L$(MW_PATH)/lib/3rd/drm
 
-MW_LIBS := -lispv4l2_adapter -lcvi_bin -lcvi_bin_isp -lsns_full -ljson-c -ldrm
+MW_LIBS := -lispv4l2_adapter -lcvi_bin -lsns_full -ldrm
 ISP_LIBS := -lisp -lawb -lae -laf -lisp_algo -lcvi_ispd2 -lvenc -lcvi_rtsp
 ISP_HELPER_LIBS := -lispv4l2_helper
 TPU_LIBS := -lbmcv -lbmlib -lbmjpeg
 LIBS += $(MW_LIBS) $(ISP_LIBS) $(ISP_HELPER_LIBS) $(TPU_LIBS) -L./prebuilt/libarm64
+LIBS += -L$(ISP_D2_PATH)/prebuilt/64bit -lcvi_json-c
 ELFFLAGS += $(LIBS) -lpthread -lm -latomic -ldl
 
 .PHONY : clean all self_test

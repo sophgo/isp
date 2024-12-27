@@ -87,7 +87,6 @@ ISP_LIBS=(
     libaf.so
     libisp_algo.so
     libcvi_ispd2.so
-    libcvi_bin_isp.so
     libcvi_bin.so
     libsns_full.so
     libispv4l2_adapter.so
@@ -108,12 +107,28 @@ do
     fi
 done
 
+# empty so for linking
+CVI_BIN_ISP_LIB=libcvi_bin_isp.so
+if [ -f ${ISP_V4L2_LIB_PAHT}/${CVI_BIN_ISP_LIB} ]; then
+	cp ${ISP_V4L2_LIB_PAHT}/${CVI_BIN_ISP_LIB} $DEB_DIR_LIB
+else
+	echo -e "void __dummy_cvi_bin_isp__() {}" | ${CROSS_COMPILE}gcc -x c -shared -o ${CVI_BIN_ISP_LIB} -fPIC -
+	if [ $? -eq 0 ]; then
+		cp ${CVI_BIN_ISP_LIB} $DEB_DIR_LIB
+		rm ${CVI_BIN_ISP_LIB}
+	else
+		echo "fail to generate the ${CVI_BIN_ISP_LIB}"
+		return 1
+	fi
+fi
+
 echo "pack 3rd party lib ..."
 if [ ! -d $ISP_V4L2_LIB_PATH/3rd ]; then
     echo "${ISP_V4L2_LIB_PATH}/3rd not existed! Exit ..."
     return 1
 else
-    cp -L ${ISP_V4L2_LIB_PATH}/3rd/libjson-c* ${ISP_V4L2_LIB_PATH}/3rd/libini.so $DEB_DIR_LIB
+    # cp -L ${ISP_V4L2_LIB_PATH}/3rd/libjson-c* ${ISP_V4L2_LIB_PATH}/3rd/libini.so $DEB_DIR_LIB
+    cp -L ${ISP_V4L2_LIB_PATH}/3rd/libini.so $DEB_DIR_LIB
 fi
 
 cp $ISP_V4L2_RT_PATH $DEB_DIR_LIB

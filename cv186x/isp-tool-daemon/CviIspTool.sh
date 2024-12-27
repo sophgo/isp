@@ -1,6 +1,7 @@
 #!/bin/sh
 
 DEFAULT_HOST="192.168.1.3"
+UART="/dev-"
 
 echo 16777216 > /proc/sys/net/core/wmem_max
 echo "4096 873800 16777216" > /proc/sys/net/ipv4/tcp_wmem
@@ -24,7 +25,7 @@ getopts_get_optional_argument() {
 
 sed -i 's/"dev-num": 2/"dev-num": 1/g' $CFG_JSON_FILE
 sed -i 's/"replay-mode": true/"replay-mode": false/g' $CFG_JSON_FILE
-while getopts "hgmir" OPTION; do
+while getopts "hgmiru" OPTION; do
     case $OPTION in
         i)
             getopts_get_optional_argument $@
@@ -47,11 +48,31 @@ while getopts "hgmir" OPTION; do
             sed -i 's/"dev-num": 1/"dev-num": 2/g' $CFG_JSON_FILE
             ;;
         r)
+            getopts_get_optional_argument $@
             if [ -z "$CVI_REPLAY_MODE" ]; then
                 export CVI_REPLAY_MODE=1
             fi
-            echo "start replay mode"
+            if [ -z "$OPTARG" ]; then
+                echo "start replay mode"
+            else
+                export REPLAY_FROM_BOARD_PATH=$OPTARG
+                if [ -d "$REPLAY_FROM_BOARD_PATH" ]; then
+                    echo "start replay offline mode"
+                else
+                    echo "Error: Directory $REPLAY_FROM_BOARD_PATH does not exist. start replay mode"
+                    REPLAY_FROM_BOARD_PATH=
+                fi
+            fi
             sed -i 's/"replay-mode": false/"replay-mode": true/g' $CFG_JSON_FILE
+            ;;
+        u)
+            getopts_get_optional_argument $@
+            if [ -z "$OPTARG" ]; then
+                UART="/dev/ttyS0"
+            else
+                UART="/dev/ttyS$OPTARG"
+            fi
+            echo "startting app in uart mode additionally"
             ;;
         h)
             echo "Usage:"
@@ -59,6 +80,7 @@ while getopts "hgmir" OPTION; do
             echo "   -g     use gigabit ethernet"
             echo "   -m     use multi rtsp server"
             echo "   -h     help (this output)"
+            echo "   -u     use uart connectting to pqtool"
             exit 0
             ;;
     esac
@@ -91,4 +113,4 @@ export LD_LIBRARY_PATH=${SCRIPT_SELF}/lib:${SCRIPT_SELF}/lib/ai:${LD_LIBRARY_PAT
 
 PATH=${SCRIPT_SELF}:/mnt/system/usr/bin:$PATH
 cd ${SCRIPT_SELF}
-isp_tool_daemon
+isp_tool_daemon ${UART}

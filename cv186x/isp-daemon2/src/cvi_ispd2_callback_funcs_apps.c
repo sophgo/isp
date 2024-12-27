@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/spi/spidev.h>
 
 #include "cvi_ispd2_callback_funcs_local.h"
 #include "cvi_ispd2_callback_funcs_apps_local.h"
@@ -26,6 +29,7 @@
 #include "3A_internal.h"
 #include "cvi_ae.h"
 #include "cvi_awb.h"
+#include "cvi_ispd2_uart.h"
 // #include "cvi_af.h"
 
 // -----------------------------------------------------------------------------
@@ -3565,6 +3569,165 @@ CVI_S32 CVI_ISPD2_CBFunc_I2cWrite(TJSONRpcContentIn *ptContentIn,
 	UNUSED(pJsonResponse);
 	UNUSED(s32Ret);
 	SAFE_FREE(buffer);
+
+	return CVI_SUCCESS;
+}
+
+static int spi_init(SPI_DEVICE *dev)
+{
+	char name[32];
+
+	memset(name, 0, 32);
+	snprintf(name, 32, "/dev/spidev%d.%d", dev->num, dev->csn);
+
+	int fd = open(name, O_RDWR);
+
+	if (fd < 0)
+		return -1;
+
+	if (ioctl(fd, SPI_IOC_WR_MODE, &dev->mode) < 0 ||
+		ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &dev->bits) < 0 ||
+		ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &dev->speed) < 0) {
+		close(fd);
+		return -1;
+	}
+
+	dev->fd = fd;
+
+	return 0;
+}
+
+static int spi_transfer(SPI_DEVICE *dev, CVI_U8 *tx, CVI_U8 *rx, CVI_U16 len)
+{
+	struct spi_ioc_transfer tr = {
+		.tx_buf = (CVI_U64)tx,
+		.rx_buf = (CVI_U64)rx,
+		.len = len,
+		.speed_hz = dev->speed,
+		.bits_per_word = dev->bits,
+	};
+
+	int ret = ioctl(dev->fd, SPI_IOC_MESSAGE(1), &tr);
+
+	if (ret < 1) {
+		return -1;
+	}
+
+	return 0;
+}
+
+static void spi_exit(int fd)
+{
+	if (fd > 0)
+		close(fd);
+}
+
+static CVI_S32 CVI_ISPD2_TransmitSPI(SPI_DEVICE *device, CVI_U8 *tx, CVI_U8 *rx)
+{
+	CVI_S32 ret = 0;
+
+	ret = spi_init(device);
+	if (ret < 0) {
+		ISP_DAEMON2_DEBUG(LOG_ERR, "spi init fail\n");
+		return -1;
+	}
+
+	ret = spi_transfer(device, tx, NULL, device->lenTX);
+	if (ret < 0) {
+		ISP_DAEMON2_DEBUG(LOG_ERR, "spi tx data fail\n");
+	}
+
+	if (rx != NULL && device->lenRX > 0) {
+		ret = spi_transfer(device, NULL, rx, device->lenRX);
+		if (ret < 0) {
+			ISP_DAEMON2_DEBUG(LOG_ERR, "spi rx data fail\n");
+		}
+	}
+
+	spi_exit(device->fd);
+
+	return ret;
+}
+
+CVI_S32 CVI_ISPD2_CBFunc_SpiTransmit(TJSONRpcContentIn *ptContentIn,
+	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
+{
+	CVI_S32 s32Ret = CVI_SUCCESS;
+	SPI_DEVICE dev;
+	CVI_U8 *bufTx = NULL;
+	CVI_U8 *bufRx = NULL;
+
+	memset(&dev, 0, sizeof(SPI_DEVICE));
+
+	if (ptContentIn->pParams) {
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/Num", dev.num, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/CSN", dev.csn, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/Mode", dev.mode, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/Speed", dev.speed, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/Bits", dev.bits, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/TX Length", dev.lenTX, s32Ret);
+		GET_INT_FROM_JSON(ptContentIn->pParams, "/RX Length", dev.lenRX, s32Ret);
+	}
+
+	ISP_DAEMON2_DEBUG_EX(LOG_INFO, "Device info, num:%d, csn:%d\n"
+		"mode:%d, speed:%d, bits:%d, tx/rx length:%d,%d",
+		dev.num, dev.csn, dev.mode, dev.speed, dev.bits, dev.lenTX, dev.lenRX);
+
+	bufTx = (CVI_U8 *)calloc(1,  dev.lenTX);
+	if (bufTx == NULL) {
+		ISP_DAEMON2_DEBUG(LOG_ERR, "Allocate spi tx buffer fail");
+		CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
+			"Allocate spi tx buffer fail");
+		return CVI_FAILURE;
+	}
+	memset(bufTx, 0, dev.lenTX);
+	GET_INT_ARRAY_FROM_JSON(ptContentIn->pParams, "/TX Data", dev.lenTX, CVI_U8, bufTx, s32Ret)
+
+	if (dev.lenRX > 0) {
+		bufRx = (CVI_U8 *)calloc(1,  dev.lenRX);
+		if (bufRx == NULL) {
+			SAFE_FREE(bufTx);
+			ISP_DAEMON2_DEBUG(LOG_ERR, "Allocate spi rx buffer fail");
+			CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
+				"Allocate spi rx buffer fail");
+			return CVI_FAILURE;
+		}
+		memset(bufRx, 0, dev.lenRX);
+	}
+
+	if (CVI_ISPD2_TransmitSPI(&dev, bufTx, bufRx) != CVI_SUCCESS) {
+		SAFE_FREE(bufTx);
+		SAFE_FREE(bufRx);
+		CVI_ISPD2_Utils_ComposeMessage(ptContentOut, JSONRPC_CODE_INTERNAL_API_ERROR,
+			"spi transmit fail");
+		return CVI_FAILURE;
+	}
+
+	if (dev.lenRX > 0) {
+		JSONObject *pDataOut = ISPD2_json_object_new_object();
+
+		SET_INT_ARRAY_TO_JSON("RX Data", dev.lenRX, bufRx, pDataOut);
+		ISPD2_json_object_object_add(pJsonResponse, GET_RESPONSE_KEY_NAME, pDataOut);
+		ptContentOut->s32StatusCode = JSONRPC_CODE_OK;
+	}
+	SAFE_FREE(bufTx);
+	SAFE_FREE(bufRx);
+	UNUSED(s32Ret);
+
+	return CVI_SUCCESS;
+}
+
+// -----------------------------------------------------------------------------
+CVI_S32 CVI_ISPD2_CBFunc_Uart_Close(TJSONRpcContentIn *ptContentIn,
+	TJSONRpcContentOut *ptContentOut, JSONObject *pJsonResponse)
+{
+	TISPDaemon2Info *ptObject = CVI_ISPD2_Uart_GetDaemon2Info();
+
+	ptObject->bServiceThreadRunning = CVI_FALSE;
+
+	UNUSED(ptContentIn);
+	UNUSED(ptContentOut);
+	UNUSED(pJsonResponse);
 
 	return CVI_SUCCESS;
 }

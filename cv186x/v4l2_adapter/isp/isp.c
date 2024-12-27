@@ -138,6 +138,12 @@ void *get_sensor_obj(int pipe)
 		break;
 #endif
 
+#if defined(SENSOR_NUC_NC021)
+	case V4L2_NUC_NC021_MIPI_2M_50FPS_8BIT:
+		pstSnsObj = &stSnsNC021_Obj;
+		break;
+#endif
+
 #if defined(SENSOR_ONSEMI_AR2020)
 	case V4L2_ONSEMI_AR2020_20M_25FPS_10BIT:
 		pstSnsObj = &stSnsAR2020_Obj;
@@ -1300,6 +1306,7 @@ static int set_dev_attr(int pipe)
 	case V4L2_LONTIUM_MIPI_LT6911_1M_30FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_2M_30FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_8M_30FPS_8BIT:
+	case V4L2_NUC_NC021_MIPI_2M_50FPS_8BIT:
 		stViDevAttr.enDataSeq = VI_DATA_SEQ_UYVY;
 		stViDevAttr.enInputDataType = VI_DATA_TYPE_YUV;
 		stViDevAttr.enIntfMode = VI_MODE_MIPI_YUV422;

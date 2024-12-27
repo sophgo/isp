@@ -17,7 +17,6 @@ INCS += -I../../common/clog
 INCS += -I../../common/isp_ipc
 INCS += -I$(TOP_DIR)/libsophon/bmlib/include
 INCS += -I$(TOP_DIR)/libsophon/tpu-runtime/include
-TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
 
 SRCS = $(wildcard $(SDIR)/*.c)
 
@@ -28,10 +27,12 @@ TARGET_A = $(MW_LIB)/libteaisp.a
 TARGET_SO = $(MW_LIB)/libteaisp.so
 
 LOCAL_CFLAGS = $(INCS) -std=gnu11
-LOCAL_LDFLAGS = -L$(TPU_SDK_PATH)
 ifeq ($(V4L2_ISP_ENABLE),1)
-LOCAL_LDFLAGS += -L../isp-tool-daemon-v4l2/prebuilt/libarm64
+	LOCAL_LDFLAGS += -L../isp-tool-daemon-v4l2/prebuilt/libarm64
+else
+	LOCAL_LDFLAGS += -L../isp-tool-daemon/isp_daemon_tool/prebuilt/libarm64
 endif
+
 LOCAL_LDFLAGS += -lbmlib -lbmrt
 
 # SOC Architecture
