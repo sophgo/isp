@@ -12,6 +12,8 @@ DEB_PREFIX_DIR=${ISP_V4L2_SRC_PATH}/v4l2_adapter
 DEB_SCRIPT_PATH=${ISP_V4L2_SRC_PATH}/v4l2_adapter/debian_script
 DEB_DIR="${DEB_PREFIX_DIR}/sophon-soc-libisp_${ISP_MW_VER}"
 DEB_PATH="${DEB_PREFIX_DIR}/sophon-soc-libisp_${ISP_MW_VER}_arm64.deb"
+DEB_EDGE_LIB_PATH=${DEB_PREFIX_DIR}/edge_lib
+
 # dev
 DEB_DEV_DIR="${DEB_PREFIX_DIR}/sophon-soc-libisp-dev_${ISP_MW_VER}"
 DEB_DEV_PATH="${DEB_PREFIX_DIR}/sophon-soc-libisp-dev_${ISP_MW_VER}_arm64.deb"
@@ -39,41 +41,61 @@ export V4L2_ISP_ENABLE=1
 
 ORIGINAL_LOCATION=$PWD
 
+if [ -d $DEB_EDGE_LIB_PATH ]; then
+	rm -rf $DEB_EDGE_LIB_PATH
+fi
+
+mkdir -p $DEB_EDGE_LIB_PATH
+
 echo "build 3rd party ..."
 build_3rd_party || return $?
 cd ${TOP_DIR}/middleware/${MW_VER}/3rdparty || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
 
 echo "build sensor ..."
 cd ${TOP_DIR}/middleware/${MW_VER}/component/isp
-make clean
+make clean &> /dev/null
 make all || return $?
+cp ${ISP_V4L2_LIB_PATH}/libsns_full.so ${DEB_EDGE_LIB_PATH}/
+
 
 echo "build cvi bin ..."
 cd ${TOP_DIR}/middleware/${MW_VER}/modules/bin || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
+cp ${ISP_V4L2_LIB_PATH}/libcvi_bin.so ${DEB_EDGE_LIB_PATH}/
 
 echo "build cvi venc ..."
 cd ${TOP_DIR}/middleware/${MW_VER}/modules/vcodec || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
+cp ${ISP_V4L2_LIB_PATH}/libvenc.so ${DEB_EDGE_LIB_PATH}/
 
 echo "build isp ..."
 cd $ISP_V4L2_SRC_PATH || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
 
 # build isp-tool-daemon-v4l2
 cd $ISP_V4L2_SRC_PATH/isp-tool-daemon-v4l2 || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
 
 echo "build ispv4l2_ut ..."
 cd ${TOP_DIR}/middleware/${MW_VER}/self_test/ispv4l2_ut || return $?
-make clean
+make clean &> /dev/null
 make all || return $?
+
+# clean the shared so
+cd ${TOP_DIR}/middleware/${MW_VER}/component/isp
+make clean &> /dev/null
+
+cd ${TOP_DIR}/middleware/${MW_VER}/modules/bin || return $?
+make clean &> /dev/null
+
+cd ${TOP_DIR}/middleware/${MW_VER}/modules/vcodec || return $?
+make clean &> /dev/null
 
 cd $ORIGINAL_LOCATION
 
@@ -87,12 +109,15 @@ ISP_LIBS=(
     libaf.so
     libisp_algo.so
     libcvi_ispd2.so
-    libcvi_bin.so
-    libsns_full.so
     libispv4l2_adapter.so
     libispv4l2_helper.so
-    libvenc.so
     libteaisp.so
+)
+
+ISP_EDGE_LIBS=(
+	libsns_full.so
+	libvenc.so
+	libcvi_bin.so
 )
 
 echo "pack isp lib ..."
@@ -106,6 +131,19 @@ do
         cp $lib_path $DEB_DIR_LIB
     fi
 done
+
+for lib in ${ISP_EDGE_LIBS[@]}
+do
+    lib_path=${DEB_EDGE_LIB_PATH}/${lib}
+    if [ ! -f $lib_path ]; then
+        echo "$lib_path not existed! Exit ..."
+        return 1
+    else
+        cp $lib_path $DEB_DIR_LIB
+    fi
+done
+
+rm -rf ${DEB_EDGE_LIB_PATH} &> /dev/null
 
 # empty so for linking
 CVI_BIN_ISP_LIB=libcvi_bin_isp.so
