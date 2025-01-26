@@ -285,6 +285,7 @@ CVI_S32 CVI_ISP_Run(VI_PIPE ViPipe)
 	pthread_mutex_lock(&isp_run_mutex);
 	if (g_isp_thread_run) {
 		ISP_LOG_DEBUG("ISP thread already runing, Dev %d return\n", ViPipe);
+		pthread_mutex_unlock(&isp_run_mutex);
 		return CVI_SUCCESS;
 	}
 	g_isp_thread_run = CVI_TRUE;

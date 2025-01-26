@@ -3295,7 +3295,7 @@ CVI_S32 setDisConfig(VI_PIPE ViPipe)
 	ISP_DIS_CONFIG_S attr = {0};
 
 	INIT_V(attr, mode, 0);
-	INIT_V(attr, motionLevel, 0);
+	INIT_V(attr, motionLevel, DIS_MOTION_LEVEL_NORMAL);
 	INIT_V(attr, cropRatio, 94);
 
 	isp_dis_ctrl_set_dis_config(ViPipe, &attr);

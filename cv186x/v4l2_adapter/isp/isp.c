@@ -262,6 +262,7 @@ void *get_sensor_obj(int pipe)
 #if defined(SENSOR_PIXELPLUS_PR2100)
 	case V4L2_PIXELPLUS_PR2100_2M_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_4CH_25FPS_8BIT:
 		pstSnsObj = &stSnsPR2100_Obj;
 		break;
@@ -519,6 +520,13 @@ void *get_sensor_obj(int pipe)
 		pstSnsObj = &stSnsImx412_Obj;
 		break;
 #endif
+#if defined(SENSOR_SONY_IMX415)
+	case V4L2_SONY_IMX415_MIPI_4M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_5M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_8M_25FPS_12BIT:
+		pstSnsObj = &stSnsImx415_Obj;
+		break;
+#endif
 #if defined(SENSOR_SONY_IMX900)
 	case V4L2_SONY_IMX900_MIPI_3M_70FPS_12BIT:
 	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
@@ -676,6 +684,9 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	/* bayerid */
 	switch (sns_type) {
 	case V4L2_SOI_K06_MIPI_4M_25FPS_10BIT:
+	case V4L2_SONY_IMX415_MIPI_4M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_5M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_8M_25FPS_12BIT:
 		pstPubAttr->enBayer = BAYER_GBRG;
 		break;
 	// Sony
@@ -1299,6 +1310,7 @@ static int set_dev_attr(int pipe)
 	case V4L2_PIXELPLUS_PR2020_2M_30FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_4CH_25FPS_8BIT:
 	case V4L2_VIVO_MCS369_2M_30FPS_12BIT:
 	case V4L2_VIVO_MCS369Q_4M_30FPS_12BIT:
@@ -1457,6 +1469,7 @@ static int set_dev_attr(int pipe)
 	// virtual channel for multi-ch
 	switch (enSnsType) {
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_NEXTCHIP_N5_1M_2CH_25FPS_8BIT:
 		stViDevAttr.enWorkMode = VI_WORK_MODE_2Multiplex;
 		break;
