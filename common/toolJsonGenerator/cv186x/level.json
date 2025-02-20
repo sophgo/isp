@@ -189,16 +189,6 @@
 		"u16Hwnd": 1,
 		"u16Vwnd": 1
 	},
-	"ISP_WDR_EXPOSURE_ATTR_S": {
-		"u16SEHisThr": 1,
-		"u16SEHisCntRatio1": 1,
-		"u16SEHisCntRatio2": 1,
-		"u16SEHis255CntThr1": 1,
-		"u16SEHis255CntThr2": 1,
-		"u8AdjustTargetDetectFrmNum": 1,
-		"u32DiffPixelNum": 1,
-		"au8FrameAvgLumaMin": 1
-	},
 	"@ISP_LDCI_ATTR_S": {
 		"EdgeCoring": 2
 	},

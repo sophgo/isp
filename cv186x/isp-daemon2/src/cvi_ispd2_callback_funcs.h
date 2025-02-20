@@ -85,6 +85,8 @@ CVI_S32 CVI_ISPD2_CBFunc_I2cRead(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_I2cWrite(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+CVI_S32 CVI_ISPD2_CBFunc_SpiTransmit(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_GetRawDumpMaxFrames(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 
@@ -428,6 +430,10 @@ CVI_S32 CVI_ISPD2_CBFunc_VC_GetRCAttrInfo(TJSONRpcContentIn *ptIn,
 CVI_S32 CVI_ISPD2_CBFunc_VC_SetRCParamInfo(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 CVI_S32 CVI_ISPD2_CBFunc_VC_GetRCParamInfo(TJSONRpcContentIn *ptIn,
+	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
+
+// Uart
+CVI_S32 CVI_ISPD2_CBFunc_Uart_Close(TJSONRpcContentIn *ptIn,
 	TJSONRpcContentOut *ptOut, JSONObject *pJsonRes);
 
 #endif // _CVI_ISPD2_CALLBACK_FUNCS_H_

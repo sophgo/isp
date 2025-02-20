@@ -1,7 +1,7 @@
     "DEVICE": {
         "FULL_NAME": "cv186x",
         "CODE_NAME": "cv186x",
-        "SDK_VERSION": "20241022",
+        "SDK_VERSION": "20250212",
         "GENERATOR_VERSION": "(NULL,NULL)",
         "ISP_VERSION": "(NULL,NULL)",
         "ISP_BRANCH": "master",

@@ -307,7 +307,8 @@ static CVI_S32 isp_tnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 			MANUAL(tnr_ghost_attr, PrtctWgt0[i]);
 		}
 		MANUAL(tnr_ghost_attr, MotionHistoryStr);
-
+		MANUAL(tnr_ghost_attr, CompRatioThr);
+		MANUAL(tnr_ghost_attr, CompRatio);
 		MANUAL(tnr_mt_prt_attr, LowMtPrtLevelY);
 		MANUAL(tnr_mt_prt_attr, LowMtPrtLevelU);
 		MANUAL(tnr_mt_prt_attr, LowMtPrtLevelV);
@@ -393,7 +394,8 @@ static CVI_S32 isp_tnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 			AUTO(tnr_ghost_attr, PrtctWgt0[i], INTPLT_POST_ISO);
 		}
 		AUTO(tnr_ghost_attr, MotionHistoryStr, INTPLT_POST_ISO);
-
+		AUTO(tnr_ghost_attr, CompRatioThr, INTPLT_POST_ISO);
+		AUTO(tnr_ghost_attr, CompRatio, INTPLT_POST_ISO);
 		AUTO(tnr_mt_prt_attr, LowMtPrtLevelY, INTPLT_POST_ISO);
 		AUTO(tnr_mt_prt_attr, LowMtPrtLevelU, INTPLT_POST_ISO);
 		AUTO(tnr_mt_prt_attr, LowMtPrtLevelV, INTPLT_POST_ISO);
@@ -479,6 +481,12 @@ static CVI_S32 isp_tnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 		runtime->drop_mode_write = !runtime->drop_mode_write;
 	}
 
+	//CompRatioThr base 1x = 64
+	CVI_U32 tmpMaxThr = runtime->tnr_ghost_attr.CompRatioThr * TNR_BASE_1X_GAIN / 64;
+	CVI_U32 tmpMinThr = TNR_BASE_1X_GAIN * 64 / runtime->tnr_ghost_attr.CompRatioThr;
+	//CompRatio 1x = 255
+	CVI_U8 CompRatio = runtime->tnr_ghost_attr.CompRatio;
+	CVI_U16 tmpRatio = 0;
 	// TODO@CV181X check compensate gain effective timing
 	for (CVI_U32 i = 0 ; i < ISP_BAYER_CHN_NUM ; i++) {
 #if ENABLE_FE_WBG_UPDATE // removed fe wbg update in isp_wbg_ctrl.c
@@ -488,11 +496,24 @@ static CVI_S32 isp_tnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *algoRe
 #else
 		CVI_U32 u32RatioTNRbase = TNR_BASE_1X_GAIN;
 #endif
-		runtime->GainCompensateRatio[ISP_CHANNEL_LE][i] =
-			(CVI_U16) ((CVI_FLOAT) u32RatioTNRbase * algoResult->afAEEVRatio[ISP_CHANNEL_LE]);
-
-		runtime->GainCompensateRatio[ISP_CHANNEL_SE][i] =
-			(CVI_U16) ((CVI_FLOAT) u32RatioTNRbase * algoResult->afAEEVRatio[ISP_CHANNEL_SE]);
+		for (CVI_U32 j = 0; j < ISP_CHANNEL_MAX_NUM; j++) {
+			tmpRatio = (CVI_U16) ((CVI_FLOAT) u32RatioTNRbase * algoResult->fTnrComRatio[j]);
+			if ((tmpRatio > tmpMaxThr || tmpRatio < tmpMinThr)) {
+				if (CompRatio == 0) {
+					runtime->GainCompensateRatio[j][i] = CompRatio;
+				} else {
+					if (tmpRatio > tmpMaxThr) {
+						runtime->GainCompensateRatio[j][i] =
+							MAX(tmpRatio * CompRatio / 255, TNR_BASE_1X_GAIN);
+					} else {
+						runtime->GainCompensateRatio[j][i] =
+							MIN(tmpRatio * 255 / CompRatio, TNR_BASE_1X_GAIN);
+					}
+				}
+			} else {
+				runtime->GainCompensateRatio[j][i] = tmpRatio;
+			}
+		}
 	}
 
 	// ParamIn

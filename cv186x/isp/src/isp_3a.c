@@ -55,7 +55,7 @@ ISP_SMART_INFO_S smartInfo[VI_MAX_PIPE_NUM] = {0};
 STITCH_CALIBRATION_INFO stitchCalibInfo[VI_MAX_PIPE_NUM] = {0};
 #define DIV_0_TO_1(a)           ((0 == (a)) ? 1 : (a))
 
-static CVI_U8 gSmartAeTimeOut;
+static CVI_U8 gSmartAeTimeOut[VI_MAX_PIPE_NUM];
 static CVI_U32 gSmartAeFrameCnt[VI_MAX_PIPE_NUM] = {0};
 struct timeval t2, t1;
 
@@ -419,8 +419,8 @@ CVI_S32 isp_3aLib_smart_info_set(VI_PIPE ViPipe, const ISP_SMART_INFO_S *pstSmar
 	}
 
 	ISP_GET_CTX(ViPipe, pstIspCtx);
-	__sync_fetch_and_and(&gSmartAeTimeOut, 0);
-	__sync_fetch_and_add(&gSmartAeTimeOut, TimeOut);
+	gSmartAeTimeOut[ViPipe] =  0;
+	gSmartAeTimeOut[ViPipe] += TimeOut;
 	gSmartAeFrameCnt[ViPipe] = pstIspCtx->frameCnt;
 	if (pstSmartInfo->stROI[0].u8Num == 0 && pstSmartInfo->stROI[1].u8Num != 0) {
 		index = 1;
@@ -437,10 +437,11 @@ CVI_VOID isp_smartROI_info_update(VI_PIPE ViPipe)
 
 	ISP_GET_CTX(ViPipe, pstIspCtx);
 	if (aeAlgoInfo[ViPipe].stSmartInfo.bEnable) {
-		if (gSmartAeTimeOut != 0 && pstIspCtx->frameCnt - gSmartAeFrameCnt[ViPipe] > gSmartAeTimeOut) {
-			__sync_fetch_and_and(&aeAlgoInfo[ViPipe].stSmartInfo.u8Num, 0);
-			__sync_fetch_and_and(&awbAlgoInfo[ViPipe].stSmartInfo.u8Num, 0);
-			__sync_fetch_and_and(&gSmartAeTimeOut, 0);
+		if (gSmartAeTimeOut[ViPipe] != 0 &&
+				pstIspCtx->frameCnt - gSmartAeFrameCnt[ViPipe] > gSmartAeTimeOut[ViPipe]) {
+			aeAlgoInfo[ViPipe].stSmartInfo.u8Num = 0;
+			awbAlgoInfo[ViPipe].stSmartInfo.u8Num = 0;
+			gSmartAeTimeOut[ViPipe] = 0;
 		}
 	}
 }
@@ -731,8 +732,18 @@ CVI_S32 isp_3aLib_run(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 		// isp_3aLib_updateAEAlgoInfo(ViPipe);
 
 		if (pAlgo[ViPipe * MAX_REGISTER_ALG_LIB_NUM + activeIdx].algoFunc.aeFunc.pfn_ae_run != NULL) {
+			//struct timeval tv1, tv2;
+
+			//gettimeofday(&tv1, NULL);
+
 			pAlgo[ViPipe * MAX_REGISTER_ALG_LIB_NUM + activeIdx].algoFunc.aeFunc.pfn_ae_run(
 				ViPipe, &aeAlgoInfo[ViPipe], &stAeResult, rsv);
+
+			//gettimeofday(&tv2, NULL);
+
+			//ISP_LOG_ERR("ae run time: %d\n",
+			//	((tv2.tv_sec - tv1.tv_sec) * 1000000 + (tv2.tv_usec - tv1.tv_usec)));
+
 			//isp_snsSync_cfg_set(ViPipe);
 			if (pstIspCtx->stStitchAttr.enable && !pstIspCtx->stStitchAttr.bMainPipe && bMainPipeOk) {
 				memcpy(&(pstIspCtx->stAeResult), &(g_astIspCtx[mainPipe]->stAeResult),

@@ -215,6 +215,7 @@ void CVI_ISPD2_ConfigMessageHandler(TISPD2HandlerInfo *ptHandlerInfo)
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_CancelRawReplay, "CVI_ISP_CancelRawReplay");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_I2cRead, "CVI_I2cRead");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_I2cWrite, "CVI_I2cWrite");
+	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_SpiTransmit, "CVI_SPI_Transmit");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_GetRawDumpMaxFrames, "CVI_GetRawDumpMaxFrames");
 
 
@@ -241,6 +242,9 @@ void CVI_ISPD2_ConfigMessageHandler(TISPD2HandlerInfo *ptHandlerInfo)
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_VC_GetRCAttrInfo, "CVI_VC_GetRCAttrInfo");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_VC_SetRCParamInfo, "CVI_VC_SetRCParamInfo");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_VC_GetRCParamInfo, "CVI_VC_GetRCParamInfo");
+
+	// Uart
+	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_Uart_Close, "CVI_Uart_Close");
 }
 
 // -----------------------------------------------------------------------------

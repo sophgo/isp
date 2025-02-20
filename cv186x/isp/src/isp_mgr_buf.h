@@ -63,7 +63,6 @@ struct isp_mlsc_shared_buffer {
 struct isp_dpc_shared_buffer {
 	ISP_DP_DYNAMIC_ATTR_S stDPCDynamicAttr;
 	ISP_DP_STATIC_ATTR_S stDPStaticAttr;
-	ISP_DP_CALIB_ATTR_S stDPCalibAttr;
 	struct isp_dpc_ctrl_runtime runtime;
 };
 

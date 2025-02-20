@@ -99,7 +99,6 @@ typedef struct {
 	//ISP_RADIAL_SHADING_GAIN_LUT_ATTR_S rlscLUT;
 	ISP_DP_DYNAMIC_ATTR_S dpc_dynamic;
 	ISP_DP_STATIC_ATTR_S dpc_static;
-	ISP_DP_CALIB_ATTR_S DPCalib;
 	ISP_CROSSTALK_ATTR_S crosstalk;
 	// RAW_TOP
 	ISP_NR_ATTR_S bnr;

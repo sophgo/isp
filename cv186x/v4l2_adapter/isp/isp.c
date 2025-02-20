@@ -138,6 +138,12 @@ void *get_sensor_obj(int pipe)
 		break;
 #endif
 
+#if defined(SENSOR_NUC_NC021)
+	case V4L2_NUC_NC021_MIPI_2M_50FPS_8BIT:
+		pstSnsObj = &stSnsNC021_Obj;
+		break;
+#endif
+
 #if defined(SENSOR_ONSEMI_AR2020)
 	case V4L2_ONSEMI_AR2020_20M_25FPS_10BIT:
 		pstSnsObj = &stSnsAR2020_Obj;
@@ -256,6 +262,7 @@ void *get_sensor_obj(int pipe)
 #if defined(SENSOR_PIXELPLUS_PR2100)
 	case V4L2_PIXELPLUS_PR2100_2M_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_4CH_25FPS_8BIT:
 		pstSnsObj = &stSnsPR2100_Obj;
 		break;
@@ -513,6 +520,19 @@ void *get_sensor_obj(int pipe)
 		pstSnsObj = &stSnsImx412_Obj;
 		break;
 #endif
+#if defined(SENSOR_SONY_IMX415)
+	case V4L2_SONY_IMX415_MIPI_4M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_5M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_8M_25FPS_12BIT:
+		pstSnsObj = &stSnsImx415_Obj;
+		break;
+#endif
+#if defined(SENSOR_SONY_IMX900)
+	case V4L2_SONY_IMX900_MIPI_3M_70FPS_12BIT:
+	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
+		pstSnsObj = &stSnsImx900_Obj;
+		break;
+#endif
 #if defined(SENSOR_TECHPOINT_TP2850)
 	case V4L2_TECHPOINT_TP2850_MIPI_2M_30FPS_8BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_4M_30FPS_8BIT:
@@ -614,6 +634,10 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_OV_OV7251_MIPI_480P_120FPS_10BIT:
 		pstPubAttr->f32FrameRate = 120;
 		break;
+	case V4L2_SONY_IMX900_MIPI_3M_70FPS_12BIT:
+	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
+		pstPubAttr->f32FrameRate = 70;
+		break;
 	case V4L2_SONY_IMX307_MIPI_2M_60FPS_12BIT:
 	case V4L2_SONY_IMX307_SUBLVDS_2M_60FPS_12BIT:
 	case V4L2_SONY_IMX327_MIPI_2M_60FPS_12BIT:
@@ -660,6 +684,9 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	/* bayerid */
 	switch (sns_type) {
 	case V4L2_SOI_K06_MIPI_4M_25FPS_10BIT:
+	case V4L2_SONY_IMX415_MIPI_4M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_5M_25FPS_12BIT:
+	case V4L2_SONY_IMX415_MIPI_8M_25FPS_12BIT:
 		pstPubAttr->enBayer = BAYER_GBRG;
 		break;
 	// Sony
@@ -706,6 +733,8 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_SONY_IMX412_MIPI_12M_30FPS_12BIT:
 	case V4L2_SONY_IMX585_MIPI_8M_30FPS_12BIT:
 	case V4L2_SONY_IMX585_MIPI_8M_25FPS_12BIT_WDR2TO1:
+	case V4L2_SONY_IMX900_MIPI_3M_70FPS_12BIT:
+	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
 	// GalaxyCore
 	case V4L2_GCORE_GC02M1_MIPI_2M_30FPS_10BIT:
 	case V4L2_GCORE_GC1054_MIPI_1M_30FPS_10BIT:
@@ -1281,6 +1310,7 @@ static int set_dev_attr(int pipe)
 	case V4L2_PIXELPLUS_PR2020_2M_30FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_PIXELPLUS_PR2100_2M_4CH_25FPS_8BIT:
 	case V4L2_VIVO_MCS369_2M_30FPS_12BIT:
 	case V4L2_VIVO_MCS369Q_4M_30FPS_12BIT:
@@ -1300,6 +1330,7 @@ static int set_dev_attr(int pipe)
 	case V4L2_LONTIUM_MIPI_LT6911_1M_30FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_2M_30FPS_8BIT:
 	case V4L2_LONTIUM_MIPI_LT6911_8M_30FPS_8BIT:
+	case V4L2_NUC_NC021_MIPI_2M_50FPS_8BIT:
 		stViDevAttr.enDataSeq = VI_DATA_SEQ_UYVY;
 		stViDevAttr.enInputDataType = VI_DATA_TYPE_YUV;
 		stViDevAttr.enIntfMode = VI_MODE_MIPI_YUV422;
@@ -1401,6 +1432,8 @@ static int set_dev_attr(int pipe)
 	case V4L2_SONY_IMX412_MIPI_12M_30FPS_12BIT:
 	case V4L2_SONY_IMX585_MIPI_8M_30FPS_12BIT:
 	case V4L2_SONY_IMX585_MIPI_8M_25FPS_12BIT_WDR2TO1:
+	case V4L2_SONY_IMX900_MIPI_3M_70FPS_12BIT:
+	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
 	// GalaxyCore
 	case V4L2_GCORE_GC02M1_MIPI_2M_30FPS_10BIT:
 	case V4L2_GCORE_GC1054_MIPI_1M_30FPS_10BIT:
@@ -1436,6 +1469,7 @@ static int set_dev_attr(int pipe)
 	// virtual channel for multi-ch
 	switch (enSnsType) {
 	case V4L2_PIXELPLUS_PR2100_2M_2CH_25FPS_8BIT:
+	case V4L2_PIXELPLUS_PR2100_2M_2CH_2L_25FPS_8BIT:
 	case V4L2_NEXTCHIP_N5_1M_2CH_25FPS_8BIT:
 		stViDevAttr.enWorkMode = VI_WORK_MODE_2Multiplex;
 		break;

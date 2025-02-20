@@ -62,7 +62,7 @@ static enum CVI_BIN_SECTION_ID CVI_ISPD2_GetModuleIdFromString(const char *pszTe
 	enum CVI_BIN_SECTION_ID id = CVI_BIN_ID_MIN;
 
 	if (strcmp(pszTemp, "All") == 0) {
-		id = CVI_BIN_ID_MAX;
+		id = CVI_BIN_ID_ALL;
 	} else if (strcmp(pszTemp, "Sensor_0") == 0) {
 		id = CVI_BIN_ID_ISP0;
 	} else if (strcmp(pszTemp, "Sensor_1") == 0) {
@@ -85,8 +85,10 @@ static enum CVI_BIN_SECTION_ID CVI_ISPD2_GetModuleIdFromString(const char *pszTe
 		id = CVI_BIN_ID_VDEC;
 	} else if (strcmp(pszTemp, "Venc") == 0) {
 		id = CVI_BIN_ID_VENC;
-	} else if (strcmp(pszTemp, "Vo") == 0) {
-		id = CVI_BIN_ID_VO;
+	} else if (strcmp(pszTemp, "Vo_0") == 0) {
+		id = CVI_BIN_ID_VO0;
+	} else if (strcmp(pszTemp, "Vo_1") == 0) {
+		id = CVI_BIN_ID_VO1;
 	}
 
 	return id;

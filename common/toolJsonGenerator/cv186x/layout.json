@@ -1,5 +1,59 @@
 {
 	"FUNCTIONS": {
+		"ORDER": [
+			{
+				"ALL": [
+					"Top",
+					"Pub Attr",
+					"Noise Profile",
+					"Exposure attr",
+					"WDR Exposure Attr",
+					"Smart Exposure Attr",
+					"AE Route",
+					"IRIS",
+					"Exposure Info",
+					"BLC",
+					"LBLC",
+					"RGBIR",
+					"DPC",
+					"Crosstalk",
+					"LSC",
+					"BNR",
+					"TEAISP.drc",
+					"TEAISP.bnr",
+					"TEAISP.pq",
+					"WB Attr",
+					"WB Info",
+					"Demosaic",
+					"RGBCAC",
+					"LCAC",
+					"CCM",
+					"FSWDR",
+					"DRC",
+					"Gamma",
+					"Dehaze",
+					"CLUT",
+					"CSC",
+					"Mono",
+					"PreSharpen",
+					"3DNR",
+					"YNR",
+					"CNR",
+					"CAC",
+					"Y Sharpen",
+					"DCI",
+					"LDCI",
+					"CA",
+					"CA Lite",
+					"Y Contrast",
+					"Statistics Config",
+					"DIS",
+					"VPSS Adjustment",
+					"VO Gamma",
+					"ISPtoVC"
+				]
+			}
+		],
 		"FUNCTION": [
 			{
 				"ID": "Top",
@@ -796,30 +850,17 @@
 								"ISP_WDR_EXPOSURE_ATTR_S.u16Tolerance",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16Speed",
 								"ISP_WDR_EXPOSURE_ATTR_S.u16RatioBias",
-								"ISP_WDR_EXPOSURE_ATTR_S.u8SECompensation",
-								"ISP_WDR_EXPOSURE_ATTR_S.enExpMainChn",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHisThr",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHis255CntThr1",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHis255CntThr2",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHisCntRatio1",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHisCntRatio2"
+								"ISP_WDR_EXPOSURE_ATTR_S.u8SECompensation"
 							]
 						},
 						{
 							"TITLE": "WDRExposureAttr",
 							"MEMBER": [
+								"ISP_WDR_EXPOSURE_ATTR_S.enExpMainChn",
 								"ISP_WDR_EXPOSURE_ATTR_S.au8LEAdjustTargetMin",
 								"ISP_WDR_EXPOSURE_ATTR_S.au8LEAdjustTargetMax",
 								"ISP_WDR_EXPOSURE_ATTR_S.au8SEAdjustTargetMin",
-								"ISP_WDR_EXPOSURE_ATTR_S.au8SEAdjustTargetMax",
-								"ISP_WDR_EXPOSURE_ATTR_S.au8FrameAvgLumaMin",
-								"ISP_WDR_EXPOSURE_ATTR_S.au8FrameAvgLumaMax",
-								"ISP_WDR_EXPOSURE_ATTR_S.u8AdjustTargetDetectFrmNum",
-								"ISP_WDR_EXPOSURE_ATTR_S.u32DiffPixelNum",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16LELowBinThr",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16LEHighBinThr",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SELowBinThr",
-								"ISP_WDR_EXPOSURE_ATTR_S.u16SEHighBinThr"
+								"ISP_WDR_EXPOSURE_ATTR_S.au8SEAdjustTargetMax"
 							]
 						}
 					]
@@ -1387,10 +1428,14 @@
 								"ISP_TNR_MT_PRT_ATTR_S.stManual.LowMtPrtLevelY",
 								"ISP_TNR_MT_PRT_ATTR_S.stManual.LowMtPrtInY",
 								"ISP_TNR_MT_PRT_ATTR_S.stManual.LowMtPrtOutY",
+								"ISP_TNR_GHOST_ATTR_S.stManual.CompRatioThr",
+								"ISP_TNR_GHOST_ATTR_S.stManual.CompRatio",
 								"ISP_TNR_GHOST_ATTR_S.stAuto.MotionHistoryStr",
 								"ISP_TNR_MT_PRT_ATTR_S.stAuto.LowMtPrtLevelY",
 								"ISP_TNR_MT_PRT_ATTR_S.stAuto.LowMtPrtInY",
-								"ISP_TNR_MT_PRT_ATTR_S.stAuto.LowMtPrtOutY"
+								"ISP_TNR_MT_PRT_ATTR_S.stAuto.LowMtPrtOutY",
+								"ISP_TNR_GHOST_ATTR_S.stAuto.CompRatioThr",
+								"ISP_TNR_GHOST_ATTR_S.stAuto.CompRatio"
 							],
 							"CURVE": [
 								{
@@ -1625,28 +1670,39 @@
 							"TITLE": "DCI",
 							"MEMBER": [
 								"ISP_DCI_ATTR_S.Enable",
-								"ISP_DCI_ATTR_S.enOpType",
+								"ISP_DCI_ATTR_S.CurveMode",
+								"ISP_DCI_ATTR_S.Method",
 								"ISP_DCI_ATTR_S.UpdateInterval",
 								"ISP_DCI_ATTR_S.TuningMode",
-								"ISP_DCI_ATTR_S.Method",
-								"ISP_DCI_ATTR_S.Speed",
-								"ISP_DCI_ATTR_S.stManual.ContrastGain",
-								"ISP_DCI_ATTR_S.stManual.BlcThr",
-								"ISP_DCI_ATTR_S.stManual.WhtThr",
-								"ISP_DCI_ATTR_S.stManual.BlcCtrl",
-								"ISP_DCI_ATTR_S.stManual.WhtCtrl",
-								"ISP_DCI_ATTR_S.stManual.DciGainMax",
-								"ISP_DCI_ATTR_S.stAuto.ContrastGain",
-								"ISP_DCI_ATTR_S.stAuto.BlcThr",
-								"ISP_DCI_ATTR_S.stAuto.WhtThr",
-								"ISP_DCI_ATTR_S.stAuto.BlcCtrl",
-								"ISP_DCI_ATTR_S.stAuto.WhtCtrl",
-								"ISP_DCI_ATTR_S.stAuto.DciGainMax",
 								"ISP_DCI_ATTR_S.DciStrength",
 								"ISP_DCI_ATTR_S.DciGamma",
 								"ISP_DCI_ATTR_S.DciOffset",
-								"ISP_DCI_ATTR_S.ToleranceY",
+								"ISP_DCI_ATTR_S.DciContrast",
+								"ISP_DCI_ATTR_S.DciGammaCurve",
+								"ISP_DCI_ATTR_S.Speed",
 								"ISP_DCI_ATTR_S.Sensitivity"
+							],
+							"GAMMACURVE": [
+								{
+									"ALIAS": "DciGammaCurve",
+									"POINTS": [
+										"ISP_DCI_ATTR_S.DciGammaCurve"
+									],
+									"RELATED_PARAMS": [
+										{
+											"ID": "ISP_DCI_ATTR_S.Method"
+										},
+										{
+											"ID": "ISP_DCI_ATTR_S.DciGamma"
+										},
+										{
+											"ID": "ISP_DCI_ATTR_S.DciOffset"
+										},
+										{
+											"ID": "ISP_DCI_ATTR_S.DciContrast"
+										}
+									]
+								}
 							]
 						}
 					]
@@ -2009,7 +2065,10 @@
 								"ISP_DCIRIS_ATTR_S.s32Kd",
 								"ISP_DCIRIS_ATTR_S.u32MinPwmDuty",
 								"ISP_DCIRIS_ATTR_S.u32MaxPwmDuty",
-								"ISP_DCIRIS_ATTR_S.u32OpenPwmDuty"
+								"ISP_DCIRIS_ATTR_S.u32OpenPwmDuty",
+								"ISP_DCIRIS_ATTR_S.u32MaxSafeLuma",
+								"ISP_DCIRIS_ATTR_S.u32ToSafePwmDuty",
+								"ISP_DCIRIS_ATTR_S.enIrisPIDMode"
 							]
 						}
 					]
@@ -2036,6 +2095,7 @@
 								"ISP_EXPOSURE_ATTR_S.bHistStatAdjust",
 								"ISP_EXPOSURE_ATTR_S.bAERouteExValid",
 								"ISP_EXPOSURE_ATTR_S.bAEGainSepCfg",
+								"ISP_EXPOSURE_ATTR_S.s8SensorSensitivity",
 								"ISP_EXPOSURE_ATTR_S.u8DebugMode",
 								"HEADER:Exposure Manual",
 								"ISP_EXPOSURE_ATTR_S.stManual.enExpTimeOpType",
@@ -2068,13 +2128,17 @@
 								"ISP_EXPOSURE_ATTR_S.stAuto.stSysGainRange.u32Max",
 								"ISP_EXPOSURE_ATTR_S.stAuto.stSysGainRange.u32Min",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u32GainThreshold",
-								"ISP_EXPOSURE_ATTR_S.stAuto.u8GridBvWeight",
-								"ISP_EXPOSURE_ATTR_S.stAuto.au32Reserve",
+								"HEADER:Convergence Strategy",
+								"ISP_EXPOSURE_ATTR_S.stAuto.enAEStrategyMode",
+								"ISP_EXPOSURE_ATTR_S.stAuto.u16AEStrategyThr",
+								"ISP_EXPOSURE_ATTR_S.stAuto.u16HistRatioSlope",
+								"ISP_EXPOSURE_ATTR_S.stAuto.u8MaxHistOffset",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8HighLightLumaThr",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8HighLightBufLumaThr",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8LowLightLumaThr",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8LowLightBufLumaThr",
-								"ISP_EXPOSURE_ATTR_S.stAuto.bHistogramAssist"
+								"ISP_EXPOSURE_ATTR_S.stAuto.bHistogramAssist",
+								"ISP_EXPOSURE_ATTR_S.stAuto.au32Reserve"
 							]
 						},
 						{
@@ -2085,9 +2149,6 @@
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8Tolerance",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8Compensation",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u16EVBias",
-								"ISP_EXPOSURE_ATTR_S.stAuto.enAEStrategyMode",
-								"ISP_EXPOSURE_ATTR_S.stAuto.u16HistRatioSlope",
-								"ISP_EXPOSURE_ATTR_S.stAuto.u8MaxHistOffset",
 								"ISP_EXPOSURE_ATTR_S.stAuto.enAEMode",
 								"ISP_EXPOSURE_ATTR_S.stAuto.stAntiflicker.bEnable",
 								"ISP_EXPOSURE_ATTR_S.stAuto.stAntiflicker.enFrequency",
@@ -2103,8 +2164,6 @@
 								"ISP_EXPOSURE_ATTR_S.stAuto.u16ISOCalCoef",
 								"ISP_EXPOSURE_ATTR_S.stAuto.au8AdjustTargetMin",
 								"ISP_EXPOSURE_ATTR_S.stAuto.au8AdjustTargetMax",
-								"ISP_EXPOSURE_ATTR_S.stAuto.u16LowBinThr",
-								"ISP_EXPOSURE_ATTR_S.stAuto.u16HighBinThr",
 								"ISP_EXPOSURE_ATTR_S.stAuto.bEnableFaceAE",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8FaceTargetLuma",
 								"ISP_EXPOSURE_ATTR_S.stAuto.u8FaceWeight"

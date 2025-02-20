@@ -30,6 +30,7 @@ endif
 INCS = -I$(KERNEL_INC) -I$(MW_INC) -I$(ISP_INC) -I$(VI_INC) -Iinclude -I$(MW_PATH)/sample -I$(CVI_ISPD2_PATH)
 INCS += -I$(ISP_COMMON_DIR)/raw_dump/inc
 INCS += -I$(ISP_COMMON_DIR)/raw_dump/src
+INCS += -I$(ISP_COMMON_DIR)/raw_replay_offline
 
 OBJS = $(patsubst $(SDIR)/%.cpp, $(TMP_FOLDER)/%.o, $(wildcard $(SDIR)/*.cpp))
 COBJS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.o, $(wildcard $(SDIR)/*.c))
@@ -71,10 +72,12 @@ REQUIRES = cvi_common cvi_sample cvi_vdec cvi_misc
 MW_LIBS = $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs --define-variable=mw_dir=$(MW_PATH) $(REQUIRES))
 
 LIBS += $(MW_LIBS) -latomic
-LIBS += -lcvi_bin -lcvi_bin_isp -lsns_full -lini
-LIBS += -ljson-c -lcvi_ispd2
+LIBS += -lcvi_bin -lsns_full -lini
+LIBS += -lcvi_ispd2
 LIBS += -lraw_dump
+LIBS += -lraw_replay_offline
 LIBS += -lteaisp -lbmlib -lbmrt
+LIBS += -lcvi_json-c
 
 LOCAL_CFLAGS = $(DEFS) $(INCS) -DSDK_VER=$(SDK_VER)
 LOCAL_CFLAGS += -MMD -MP

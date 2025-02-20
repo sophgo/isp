@@ -483,9 +483,9 @@ static CVI_S32 CVI_ISPD2_Dump_GetFileName(const TFrameData *pstFrameData, CVI_CH
 
 static CVI_S32 CVI_ISPD2_Dump_saveLogToFile(TFrameData *ptFrameData, CVI_CHAR *pFilePath)
 {
-	JSONObject *pstJsonObj = json_object_new_string((char *)ptFrameData->pu8AWBLogBuffer);
-	const CVI_CHAR *pJsonObjContent = json_object_get_string(pstJsonObj);
-	CVI_U32	u32ContentLength = json_object_get_string_len(pstJsonObj);
+	JSONObject *pstJsonObj = ISPD2_json_object_new_string((char *)ptFrameData->pu8AWBLogBuffer);
+	const CVI_CHAR *pJsonObjContent = ISPD2_json_object_get_string(pstJsonObj);
+	CVI_U32	u32ContentLength = ISPD2_json_object_get_string_len(pstJsonObj);
 	CVI_CHAR chPathName[FILE_NAME_LENGTH];
 
 	snprintf((char *)chPathName, FILE_NAME_LENGTH, "%s-awblog.txt", (char *)pFilePath);
@@ -517,9 +517,9 @@ static CVI_S32 CVI_ISPD2_Dump_SaveBinToFile(TISPDeviceInfo *ptDevInfo, CVI_CHAR 
 static CVI_S32 CVI_ISPD2_Dump_saveRawInfoToFile(TFrameData *ptFrameData, CVI_CHAR *pFilePath)
 {
 	CVI_CHAR chPathName[FILE_NAME_LENGTH];
-	struct json_object *pstJsonObj = json_object_new_string((char *)ptFrameData->pu8RawInfo);
-	const CVI_CHAR *pJsonObjContent = json_object_get_string(pstJsonObj);
-	CVI_U32	u32ContentLength = json_object_get_string_len(pstJsonObj);
+	JSONObject *pstJsonObj = ISPD2_json_object_new_string((char *)ptFrameData->pu8RawInfo);
+	const CVI_CHAR *pJsonObjContent = ISPD2_json_object_get_string(pstJsonObj);
+	CVI_U32	u32ContentLength = ISPD2_json_object_get_string_len(pstJsonObj);
 	CVI_S32 ret = CVI_SUCCESS;
 
 	snprintf((char *)chPathName, FILE_NAME_LENGTH, "%s.txt", (char *)pFilePath);
@@ -591,9 +591,9 @@ static CVI_S32 CVI_ISPD2_Dump_GenerateYUVFile(TFrameData *ptFrameData, CVI_CHAR 
 			ptYUVHeader->pixelFormat == 13 ? achImgFormat[0] : achImgFormat[1]);
 	}
 
-	struct json_object *pstJsonObj = json_object_new_string((char *)achReadMeContent);
-	const CVI_CHAR *pJsonObjContent = json_object_get_string(pstJsonObj);
-	CVI_U32	u32ContentLength = json_object_get_string_len(pstJsonObj);
+	JSONObject *pstJsonObj = ISPD2_json_object_new_string((char *)achReadMeContent);
+	const CVI_CHAR *pJsonObjContent = ISPD2_json_object_get_string(pstJsonObj);
+	CVI_U32	u32ContentLength = ISPD2_json_object_get_string_len(pstJsonObj);
 
 	if (CVI_ISPD2_Dump_WriteInfoTofile(chPathName, pJsonObjContent, u32ContentLength) != CVI_SUCCESS) {
 		printf("readme file create fail!\n");
@@ -747,7 +747,7 @@ static CVI_S32 CVI_ISPD2_Dump_GetData(const TISPDaemon2Info *ptObject, const cha
 	} while (u32ReadOffset < u32BufInSize);
 
 	ISPD2_json_object_put(pJsonObj);
-	json_tokener_free(pJsonTok);
+	ISPD2_json_tokener_free(pJsonTok);
 
 	return CVI_SUCCESS;
 }

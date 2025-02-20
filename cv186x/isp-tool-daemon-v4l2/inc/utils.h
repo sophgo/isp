@@ -1,7 +1,7 @@
 #ifndef _ISP_TOOL_DAEMON_V4L2_UTILS_H_
 #define _ISP_TOOL_DAEMON_V4L2_UTILS_H_
 
-#include "json-c/json.h"
+#include "cvi_json.h"
 
 #define MAX_BNR_MODEL_LIST_PATH_LEN 128
 #define MAX_VC_JSON_PATH_LEN 128
@@ -92,7 +92,7 @@ typedef struct {
 	VIDEO_SRC_CFG *pa_video_src_cfg;
 } RTSP_CFG;
 
-int get_json_object_from_file(const char *json_path, struct json_object **json_obj);
+int get_json_object_from_file(const char *json_path, struct cvi_json_object **json_obj);
 
 int init_rtsp_from_json(const char *json_path, RTSP_CFG *p_rtsp_cfg);
 void deinit_rtsp_from_json(RTSP_CFG *p_rtsp_cfg);

@@ -36,6 +36,7 @@ typedef struct {
 	CVI_U8				u8ClientCount;
 	TISPD2HandlerInfo	tHandlerInfo;
 	TISPDeviceInfo		tDeviceInfo;
+	CVI_S32				uart_fd;
 } TISPDaemon2Info;
 
 // -----------------------------------------------------------------------------

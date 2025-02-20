@@ -176,4 +176,16 @@ typedef struct _I2C_DEVICE {
 	CVI_U16 startAddr;
 	CVI_U16 length;
 } I2C_DEVICE;
+
+typedef struct _SPI_DEVICE {
+	CVI_S32 fd;
+	CVI_U8 num;
+	CVI_U8 csn;
+	CVI_U16 lenTX;
+	CVI_U16 lenRX;
+	CVI_U32 mode;
+	CVI_U32 speed;
+	CVI_U8 bits;
+} SPI_DEVICE;
+
 #endif // _CVI_ISPD2_CALLBACK_FUNCS_APPS_DEFINE_H_

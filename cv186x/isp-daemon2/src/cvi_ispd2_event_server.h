@@ -35,4 +35,9 @@ CVI_S32 CVI_ISPD2_ES_CreateService(TISPDaemon2Info *ptObject, uint16_t u16Servic
 CVI_S32 CVI_ISPD2_ES_RunService(TISPDaemon2Info *ptObject);
 CVI_S32 CVI_ISPD2_ES_DestoryService(TISPDaemon2Info *ptObject);
 
+// ---------------------------- uart service API---------------------------------
+CVI_S32 CVI_ISPD2_ES_CreateService_Uart(TISPDaemon2Info *ptObject);
+CVI_S32 CVI_ISPD2_ES_RunService_Uart(TISPDaemon2Info *ptObject);
+CVI_S32 CVI_ISPD2_ES_DestoryService_Uart(TISPDaemon2Info *ptObject);
+
 #endif // _CVI_ISPD2_EVENT_SERVER_H_

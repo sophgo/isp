@@ -294,9 +294,6 @@ typedef struct _SAE_INFO {
 	CVI_S16 s16SmoothBvStepEntry[AE_MAX_WDR_FRAME_NUM];
 	CVI_S16 s16ConvBvStepEntry[AE_MAX_WDR_FRAME_NUM];
 	CVI_S16 s16lumaBvStepEntry[AE_MAX_WDR_FRAME_NUM];
-	CVI_S16 s16WindowBvStepEntry;
-	CVI_S16	s16LumaReduceBvStepEntry;
-	CVI_U8	u8BvStepWeight[AE_MAX_WDR_FRAME_NUM];
 	CVI_U8	u8LumaReduceWeight[AE_MAX_WDR_FRAME_NUM];
 	CVI_S16	s16PreBvEntry[AE_MAX_WDR_FRAME_NUM];
 	CVI_S16 s16AssignEVBIAS[AE_MAX_WDR_FRAME_NUM];
@@ -423,8 +420,6 @@ typedef struct _SAE_INFO {
 	CVI_FLOAT	fExpTimeAccu;
 	CVI_BOOL	bEnableISPDgainCompensation;
 	CVI_U16	u16FrameAvgLuma[AE_MAX_WDR_FRAME_NUM];
-	CVI_U16 u16ROILuma[AE_MAX_WDR_FRAME_NUM];
-	CVI_U16	u16ROIWeightThr;
 	CVI_U8	u8SensorPeriod;
 	CVI_U8	u8SensorRunInterval;
 	CVI_U8	u8AERunInterval;
@@ -678,7 +673,6 @@ CVI_U32 AE_LimitManualAGain(CVI_U8 sID, CVI_U32 AGain);
 CVI_U32 AE_LimitManualDGain(CVI_U8 sID, CVI_U32 DGain);
 CVI_U32 AE_LimitManualISPDGain(CVI_U8 sID, CVI_U32 ISPDGain);
 void AE_SetWDRLEOnly(CVI_U8 sID, CVI_BOOL wdrLEOnly);
-void AE_SetMeterMode(CVI_U8 sID, ISP_AE_METER_MODE_E meterMode);
 void AE_GetWDRSETimeRange(CVI_U8 sID, CVI_U32 *minTime, CVI_U32 *maxTime);
 CVI_BOOL AE_IsWDRMode(CVI_U8 sID);
 

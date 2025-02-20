@@ -20,10 +20,10 @@ all:
 	@cd $(ISP_3A_DIR); $(MAKE) all;
 	@cd isp; $(MAKE) all;
 	@cd teaisp; $(MAKE) all;
-	@cd isp_bin; $(MAKE) all;
 	@cd $(ISP_COMMON_DIR)/toolJsonGenerator; ./generate_toolJson.sh $(shell echo $(CHIP_ARCH) | tr A-Z a-z)
 	@cd isp-daemon2; $(MAKE) -j4; $(MAKE) install;
 	@cd $(ISP_COMMON_DIR)/raw_replay; $(MAKE) all;
+	@cd $(ISP_COMMON_DIR)/raw_replay_offline; $(MAKE) all;
 	@cd $(ISP_COMMON_DIR)/raw_dump; $(MAKE) all;
 ifeq ($(V4L2_ISP_ENABLE),1)
 	@cd v4l2_adapter; $(MAKE) all;
@@ -54,10 +54,10 @@ clean:
 	@cd isp-daemon2; $(MAKE) clean;
 	@cd isp; $(MAKE) clean;
 	@cd teaisp; $(MAKE) clean;
-	@cd isp_bin; $(MAKE) clean;
 	@cd $(ISP_3A_DIR); $(MAKE) clean;
 	@cd isp_algo; $(MAKE) clean;
 	@cd $(ISP_COMMON_DIR)/raw_replay; $(MAKE) clean;
+	@cd $(ISP_COMMON_DIR)/raw_replay_offline; $(MAKE) clean;
 	@cd $(ISP_COMMON_DIR)/raw_dump; $(MAKE) clean;
 ifeq ($(V4L2_ISP_ENABLE),1)
 	@cd v4l2_adapter; $(MAKE) clean;

@@ -24,7 +24,7 @@ then
     MW_INCLUDE_PATH=${CUR_PATH}/../../../../../$MW_VER/include
     ISP_INCLUDE_PATH=${CUR_PATH}/../../include/$CHIP_ID
     RPCJSON_PATH=${CUR_PATH}/../../$CHIP_ID/isp-daemon2
-    OUTPUT_PATH=${CUR_PATH}/../../$CHIP_ID/isp-daemon2/src/
+    OUTPUT_PATH=${CUR_PATH}/../../$CHIP_ID/isp-daemon2/json_struct/
 else
     MW_INCLUDE_PATH=${CUR_PATH}/../../../../../$MW_VER/include
     ISP_INCLUDE_PATH=${CUR_PATH}/../../include/$CHIP_ID
