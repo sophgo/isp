@@ -22,17 +22,21 @@
 // #include "isp_tun_buf_ctrl.h"
 #include "isp_gamma_ctrl.h"
 
+int g_isp_debug_level = CLOG_LVL_ERROR;
+
 void isp_dbg_init(void)
 {
 	if (access("/mnt/sd/enable_isplog.txt", F_OK) == 0) {
-		clog_set_level(CLOG_LVL_DEBUG);
 		clog_file_enable();
+		g_isp_debug_level = CLOG_LVL_DEBUG;
 	}
 }
 
 void isp_dbg_deinit(void)
 {
-
+	if (access("/mnt/sd/enable_isplog.txt", F_OK) == 0) {
+		clog_file_disable();
+	}
 }
 
 CVI_U32 isp_dbg_get_time_diff_us(const struct timeval *pre, const struct timeval *cur)
@@ -42,8 +46,8 @@ CVI_U32 isp_dbg_get_time_diff_us(const struct timeval *pre, const struct timeval
 
 void CVI_DEBUG_SetDebugLevel(int level)
 {
-	clog_set_level(level);
-	ISP_LOG_INFO("set log level = %d\n", level);
+	g_isp_debug_level = level;
+	printf("set log level = %d\n", level);
 }
 
 CVI_S32 isp_dbg_dumpFrameRawInfoToFile(VI_PIPE ViPipe, FILE *fp)

@@ -1,11 +1,13 @@
 {
 	"ISP_AWB_ATTR_S": {
 		"enAlgType": 1,
-		"u8RGStrength": 1,
-		"u8BGStrength": 1,
 		"u16ZoneSel": 1,
+		"enWdrStsMode": 1,
 		"u8ZoneRadius": 1,
 		"as32CurvePara": 2
+	},
+	"ISP_WB_ATTR_S": {
+		"enWdrStsMode": 1
 	},
 	"@ISP_NR_ATTR_S": {
 		"NoiseSuppressStrMode": 1

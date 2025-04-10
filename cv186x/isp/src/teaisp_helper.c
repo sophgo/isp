@@ -80,3 +80,11 @@ CVI_S32 teaisp_bnr_set_api_info(VI_PIPE ViPipe, void *model, void *param, int is
 	}
 }
 
+CVI_S32 teaisp_bnr_get_model_type(VI_PIPE ViPipe, void *model_type)
+{
+	if (__instance) {
+		return __instance->teaisp_bnr_get_model_type(ViPipe, model_type);
+	} else {
+		return CVI_FAILURE;
+	}
+}

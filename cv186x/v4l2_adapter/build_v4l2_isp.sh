@@ -274,3 +274,14 @@ cp ${ISP_V4L2_SRC_PATH}/isp-tool-daemon-v4l2/README.md.release ${DEB_INSTALL_DEV
 dpkg -b $DEB_DEV_DIR $DEB_DEV_PATH
 dpkg -c $DEB_DEV_PATH
 
+# tar the package
+cd $DEB_PREFIX_DIR
+
+TAR_DIR=$(basename ${DEB_DIR}_arm64)
+test -d $TAR_DIR && rm -rf $TAR_DIR
+test -f ${TAR_DIR}.tar.gz && rm -rf ${TAR_DIR}.tar.gz
+
+cp -r ${DEB_DIR} $TAR_DIR
+rm -rf $TAR_DIR/DEBIAN
+tar -czvf ${TAR_DIR}.tar.gz ${TAR_DIR}
+cd $ORIGINAL_LOCATION

@@ -6,6 +6,7 @@
  *
  */
 
+#include <errno.h>
 #include "cvi_json_struct_comm.h"
 #include "string.h"
 #include "stdbool.h"
@@ -332,13 +333,19 @@ void CVI_FLOAT_JSON(int r_w_flag, JSON *j, char *key, CVI_FLOAT *value)
 	if (r_w_flag == R_FLAG) {
 		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
 			double temp;
-			//cvi_json_type cvi_type = cvi_json_object_get_type(obj);
+			cvi_json_type cvi_type = cvi_json_object_get_type(obj);
 
-			//if (cvi_type != cvi_json_type_double) {
-			//	JSON_PRINT_ERR_DATA_TYPE(key);
-			//	return;
-			//}
+			if (cvi_type != cvi_json_type_double &&
+				cvi_type != cvi_json_type_string) {
+				JSON_PRINT_ERR_DATA_TYPE(key);
+				return;
+			}
+			errno = 0;
 			temp = cvi_json_object_get_double(obj);
+			if (errno != 0) {
+				JSON_PRINT_ERR_DATA_TYPE(key);
+				return;
+			}
 			JSON_CHECK_RANGE_OF_DOUBLE(key, &temp, CVI_FLOAT_MIN, CVI_FLOAT_MAX);
 			*value = temp;
 		} else {

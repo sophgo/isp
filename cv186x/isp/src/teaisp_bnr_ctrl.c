@@ -267,7 +267,7 @@ static void *bnr_work_thread(void *arg)
 				runtime->is_teaisp_bnr_running = CVI_FALSE;
 			}
 
-			if (!bnr_attr->enable && runtime->is_teaisp_bnr_enable) {
+			if (runtime->is_teaisp_bnr_enable) {
 #ifdef ENABLE_PRELOAD_BNR_MODEL
 				bnr_unload_all_bmodel(ViPipe);
 #endif
@@ -485,7 +485,7 @@ static CVI_S32 teaisp_bnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *alg
 	runtime->bnr_param_in.iso = algoResult->u32PreBlcIso;
 	runtime->bnr_param_in.NoiseLevel = runtime->bnr_attr.NoiseLevel;
 	runtime->bnr_param_in.NoiseHiLevel = runtime->bnr_attr.NoiseHiLevel;
-
+	runtime->fTnrComRatio = algoResult->fTnrComRatio[ISP_CHANNEL_LE];
 	runtime->process_updated = CVI_TRUE;
 
 	return ret;
@@ -522,6 +522,12 @@ static CVI_S32 teaisp_bnr_ctrl_postprocess(VI_PIPE ViPipe)
 		return CVI_FAILURE;
 	}
 
+	ISP_CTX_S * pstIspCtx = NULL;
+
+	ISP_GET_CTX(ViPipe, pstIspCtx);
+	pstIspCtx->enModelType = TEAISP_MODEL_NONE;
+	teaisp_bnr_get_model_type(ViPipe, &pstIspCtx->enModelType);
+
 	struct cvi_vip_isp_fe_cfg *pre_fe_addr = get_pre_fe_tuning_buf_addr(ViPipe);
 	CVI_U8 tun_idx = get_tuning_buf_idx(ViPipe);
 
@@ -550,7 +556,11 @@ static CVI_S32 teaisp_bnr_ctrl_postprocess(VI_PIPE ViPipe)
 		temp_f = runtime->bnr_param_out.slope;
 		bnr_cfg->coeff_a = *temp;
 
-		temp_f = runtime->bnr_param_out.intercept;
+		if (pstIspCtx->enModelType == TEAISP_MODEL_MOTION) {
+			temp_f = runtime->fTnrComRatio;
+		} else {
+			temp_f = runtime->bnr_param_out.intercept;
+		}
 		bnr_cfg->coeff_b = *temp;
 
 		temp_f = (CVI_FLOAT) (255 - runtime->bnr_attr.FilterMotionStr2D) / 255.0;
@@ -677,8 +687,9 @@ CVI_S32 teaisp_bnr_ctrl_set_model(VI_PIPE ViPipe, const TEAISP_BNR_MODEL_INFO_S 
 		TEAISP_BNR_MODEL_S *prev = list_entry(handle->model_info_head.prev, TEAISP_BNR_MODEL_S, list);
 
 		if (prev->model_info.enterISO >= pstModelInfo->enterISO) {
-			ISP_LOG_ASSERT("prev enterISO: %d, curr enterISO: %d, please keep add in order\n",
+			ISP_LOG_ERR("prev enterISO: %d, curr enterISO: %d, please keep add in order\n",
 				prev->model_info.enterISO, pstModelInfo->enterISO);
+			ISP_LOG_ASSERT(0);
 		}
 	}
 

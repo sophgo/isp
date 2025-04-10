@@ -423,7 +423,6 @@ void AWB_GetQueryInfo(CVI_U8 sID, ISP_WB_Q_INFO_S *pstWB_Q_Info);
 void AWB_SetManualGain(CVI_U8 sID, CVI_U16 RGain, CVI_U16 GGain, CVI_U16 BGain);
 void AWB_SetByPass(CVI_U8 sID, CVI_BOOL enalbe);
 void AWB_SetCurveBoundary(CVI_U8 sID, CVI_U16 lowCT, CVI_U16 highCT);
-void AWB_SetRGStrength(CVI_U8 sID, CVI_U8 RG, CVI_U8 BG);
 void AWB_GetCurveBoundary(CVI_U8 sID, sWBBoundary *psWBBound);
 void AWB_GetCurveRange(CVI_U8 sID, sWBCurveInfo *psWBCurve);
 void AWB_SetCalibration(CVI_U8 sID, const ISP_AWB_Calibration_Gain_S *pstWBCali);

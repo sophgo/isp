@@ -23,6 +23,7 @@ CVI_S32 teaisp_bnr_set_driver_deinit_wrap(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_driver_start_wrap(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_driver_stop_wrap(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, int is_new);
+CVI_S32 teaisp_bnr_get_model_type_wrap(VI_PIPE ViPipe, void *model_type);
 
 #ifdef __cplusplus
 #if __cplusplus

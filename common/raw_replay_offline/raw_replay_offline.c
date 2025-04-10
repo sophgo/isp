@@ -42,14 +42,15 @@ typedef enum {
 typedef struct {
 	RAW_REPLAY_INFO *pRawHeader;	//pRawHeader[1]: n frame have the same one info (which load from same file)
 	CVI_U16 *pData16bit;
-	CVI_U8 *pData12bit;
+	CVI_U8 *pData12bit_le;
+	CVI_U8 *pData12bit_se;
 	CVI_U32 size16bit; // CVI_S32 size;
 	CVI_U32 size12bit;
 	FILE *rawfp;
 
 	VI_PIPE ViPipe;
 	VB_POOL PoolID;
-	VB_BLK blk;
+	VB_BLK blk[2];
 	CVI_U32 u32BlkSize;
 	CVI_U64 u64PhyAddr[2];
 	CVI_U8 *pu8VirAddr[2];
@@ -67,6 +68,7 @@ static RAW_REPLAY_BOARD_CTX_S *pRawReplayBoardCtx;
 static CVI_S32 load_rawFileName_from_path(char *boardPath, char *rawFileName, int maxFileNameLen);
 static CVI_S32 load_raw_info_from_file(char *boardPath, char *rawFileName, RAW_REPLAY_INFO *pRawInfo);
 static void *raw_replay_offline_thread(void *arg);
+static CVI_S32 creat_vbpool(RAW_REPLAY_INFO *pRawInfo, CVI_U32 size12bit);
 
 CVI_S32 raw_replay_offline_init(char *boardPath)
 {
@@ -107,12 +109,22 @@ CVI_S32 raw_replay_offline_init(char *boardPath)
 		return CVI_FAILURE;
 	}
 	memset(pRawReplayBoardCtx->pData16bit, 0, sizeof(pRawReplayBoardCtx->size16bit));
-	pRawReplayBoardCtx->pData12bit = (CVI_U8 *) calloc(1, pRawReplayBoardCtx->size12bit);
-	if (pRawReplayBoardCtx->pData12bit == NULL) {
-		LOGOUT("pRawReplayBoardCtx->pData12bit calloc failed!\n");
+	pRawReplayBoardCtx->pData12bit_le = (CVI_U8 *) calloc(1, pRawReplayBoardCtx->size12bit);
+
+	if (pRawReplayBoardCtx->pData12bit_le == NULL) {
+		LOGOUT("pRawReplayBoardCtx->pData12bit_le calloc failed!\n");
 		return CVI_FAILURE;
 	}
-	memset(pRawReplayBoardCtx->pData12bit, 0, sizeof(pRawReplayBoardCtx->size12bit));
+	memset(pRawReplayBoardCtx->pData12bit_le, 0, sizeof(pRawReplayBoardCtx->size12bit));
+
+	if (pRawInfo->enWDR) {
+		pRawReplayBoardCtx->pData12bit_se = (CVI_U8 *) calloc(1, pRawReplayBoardCtx->size12bit);
+		if (pRawReplayBoardCtx->pData12bit_se == NULL) {
+			LOGOUT("pRawReplayBoardCtx->pData12bit_se calloc failed!\n");
+			return CVI_FAILURE;
+		}
+		memset(pRawReplayBoardCtx->pData12bit_se, 0, sizeof(pRawReplayBoardCtx->size12bit));
+	}
 
 	// Open RawFile to Load Data
 	snprintf(rawFilePath, PATH_MAX_LEN, "%s/%s.raw", boardPath, rawFileName);
@@ -127,6 +139,9 @@ CVI_S32 raw_replay_offline_init(char *boardPath)
 	pRawReplayBoardCtx->isRawReplayReady = CVI_FALSE;
 	pRawReplayBoardCtx->timingAttr.bEnable = CVI_FALSE;
 	pRawReplayBoardCtx->timingAttr.s32FrmRate = 25;
+
+	if (creat_vbpool(pRawInfo, pRawReplayBoardCtx->size12bit) != CVI_SUCCESS)
+		return CVI_FAILURE;
 
 	return CVI_SUCCESS;
 }
@@ -143,8 +158,11 @@ void raw_replay_offline_uninit(void)
 	if (pRawReplayBoardCtx->pData16bit != NULL) {
 		free(pRawReplayBoardCtx->pData16bit);
 	}
-	if (pRawReplayBoardCtx->pData12bit != NULL) {
-		free(pRawReplayBoardCtx->pData12bit);
+	if (pRawReplayBoardCtx->pData12bit_le != NULL) {
+		free(pRawReplayBoardCtx->pData12bit_le);
+	}
+	if (pRawReplayBoardCtx->pData12bit_se != NULL) {
+		free(pRawReplayBoardCtx->pData12bit_se);
 	}
 	if (pRawReplayBoardCtx->rawfp != NULL) {
 		fclose(pRawReplayBoardCtx->rawfp);
@@ -191,9 +209,19 @@ CVI_S32 stop_raw_replay_offline(void)
 		if (s32Ret != CVI_SUCCESS) {
 			LOGOUT("Error: CVI_SYS_Munmap Failed!\n");
 		}
-		s32Ret = CVI_VB_ReleaseBlock(pRawReplayBoardCtx->blk);
+		s32Ret = CVI_VB_ReleaseBlock(pRawReplayBoardCtx->blk[0]);
 		if (s32Ret != CVI_SUCCESS) {
 			LOGOUT("Error: CVI_VB_ReleaseBlock Failed!\n");
+		}
+		if (pRawReplayBoardCtx->pRawHeader->enWDR) {
+			s32Ret = CVI_SYS_Munmap(pRawReplayBoardCtx->pu8VirAddr[1], pRawReplayBoardCtx->u32BlkSize);
+			if (s32Ret != CVI_SUCCESS) {
+				LOGOUT("Error: CVI_SYS_Munmap Failed!\n");
+			}
+			s32Ret = CVI_VB_ReleaseBlock(pRawReplayBoardCtx->blk[1]);
+			if (s32Ret != CVI_SUCCESS) {
+				LOGOUT("Error: CVI_VB_ReleaseBlock Failed!\n");
+			}
 		}
 		s32Ret = CVI_VB_DestroyPool(pRawReplayBoardCtx->PoolID);
 		if (s32Ret != CVI_SUCCESS) {
@@ -237,30 +265,46 @@ static CVI_S32 load_rawFileName_from_path(char *path, char *rawFileName, int max
 	return CVI_SUCCESS;
 }
 
-static CVI_S32 Bayer_16bit_2_12bit(CVI_U16 *Buffer16bit, CVI_U8 *Buffer12bit,
-						CVI_U16 width, CVI_U16 height, CVI_U16 stride)
+static CVI_S32 Bayer_16bit_2_12bit(CVI_U16 *Buffer16bit, CVI_U8 *Buffer12bit_le, CVI_U8 *Buffer12bit_se,
+						CVI_U16 width, CVI_U16 height)
 {
 	CVI_U32 r, c;
 	CVI_U16 pixel1, pixel2;
-	CVI_U8 *p = NULL;
+	CVI_U8 *p_le,  *p_se;
+	CVI_U16 frame_width = width;
 
-	if (Buffer16bit == NULL || Buffer12bit == NULL) {
+	if (Buffer12bit_se)
+		frame_width = 2 * width;
+
+	if (Buffer16bit == NULL || Buffer12bit_le == NULL) {
 		LOGOUT("pointer is NULL\n");
 		return CVI_FAILURE;
 	}
-	p = Buffer12bit;
+
+	p_le = Buffer12bit_le;
+	p_se = Buffer12bit_se;
+
 	for (r = 0; r < height; r++) {
 		for (c = 0; c < width; c += 2) {
 			pixel1 = *Buffer16bit;
 			pixel2 = *(Buffer16bit + 1);
 
-			*p = (pixel1 >> 4) & 0xFF;
-			*(p + 1) = (pixel2 >> 4) & 0xFF;
-			*(p + 2) = ((pixel1 & 0x0F) << 4) | (pixel2 & 0x0F);
+			*p_le = (pixel1 >> 4) & 0xFF;
+			*(p_le + 1) = (pixel2 >> 4) & 0xFF;
+			*(p_le + 2) = ((pixel2 & 0x0F) << 4) | (pixel1 & 0x0F);
 			Buffer16bit += 2;
-			p += 3;
+			p_le += 3;
 		}
-		Buffer16bit += (CVI_U16)((stride - width) * 2);
+		for (c = width; c < frame_width; c += 2) {
+			pixel1 = *Buffer16bit;
+			pixel2 = *(Buffer16bit + 1);
+
+			*p_se = (pixel1 >> 4) & 0xFF;
+			*(p_se + 1) = (pixel2 >> 4) & 0xFF;
+			*(p_se + 2) = ((pixel2 & 0x0F) << 4) | (pixel1 & 0x0F);
+			Buffer16bit += 2;
+			p_se += 3;
+		}
 	}
 	return CVI_SUCCESS;
 }
@@ -268,13 +312,17 @@ static CVI_S32 Bayer_16bit_2_12bit(CVI_U16 *Buffer16bit, CVI_U8 *Buffer12bit,
 // load 1 frame data(12bit) from the raw file(16bit)
 static CVI_S32 load_one_frame_data_from_file(FILE *fp, RAW_REPLAY_INFO *pRawInfo, CVI_S32 curFrame)
 {
+	static CVI_S32 pre_frame = -1;
+
+	if (pre_frame == curFrame) {
+		return CVI_SUCCESS;
+	}
+	pre_frame = curFrame;
+
 	long offset = (long)curFrame * pRawReplayBoardCtx->size16bit;
 	CVI_U64 frameRead;
 
 	fseek(fp, offset, SEEK_SET);
-	// Reset pData
-	memset(pRawReplayBoardCtx->pData16bit, 0, sizeof(pRawReplayBoardCtx->size16bit));
-	memset(pRawReplayBoardCtx->pData12bit, 0, sizeof(pRawReplayBoardCtx->size12bit));
 
 	// Read and Transform 16bit Data to 12bit
 	frameRead = fread(pRawReplayBoardCtx->pData16bit, 1, pRawReplayBoardCtx->size16bit, fp);
@@ -289,8 +337,8 @@ static CVI_S32 load_one_frame_data_from_file(FILE *fp, RAW_REPLAY_INFO *pRawInfo
 		}
 		return CVI_FAILURE;
 	}
-	Bayer_16bit_2_12bit(pRawReplayBoardCtx->pData16bit, pRawReplayBoardCtx->pData12bit,
-						pRawInfo->width, pRawInfo->height, pRawInfo->width);
+	Bayer_16bit_2_12bit(pRawReplayBoardCtx->pData16bit, pRawReplayBoardCtx->pData12bit_le,
+					pRawReplayBoardCtx->pData12bit_se, pRawInfo->width, pRawInfo->height);
 	return CVI_SUCCESS;
 }
 
@@ -373,10 +421,20 @@ static CVI_S32 load_raw_info_from_file(char *boardPath, char *rawFileName, RAW_R
 		goto FAIL;
 	}
 	sscanf(strstr(rawFileName, "-frame="), "-frame=%d", &pRawInfo->numFrame);
+
+	// deal the wdr
+	if (pRawInfo->enWDR) {
+		pRawInfo->width /= 2;
+	}
+
 	pRawInfo->curFrame = 0;
 	pRawInfo->pixFormat = 0;		// PixelFormat: 0 raw, !0 yuv(22 yuyv422,...)
-	pRawReplayBoardCtx->size16bit = (CVI_U32) pRawInfo->width * pRawInfo->height * 2;		// 16bit RawSize
+	pRawReplayBoardCtx->size16bit = (CVI_U32) pRawInfo->width * pRawInfo->height * 2;	// 16bit RawSize
 	pRawReplayBoardCtx->size12bit = (CVI_U32) pRawInfo->width * pRawInfo->height * 1.5;	// 12bit RawSize
+
+	if (pRawInfo->enWDR) {
+		pRawReplayBoardCtx->size16bit *= 2;
+	}
 
 	// Load Raw Info from TXT File
 	snprintf(rawInfoFile, PATH_MAX_LEN, "%s/%s.txt", boardPath, rawFileName);
@@ -567,58 +625,61 @@ FAIL:
 	return CVI_FAILURE;
 }
 
-// put one frame raw data into vbpool
-static CVI_S32 set_1_frame_raw_data_into_vbpool(RAW_REPLAY_INFO *pRawInfo,
-						CVI_U8 *Buffer12bit, CVI_U32 size12bit, CVI_S32 curFrame)
+static CVI_S32 creat_vbpool(RAW_REPLAY_INFO *pRawInfo, CVI_U32 size12bit)
 {
 	CVI_U64 tmpPhyAddr;
 	VB_POOL_CONFIG_S vbCfg;
 
-	if (curFrame == 0) {
-		if (pRawReplayBoardCtx->pRawHeader == NULL) {
-			LOGOUT("Abort: pRawReplayBoardCtx->pRawHeader == NULL\n");
+	LOGOUT("creat vbpool...\n");
+
+	if (pRawReplayBoardCtx->pRawHeader == NULL) {
+		LOGOUT("Abort: pRawReplayBoardCtx->pRawHeader == NULL\n");
+		abort();
+	}
+
+	vbCfg.u32BlkSize = size12bit;
+	vbCfg.u32BlkCnt = pRawInfo->enWDR ? 2 : 1;
+	vbCfg.enRemapMode = VB_REMAP_MODE_CACHED;
+	snprintf(vbCfg.acName, MAX_VB_POOL_NAME_LEN, "%s", "raw_replay_offline_vb");
+	pRawReplayBoardCtx->u32BlkSize = size12bit;
+
+	if (pRawInfo->enWDR)
+		vbCfg.u32BlkSize *= 2;
+
+	if (pRawReplayBoardCtx->PoolID == 0) {
+		pRawReplayBoardCtx->PoolID = CVI_VB_CreatePool(&vbCfg);
+		if (pRawReplayBoardCtx->PoolID == VB_INVALID_POOLID) {
+			LOGOUT("Abort: pRawReplayBoardCtx->PoolID == VB_INVALID_POOLID\n");
 			abort();
 		}
 
-		vbCfg.u32BlkSize = size12bit;
-		vbCfg.u32BlkCnt = 1;
-		vbCfg.enRemapMode = VB_REMAP_MODE_CACHED;
-		snprintf(vbCfg.acName, MAX_VB_POOL_NAME_LEN, "%s", "raw_replay_offline_vb");
-		pRawReplayBoardCtx->u32BlkSize = vbCfg.u32BlkSize;
-
-		if (pRawReplayBoardCtx->PoolID == 0) {
-			pRawReplayBoardCtx->PoolID = CVI_VB_CreatePool(&vbCfg);
-			if (pRawReplayBoardCtx->PoolID == VB_INVALID_POOLID) {
-				LOGOUT("Abort: pRawReplayBoardCtx->PoolID == VB_INVALID_POOLID\n");
-				abort();
-			}
-
-			pRawReplayBoardCtx->blk = CVI_VB_GetBlock(pRawReplayBoardCtx->PoolID, vbCfg.u32BlkSize);
-			tmpPhyAddr = CVI_VB_Handle2PhysAddr(pRawReplayBoardCtx->blk);
-			pRawReplayBoardCtx->u64PhyAddr[0] = tmpPhyAddr;
-			pRawReplayBoardCtx->pu8VirAddr[0] = (CVI_U8 *) CVI_SYS_MmapCache(tmpPhyAddr, vbCfg.u32BlkSize);
-			if (pRawInfo->enWDR || pRawInfo->pixFormat) {
-				pRawReplayBoardCtx->u64PhyAddr[1] =
-						pRawReplayBoardCtx->u64PhyAddr[0] + pRawReplayBoardCtx->u32BlkSize / 2;
-				pRawReplayBoardCtx->pu8VirAddr[1] =
-						pRawReplayBoardCtx->pu8VirAddr[0] + pRawReplayBoardCtx->u32BlkSize / 2;
-			}
-			LOGOUT("create vb pool cnt: %d, blksize: %d phyAddr: %lu\n", 1,
-						vbCfg.u32BlkSize, pRawReplayBoardCtx->u64PhyAddr[0]);
-		}
-	}
-	if (curFrame < pRawInfo->numFrame) {
+		pRawReplayBoardCtx->blk[0] = CVI_VB_GetBlock(pRawReplayBoardCtx->PoolID, size12bit);
+		tmpPhyAddr = CVI_VB_Handle2PhysAddr(pRawReplayBoardCtx->blk[0]);
+		pRawReplayBoardCtx->u64PhyAddr[0] = tmpPhyAddr;
+		pRawReplayBoardCtx->pu8VirAddr[0] = (CVI_U8 *) CVI_SYS_MmapCache(tmpPhyAddr, size12bit);
 		if (pRawInfo->enWDR || pRawInfo->pixFormat) {
-			memcpy(pRawReplayBoardCtx->pu8VirAddr[0], Buffer12bit, size12bit / 2);
-			memcpy(pRawReplayBoardCtx->pu8VirAddr[1], Buffer12bit + size12bit / 2, size12bit / 2);
-			CVI_SYS_IonFlushCache(pRawReplayBoardCtx->u64PhyAddr[0],
-						pRawReplayBoardCtx->pu8VirAddr[0], size12bit / 2);
+			pRawReplayBoardCtx->blk[1] = CVI_VB_GetBlock(pRawReplayBoardCtx->PoolID, size12bit);
+			tmpPhyAddr = CVI_VB_Handle2PhysAddr(pRawReplayBoardCtx->blk[1]);
+			pRawReplayBoardCtx->u64PhyAddr[1] = tmpPhyAddr;
+			pRawReplayBoardCtx->pu8VirAddr[1] = (CVI_U8 *) CVI_SYS_MmapCache(tmpPhyAddr, size12bit);
+		}
+		LOGOUT("create vb pool cnt: %d, blksize: %d phyAddr: %lu\n", 1,
+					vbCfg.u32BlkSize, pRawReplayBoardCtx->u64PhyAddr[0]);
+	}
+
+	return CVI_SUCCESS;
+}
+
+// put one frame raw data into vbpool
+static CVI_S32 set_1_frame_raw_data_into_vbpool(RAW_REPLAY_INFO *pRawInfo, CVI_U32 size12bit, CVI_S32 curFrame)
+{
+	if (curFrame < pRawInfo->numFrame) {
+		memcpy(pRawReplayBoardCtx->pu8VirAddr[0], pRawReplayBoardCtx->pData12bit_le, size12bit);
+		CVI_SYS_IonFlushCache(pRawReplayBoardCtx->u64PhyAddr[0], pRawReplayBoardCtx->pu8VirAddr[0], size12bit);
+		if (pRawInfo->enWDR || pRawInfo->pixFormat) {
+			memcpy(pRawReplayBoardCtx->pu8VirAddr[1], pRawReplayBoardCtx->pData12bit_se, size12bit);
 			CVI_SYS_IonFlushCache(pRawReplayBoardCtx->u64PhyAddr[1],
-						pRawReplayBoardCtx->pu8VirAddr[1], size12bit / 2);
-		} else {
-			memcpy(pRawReplayBoardCtx->pu8VirAddr[0], Buffer12bit, size12bit);
-			CVI_SYS_IonFlushCache(pRawReplayBoardCtx->u64PhyAddr[0],
-						pRawReplayBoardCtx->pu8VirAddr[0], size12bit);
+								pRawReplayBoardCtx->pu8VirAddr[1], size12bit);
 		}
 	} else {
 		LOGOUT("curFrame[%u] >= TotalFrame[%u]!\n", curFrame, pRawInfo->numFrame);
@@ -780,12 +841,7 @@ static void update_video_frame(VIDEO_FRAME_INFO_S *stVideoFrame, RAW_REPLAY_INFO
 	CVI_U8 mode = pRawInfo->enWDR;
 	//LOGOUT("wdrmode: %d, width: %d, height: %d\n", mode, pRawInfo->width, pRawInfo->height);
 
-	if (mode) {
-		stVideoFrame->stVFrame.u32Width = pRawInfo->width >> 1;
-	} else {
-		stVideoFrame->stVFrame.u32Width = pRawInfo->width;
-	}
-
+	stVideoFrame->stVFrame.u32Width = pRawInfo->width;
 	stVideoFrame->stVFrame.u32Height = pRawInfo->height;
 
 	stVideoFrame->stVFrame.s16OffsetLeft = stVideoFrame->stVFrame.s16OffsetTop =
@@ -842,7 +898,6 @@ static void send_replay_frame_2_vi(ISP_MWB_ATTR_S *pstMwbAttr,
 static void *raw_replay_offline_thread(void *arg)
 {
 	CVI_S32 s32Ret = CVI_SUCCESS;
-	VIDEO_FRAME_INFO_S stVideoFrame;
 	ISP_MWB_ATTR_S stMWBAttr;
 	ISP_EXP_INFO_S stExpInfo;
 	VI_DEV_TIMING_ATTR_S stTimingAttr;
@@ -873,18 +928,7 @@ static void *raw_replay_offline_thread(void *arg)
 		frameRate = pRawReplayBoardCtx->timingAttr.s32FrmRate;
 		gettimeofday(&timeLoad, NULL);
 
-		//Reload one Frame Data from Raw File
-		pRawReplayBoardCtx->rawReplayStatus = RAW_REPLAY_RELOAD;
-		load_one_frame_data_from_file(pRawReplayBoardCtx->rawfp, pRawReplayBoardCtx->pRawHeader, curFrame);
-		set_1_frame_raw_data_into_vbpool(pRawReplayBoardCtx->pRawHeader, pRawReplayBoardCtx->pData12bit,
-				pRawReplayBoardCtx->size12bit, curFrame);
-
-		// Update one Frame Data to VB
-		pRawReplayBoardCtx->rawReplayStatus = RAW_REPLAY_UPDATE;
-		update_video_frame(&stVideoFrame, pRawInfo);
-		pRawReplayBoardCtx->isRawReplayReady = CVI_TRUE;
-		send_replay_frame_2_vi(&stMWBAttr, &stExpInfo, &stVideoFrame);
-		pRawReplayBoardCtx->isRawReplayReady = CVI_FALSE;
+		replay_one_frame(pRawReplayBoardCtx->ViPipe, curFrame, &stMWBAttr, &stExpInfo);
 
 		// Refresh one Frame per frameRate
 		pRawReplayBoardCtx->rawReplayStatus = RAW_REPLAY_SLEEP;
@@ -908,6 +952,33 @@ static void *raw_replay_offline_thread(void *arg)
 	}
 	LOGOUT("/*** raw replay therad end ***/\n");
 	return NULL;
+}
+
+void replay_one_frame(VI_PIPE ViPipe, CVI_U32 curFrame, ISP_MWB_ATTR_S *stMWBAttr, ISP_EXP_INFO_S *stExpInfo)
+{
+	VIDEO_FRAME_INFO_S stVideoFrame;
+
+	pRawReplayBoardCtx->ViPipe = ViPipe;
+
+	//Reload one Frame Data from Raw File
+	pRawReplayBoardCtx->rawReplayStatus = RAW_REPLAY_RELOAD;
+	load_one_frame_data_from_file(pRawReplayBoardCtx->rawfp, pRawReplayBoardCtx->pRawHeader, curFrame);
+	set_1_frame_raw_data_into_vbpool(pRawReplayBoardCtx->pRawHeader, pRawReplayBoardCtx->size12bit, curFrame);
+
+	// Update one Frame Data to VB
+	pRawReplayBoardCtx->rawReplayStatus = RAW_REPLAY_UPDATE;
+	update_video_frame(&stVideoFrame, pRawReplayBoardCtx->pRawHeader);
+	pRawReplayBoardCtx->isRawReplayReady = CVI_TRUE;
+	send_replay_frame_2_vi(stMWBAttr, stExpInfo, &stVideoFrame);
+	pRawReplayBoardCtx->isRawReplayReady = CVI_FALSE;
+}
+
+CVI_U32 get_numFrames(void)
+{
+	if (pRawReplayBoardCtx) {
+		return pRawReplayBoardCtx->pRawHeader->numFrame;
+	}
+	return 0;
 }
 
 #if defined(__GNUC__) && defined(__riscv)

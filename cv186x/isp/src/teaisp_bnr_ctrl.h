@@ -49,6 +49,7 @@ struct teaisp_bnr_ctrl_runtime {
 	CVI_BOOL is_teaisp_bnr_running;
 	CVI_U32 u32CurrentISO;
 	ISP_VOID_PTR handle;
+	CVI_FLOAT fTnrComRatio;
 };
 
 CVI_S32 teaisp_bnr_ctrl_init(VI_PIPE ViPipe);

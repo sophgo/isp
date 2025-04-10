@@ -361,6 +361,31 @@ static void ISP_AWB_ALG_E_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_ALG_E *
 }
 
 // -----------------------------------------------------------------------------
+static void ISP_AWB_WDR_STS_E_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_WDR_STS_E *value)
+{
+	JSON *obj = 0;
+
+	if (r_w_flag == R_FLAG) {
+		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
+			int temp;
+
+			temp = cvi_json_object_get_int(obj);
+			JSON_CHECK_RANGE(key, &temp, WDR_STS_NORMAL, WDR_STS_BUTT);
+			*value = temp;
+		} else {
+			JSON_PRINT_ERR_NOT_EXIST(key);
+		}
+	} else {
+		obj = cvi_json_object_new_int(*value);
+		if (cvi_json_object_is_type(j, cvi_json_type_array)) {
+			cvi_json_object_array_add(j, obj);
+		} else {
+			cvi_json_object_object_add(j, key, obj);
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
 static void ISP_AWB_MULTI_LS_TYPE_E_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_MULTI_LS_TYPE_E *value)
 {
 	JSON *obj = 0;
@@ -3758,8 +3783,6 @@ static void ISP_AWB_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_ATTR_S
 	JSON_A(r_w_flag, CVI_U16, au16StaticWB, ISP_BAYER_CHN_NUM);
 	JSON_A(r_w_flag, CVI_S32, as32CurvePara, AWB_CURVE_PARA_NUM);
 	JSON(r_w_flag, ISP_AWB_ALG_TYPE_E, enAlgType);
-	JSON(r_w_flag, CVI_U8, u8RGStrength);
-	JSON(r_w_flag, CVI_U8, u8BGStrength);
 	JSON(r_w_flag, CVI_U16, u16Speed);
 	JSON(r_w_flag, CVI_U16, u16ZoneSel);
 	JSON(r_w_flag, CVI_U16, u16HighColorTemp);
@@ -3788,6 +3811,7 @@ void ISP_WB_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_WB_ATTR_S *data)
 	JSON(r_w_flag, ISP_MWB_ATTR_S, stManual);
 	JSON(r_w_flag, ISP_AWB_ATTR_S, stAuto);
 	JSON(r_w_flag, ISP_AWB_ALG_E, enAlgType);
+	JSON(r_w_flag, ISP_AWB_WDR_STS_E, enWdrStsMode);
 	JSON(r_w_flag, CVI_U8, u8DebugMode);
 
 	JSON_END(r_w_flag);
@@ -3950,6 +3974,8 @@ void ISP_AWB_ATTR_EX_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_ATTR_EX_S 
 	JSON_A(r_w_flag, CVI_U16, au16MultiCTWt, AWB_CT_BIN_NUM);
 	JSON(r_w_flag, CVI_BOOL, bFineTunEn);
 	JSON(r_w_flag, CVI_U8, u8FineTunStrength);
+	JSON_A(r_w_flag, CVI_U16, u16TargetCT, AWB_TARGET_RATIO_NUM);
+	JSON_A(r_w_flag, CVI_U8, u8TargetStrength, AWB_TARGET_RATIO_NUM);
 	JSON(r_w_flag, ST_ISP_AWB_INTERFERENCE_S, stInterference);
 	JSON(r_w_flag, ST_ISP_AWB_SKIN_S, stSkin);
 	JSON(r_w_flag, ST_ISP_AWB_SKY_S, stSky);

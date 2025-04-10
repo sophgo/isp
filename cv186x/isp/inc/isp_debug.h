@@ -26,79 +26,52 @@ void isp_dbg_init(void);
 void isp_dbg_deinit(void);
 CVI_U32 isp_dbg_get_time_diff_us(const struct timeval *pre, const struct timeval *cur);
 
+extern int g_isp_debug_level;
+
+#define ISP_DEBUG(level, ...) do { \
+	if (level <= g_isp_debug_level) { \
+		clog_output(level, CLOG_TAG, __func__, __LINE__, __VA_ARGS__); \
+	} \
+} while (0)
+
 #define IGNORE_LOG_DEBUG
+//#define IGNORE_LOG_INFO
+//#define IGNORE_LOG_NOTICE
+//#define IGNORE_LOG_WARNING
+//#define IGNORE_LOG_ERR
+//#define IGNORE_LOG_RAW
 
-#ifndef ISP_LOG_TAG
-#define ISP_LOG_ASSERT(...) clog_assert("isp", __VA_ARGS__)
-
+#define ISP_LOG_ASSERT(EXPR) CLOG_ASSERT(EXPR)
 #ifndef IGNORE_LOG_ERR
-#define ISP_LOG_ERR(...) clog_error("isp", __VA_ARGS__)
+#define ISP_LOG_ERR(...) ISP_DEBUG(CLOG_LVL_ERROR, __VA_ARGS__)
 #else
 #define ISP_LOG_ERR(...)
 #endif // IGNORE_LOG_ERR
-
 #ifndef IGNORE_LOG_WARNING
-#define ISP_LOG_WARNING(...) clog_warn("isp", __VA_ARGS__)
+#define ISP_LOG_WARNING(...) ISP_DEBUG(CLOG_LVL_WARN, __VA_ARGS__)
 #else
 #define ISP_LOG_WARNING(...)
 #endif // IGNORE_LOG_WARNING
-
 #ifndef IGNORE_LOG_NOTICE
-#define ISP_LOG_NOTICE(...) clog_info("isp", __VA_ARGS__)
+#define ISP_LOG_NOTICE(...) ISP_DEBUG(CLOG_LVL_WARN, __VA_ARGS__)
 #else
 #define ISP_LOG_NOTICE(...)
 #endif // IGNORE_LOG_NOTICE
-
 #ifndef IGNORE_LOG_INFO
-#define ISP_LOG_INFO(...) clog_info("isp", __VA_ARGS__)
+#define ISP_LOG_INFO(...) ISP_DEBUG(CLOG_LVL_INFO, __VA_ARGS__)
 #else
 #define ISP_LOG_INFO(...)
 #endif // IGNORE_LOG_INFO
-
 #ifndef IGNORE_LOG_DEBUG
-#define ISP_LOG_DEBUG(...) clog_debug("isp", __VA_ARGS__)
+#define ISP_LOG_DEBUG(...) ISP_DEBUG(CLOG_LVL_DEBUG, __VA_ARGS__)
 #else
 #define ISP_LOG_DEBUG(...)
 #endif // IGNORE_LOG_DEBUG
-#else
-#define ISP_LOG_ASSERT(tag, ...) clog_assert(tag, __VA_ARGS__)
-
-#ifndef IGNORE_LOG_ERR
-#define ISP_LOG_ERR(tag, ...) clog_error(tag, __VA_ARGS__)
-#else
-#define ISP_LOG_ERR(tag, ...)
-#endif // IGNORE_LOG_ERR
-
-#ifndef IGNORE_LOG_WARNING
-#define ISP_LOG_WARNING(tag, ...) clog_warn(tag, __VA_ARGS__)
-#else
-#define ISP_LOG_WARNING(tag, ...)
-#endif // IGNORE_LOG_WARNING
-
-#ifndef IGNORE_LOG_NOTICE
-#define ISP_LOG_NOTICE(tag, ...) clog_info(tag, __VA_ARGS__)
-#else
-#define ISP_LOG_NOTICE(tag, ...)
-#endif // IGNORE_LOG_NOTICE
-
-#ifndef IGNORE_LOG_INFO
-#define ISP_LOG_INFO(tag, ...) clog_info(tag, __VA_ARGS__)
-#else
-#define ISP_LOG_INFO(tag, ...)
-#endif // IGNORE_LOG_INFO
-
-#ifndef IGNORE_LOG_DEBUG
-#define ISP_LOG_DEBUG(tag, ...) clog_debug(tag, __VA_ARGS__)
-#else
-#define ISP_LOG_DEBUG(tag, ...)
-#endif // IGNORE_LOG_DEBUG
-#endif // ISP_LOG_TAG
-
 #ifndef IGNORE_LOG_RAW
 #define ISP_LOG_RAW(...) clog_output_raw(__VA_ARGS__)
 #else
 #define ISP_LOG_RAW(...)
-#endif
+#endif // IGNORE_LOG_RAW
 
 #ifdef __cplusplus
 #if __cplusplus

@@ -937,6 +937,7 @@ struct ST_ISP_AWB_CT_WGT_S {
 #define AWB_ZONE_WT_W (32)
 #define AWB_ZONE_WT_H (32)
 #define AWB_ZONE_WT_NUM (AWB_ZONE_WT_W * AWB_ZONE_WT_H)
+#define AWB_TARGET_RATIO_NUM (3)
 
 typedef struct _ISP_AWB_ATTR_S {
 	CVI_BOOL bEnable;
@@ -944,8 +945,6 @@ typedef struct _ISP_AWB_ATTR_S {
 	CVI_U16 au16StaticWB[ISP_BAYER_CHN_NUM]; /*RW; Range:[0x0, 0xFFFF] G/R*/
 	CVI_S32 as32CurvePara[AWB_CURVE_PARA_NUM];
 	ISP_AWB_ALG_TYPE_E enAlgType;
-	CVI_U8 u8RGStrength;
-	CVI_U8 u8BGStrength;
 	CVI_U16 u16Speed; /*RW; Range:[0x0, 0xFFF]*/
 	CVI_U16 u16ZoneSel; /*RW; Range:[0x0, 0xFF]*/
 	CVI_U16 u16HighColorTemp; /*RW; Range:[0x0, 0xFFFF]*/
@@ -979,6 +978,8 @@ typedef struct _ISP_AWB_ATTR_EX_S {
 	CVI_U16 au16MultiCTWt[AWB_CT_BIN_NUM]; /*RW; Range:[0x0, 0x400]*/
 	CVI_BOOL bFineTunEn;
 	CVI_U8 u8FineTunStrength;
+	CVI_U16 u16TargetCT[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x1, 0x4000]*/
+	CVI_U8 u8TargetStrength[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x1, 0xFF]*/
 	//AWB Algo 6
 	struct ST_ISP_AWB_INTERFERENCE_S stInterference;
 	struct ST_ISP_AWB_SKIN_S stSkin;
@@ -1003,6 +1004,13 @@ typedef enum _ISP_AWB_ALG_E {
 	ALG_BUTT
 } ISP_AWB_ALG_E;
 
+typedef enum _ISP_AWB_WDR_STS_E {
+	WDR_STS_NORMAL,
+	WDR_STS_LE,
+	WDR_STS_SE,
+	WDR_STS_BUTT
+} ISP_AWB_WDR_STS_E;
+
 typedef struct _ISP_WB_ATTR_S {
 	CVI_BOOL bByPass;
 	CVI_U8 u8AWBRunInterval; /*RW; Range:[0x1, 0xFF]*/
@@ -1010,6 +1018,7 @@ typedef struct _ISP_WB_ATTR_S {
 	ISP_MWB_ATTR_S stManual;
 	ISP_AWB_ATTR_S stAuto;
 	ISP_AWB_ALG_E enAlgType;
+	ISP_AWB_WDR_STS_E enWdrStsMode;
 	CVI_U8 u8DebugMode;
 } ISP_WB_ATTR_S;
 

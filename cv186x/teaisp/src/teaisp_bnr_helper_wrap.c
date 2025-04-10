@@ -63,6 +63,7 @@ typedef struct {
 	bm_handle_t bm_handle;
 	TEAISP_MODEL_S *bmodel0;
 	TEAISP_MODEL_S *bmodel1;
+	TEAISP_MODEL_TYPE_E enModelType;
 } TEAISP_BNR_CTX_S;
 
 typedef struct {
@@ -74,24 +75,26 @@ typedef struct {
 static TEAISP_BNR_CTX_S *bnr_ctx[VI_MAX_PIPE_NUM];
 static TEAISP_BNR_SHARED_IN_OUT_S *bnr_shared_in_out[VI_MAX_PIPE_NUM];
 
-static int teaisp_bnr_get_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *output_raw)
+static int teaisp_bnr_get_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *output_raw, uint64_t *rgbmap)
 {
-	uint64_t tmp[2] = {0, 0};
+	uint64_t tmp[3] = {0, 0, 0};
 
 	G_EXT_CTRLS_PTR(VI_IOCTL_GET_AI_ISP_RAW, &tmp);
 
 	*input_raw = tmp[0];
 	*output_raw = tmp[1];
+	*rgbmap = tmp[2];
 
 	return 0;
 }
 
-static int teaisp_bnr_put_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *output_raw)
+static int teaisp_bnr_put_raw(VI_PIPE ViPipe, uint64_t *input_raw, uint64_t *output_raw, uint64_t *rgbmap)
 {
-	uint64_t tmp[2] = {0, 0};
+	uint64_t tmp[3] = {0, 0, 0};
 
 	tmp[0] = *input_raw;
 	tmp[1] = *output_raw;
+	tmp[2] = *rgbmap;
 
 	S_EXT_CTRLS_PTR(VI_IOCTL_PUT_AI_ISP_RAW, &tmp);
 
@@ -229,6 +232,8 @@ static void *teaisp_bnr_launch_thread(void *param)
 	int pipe = (int) (uint64_t) param;
 	uint64_t input_raw_addr = 0;
 	uint64_t output_raw_addr = 0;
+	uint64_t rgbmap_addr = 0;
+	uint64_t output_addr = 0;
 
 	//ISP_LOG_INFO("run bnr launch thread, %d\n", pipe);
 	printf("run bnr launch thread, %d\n", pipe);
@@ -277,13 +282,17 @@ reset_launch:
 
 		uint8_t tuning_index = model->tuning_index % TEAISP_MAX_TUNING_INDEX;
 
-		teaisp_bnr_get_raw(pipe, &input_raw_addr, &output_raw_addr);
+		teaisp_bnr_get_raw(pipe, &input_raw_addr, &output_raw_addr, &rgbmap_addr);
+		output_addr = output_raw_addr;
+		if (bnr_ctx[pipe]->enModelType == TEAISP_MODEL_MOTION) {
+			output_addr = rgbmap_addr;
+		}
 
 #ifndef ENABLE_BYPASS_TPU
 		bm_status_t status = BM_SUCCESS;
 
 		model->input_tensors[tuning_index][0].device_mem.u.device.device_addr = input_raw_addr;
-		model->output_tensors[tuning_index][0].device_mem.u.device.device_addr = output_raw_addr;
+		model->output_tensors[tuning_index][0].device_mem.u.device.device_addr = output_addr;
 
 		model->input_tensors[tuning_index][BNR_IN_FUSION_IMG] = input_fusion_img;
 		model->output_tensors[tuning_index][BNR_IN_FUSION_IMG] = output_fusion_img;
@@ -313,7 +322,7 @@ reset_launch:
 		}
 
 		if (access("/tmp/teaisp_bnr_dump_output", F_OK) == 0) {
-			teaisp_bnr_dump_output(model, output_raw_addr, tuning_index, pipe);
+			teaisp_bnr_dump_output(model, output_addr, tuning_index, pipe);
 			system("rm /tmp/teaisp_bnr_dump_output");
 		}
 
@@ -340,7 +349,11 @@ reset_launch:
 		CVI_SYS_Munmap(src_addr, size);
 		CVI_SYS_Munmap(dst_addr, size);
 #endif
-		teaisp_bnr_put_raw(pipe, &input_raw_addr, &output_raw_addr);
+
+		if (bnr_ctx[pipe]->enModelType == TEAISP_MODEL_MOTION)
+			teaisp_bnr_put_raw(pipe, &output_raw_addr, &input_raw_addr, &rgbmap_addr);
+		else
+			teaisp_bnr_put_raw(pipe, &input_raw_addr, &output_raw_addr, &rgbmap_addr);
 
 		bm_tensor_t temp;
 
@@ -416,6 +429,7 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 		if (bnr_ctx[ViPipe] == NULL) {
 			return CVI_FAILURE;
 		}
+		bnr_ctx[ViPipe]->enModelType = TEAISP_MODEL_NONE;
 
 		bm_status_t status = bm_dev_request(&bnr_ctx[ViPipe]->bm_handle, 0);
 
@@ -424,6 +438,7 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 			return CVI_FAILURE;
 		}
 	}
+	bnr_ctx[ViPipe]->enModelType = TEAISP_MODEL_BNR;
 
 	m->p_bmrt = bmrt_create(bnr_ctx[ViPipe]->bm_handle);
 	if (m->p_bmrt == NULL) {
@@ -452,7 +467,7 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 	m->output_num = net_info->output_num;
 
 	if (m->input_num != BNR_IN_NUM || m->output_num != BNR_OUT_NUM) {
-		ISP_LOG_ASSERT("model param num not match, in: %d, %d, out: %d, %d\n",
+		ISP_LOG_ERR("model param num not match, in: %d, %d, out: %d, %d\n",
 			m->input_num, BNR_IN_NUM, m->output_num, BNR_OUT_NUM);
 		goto load_model_fail;
 	}
@@ -588,6 +603,12 @@ CVI_S32 teaisp_bnr_load_model_wrap(VI_PIPE ViPipe, const char *path, void **mode
 	printf("load bmodel success: pipe:%d, core_id: %d, cost time: %ld, %s\n", ViPipe, m->core_id,
 		((tv2.tv_sec - tv1.tv_sec) * 1000000 + (tv2.tv_usec - tv1.tv_usec)), path);
 
+	int input_size = m->input_tensors[0][0].device_mem.size;
+	int output_size = m->output_tensors[0][0].device_mem.size;
+
+	if (input_size != output_size)
+		bnr_ctx[ViPipe]->enModelType = TEAISP_MODEL_MOTION;
+
 	return CVI_SUCCESS;
 
 load_model_fail:
@@ -634,6 +655,8 @@ CVI_S32 teaisp_bnr_unload_model_wrap(VI_PIPE ViPipe, void *model)
 
 	ISP_RELEASE_MEMORY(m);
 
+	bnr_ctx[ViPipe]->enModelType = TEAISP_MODEL_NONE;
+
 	return CVI_SUCCESS;
 }
 
@@ -659,6 +682,11 @@ CVI_S32 teaisp_bnr_set_driver_init_wrap(VI_PIPE ViPipe)
 
 	bnr_cfg.swap_buf_index = (uint64_t) swap_buf_index;
 	bnr_cfg.swap_buf_count = 2;
+	bnr_cfg.ai_rgbmap = false;
+
+	//if you want this work, you must set ENABLE_PRELOAD_BNR_MODEL to 1 in teaisp_bnr_ctrl.c
+	if (bnr_ctx[ViPipe] && bnr_ctx[ViPipe]->enModelType == TEAISP_MODEL_MOTION)
+		bnr_cfg.ai_rgbmap = true;
 
 	cfg.param_addr = (uint64_t) &bnr_cfg;
 	cfg.param_size = sizeof(ai_isp_bnr_cfg_t);
@@ -671,6 +699,7 @@ CVI_S32 teaisp_bnr_set_driver_init_wrap(VI_PIPE ViPipe)
 		if (bnr_ctx[ViPipe] == NULL) {
 			return CVI_FAILURE;
 		}
+		bnr_ctx[ViPipe]->enModelType = TEAISP_MODEL_NONE;
 
 		bm_status_t status = bm_dev_request(&bnr_ctx[ViPipe]->bm_handle, 0);
 
@@ -888,6 +917,22 @@ CVI_S32 teaisp_bnr_set_api_info_wrap(VI_PIPE ViPipe, void *model, void *param, i
 	UNUSED(is_new);
 
 	bnr_ctx[ViPipe]->bmodel0 = m;
+
+	return CVI_SUCCESS;
+}
+
+CVI_S32 teaisp_bnr_get_model_type_wrap(VI_PIPE ViPipe, void *model_type)
+{
+	if (model_type == NULL) {
+		return CVI_SUCCESS;
+	}
+
+	TEAISP_MODEL_TYPE_E *m_type = (TEAISP_MODEL_TYPE_E *) model_type;
+
+	*m_type = TEAISP_MODEL_NONE;
+
+	if (bnr_ctx[ViPipe] && bnr_ctx[ViPipe]->enable_lauch_thread)
+		*m_type = bnr_ctx[ViPipe]->enModelType;
 
 	return CVI_SUCCESS;
 }

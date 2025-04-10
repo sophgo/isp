@@ -28,7 +28,9 @@ extern "C" {
 #define CLOG_LVL_DEBUG                       4
 #define CLOG_LVL_VERBOSE                     5
 
+#ifndef CLOG_OUTPUT_LVL
 #define CLOG_OUTPUT_LVL CLOG_LVL_DEBUG
+#endif
 
 #if CLOG_OUTPUT_LVL >= CLOG_LVL_ASSERT
 	#define clog_assert(tag, ...) \
@@ -73,27 +75,21 @@ extern "C" {
 #endif
 
 #ifndef CLOG_TAG
-#define cloga(...)     clog_assert("isp", __VA_ARGS__)
-#define cloge(...)     clog_error("isp", __VA_ARGS__)
-#define clogw(...)     clog_warn("isp", __VA_ARGS__)
-#define clogi(...)     clog_info("isp", __VA_ARGS__)
-#define clogd(...)     clog_debug("isp", __VA_ARGS__)
-#define clogv(...)     clog_verbose("isp", __VA_ARGS__)
-#else
-#define cloga(tag, ...)     clog_assert(tag, __VA_ARGS__)
-#define cloge(tag, ...)     clog_error(tag, __VA_ARGS__)
-#define clogw(tag, ...)     clog_warn(tag, __VA_ARGS__)
-#define clogi(tag, ...)     clog_info(tag, __VA_ARGS__)
-#define clogd(tag, ...)     clog_debug(tag, __VA_ARGS__)
-#define clogv(tag, ...)     clog_verbose(tag, __VA_ARGS__)
+#define CLOG_TAG "isp"
 #endif
+
+#define clog_a(...)     clog_assert(CLOG_TAG, __VA_ARGS__)
+#define clog_e(...)     clog_error(CLOG_TAG, __VA_ARGS__)
+#define clog_w(...)     clog_warn(CLOG_TAG, __VA_ARGS__)
+#define clog_i(...)     clog_info(CLOG_TAG, __VA_ARGS__)
+#define clog_d(...)     clog_debug(CLOG_TAG, __VA_ARGS__)
+#define clog_v(...)     clog_verbose(CLOG_TAG, __VA_ARGS__)
 
 #define CLOG_ASSERT(EXPR)                        \
 	{if (!(EXPR)) {                              \
-		cloga("assert", "%s\n", __func__);       \
+		clog_a("assert", "%s\n", __func__);       \
 	}}
 
-int clog_set_level(uint8_t level);
 int clog_file_enable(void);
 int clog_file_disable(void);
 void clog_output(uint8_t level, const char *tag, const char *func,
