@@ -19,6 +19,7 @@
 #include "isp_debug.h"
 
 #include "vi.h"
+#include "vi_ioctl.h"
 #include "cvi_isp_v4l2.h"
 
 #include "bmcv_api_ext_c.h"
@@ -448,6 +449,7 @@ int start_vi(RTSP_CFG *p_rtsp_cfg)
 				CVI_TEAISP_SetMode(pipe, TEAISP_BEFORE_FE_RAW_MODE);
 			init_teaisp_bnr(pipe, p_rtsp_cfg->pa_video_src_cfg[pipe].bnr_model_list);
 		}
+		vi_put_pipe_dump(ViCtx[pipe].vi_fd, pipe);
 	}
 	CVI_ISP_SetDISInfoCallback(get_dis_info);
 	set_dev_num(ViCtx[0].vi_fd, pipe_num);

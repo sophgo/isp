@@ -508,9 +508,6 @@ int start_vo(RTSP_CFG *p_rtsp_cfg)
 {
 	UNUSED(p_rtsp_cfg);
 
-	uint32_t crtc_id = VO_HDMI_CRTC_ID;
-	uint32_t conn_id = VO_HDMI_CONN_ID;
-
 	memset(&voCtx, 0, sizeof(__VoCtx_S));
 
 	voCtx.vi_pipe = -1;
@@ -527,8 +524,8 @@ int start_vo(RTSP_CFG *p_rtsp_cfg)
 		return 0;
 	}
 
-	voCtx.crtc_id = crtc_id;
-	voCtx.conn_id = conn_id;
+	voCtx.crtc_id = VO_HDMI_CRTC_ID;
+	voCtx.conn_id = VO_HDMI_CONN_ID;
 
 	voCtx.dev_fd = open(VO_DEV_PATH, O_RDWR | O_CLOEXEC);
 	if (voCtx.dev_fd <= 0) {
@@ -544,20 +541,33 @@ int start_vo(RTSP_CFG *p_rtsp_cfg)
 		goto failed;
 	}
 
+	if (voCtx.res->count_crtcs > 1) {
+		voCtx.crtc_id = voCtx.res->crtcs[1];
+	}
+
+	for (int i = 0; i < voCtx.res->count_connectors; i++) {
+		drmModeConnectorPtr conn = drmModeGetConnector(voCtx.dev_fd, voCtx.res->connectors[i]);
+
+		if (conn->connection == DRM_MODE_CONNECTED) {
+			voCtx.conn_id = conn->connector_id;
+			break;
+		}
+	}
+
 	for (int i = 0; i < voCtx.res->count_crtcs; i++) {
-		if (crtc_id == voCtx.res->crtcs[i])
+		if (voCtx.crtc_id == voCtx.res->crtcs[i])
 			break;
 		if (i == voCtx.res->count_crtcs - 1) {
-			ISP_LOG_ERR("not find crtc-%u\n", crtc_id);
+			ISP_LOG_ERR("not find crtc-%u\n", voCtx.crtc_id);
 			goto failed;
 		}
 	}
 
 	for (int i = 0; i < voCtx.res->count_connectors; i++) {
-		if (conn_id == voCtx.res->connectors[i])
+		if (voCtx.conn_id == voCtx.res->connectors[i])
 			break;
 		if (i == voCtx.res->count_connectors - 1) {
-			ISP_LOG_ERR("not find connector-%u\n", conn_id);
+			ISP_LOG_ERR("not find connector-%u\n", voCtx.conn_id);
 			goto failed;
 		}
 	}
