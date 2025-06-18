@@ -305,3 +305,24 @@ int vi_sdk_get_dev_attr(int fd, int dev, VI_DEV_ATTR_S *pstDevAttr)
 
 	return 0;
 }
+
+int vi_put_pipe_dump(int fd, CVI_U32 dev_num)
+{
+	struct v4l2_ext_controls ecs;
+	struct v4l2_ext_control ec;
+	int rc = 0;
+
+	memset(&ecs, 0, sizeof(ecs));
+
+	ec.id = VI_IOCTL_PUT_PIPE_DUMP;
+	ec.value = dev_num;
+	ecs.count = 1;
+	ecs.controls = &ec;
+	rc = ioctl(fd, VIDIOC_S_EXT_CTRLS, &ecs);
+	if (rc < 0) {
+		fprintf(stderr, "VIDIOC_S_EXT_CTRLS - %s NG, %s\n", __func__, strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}

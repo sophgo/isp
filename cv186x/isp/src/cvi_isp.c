@@ -278,7 +278,7 @@ CVI_S32 CVI_ISP_Run(VI_PIPE ViPipe)
 	CVI_S32 fd = pstIspCtx->ispDevFd;
 
 	if (fd == -1) {
-		ISP_LOG_ASSERT("ISP%d fd state incorrect\n", fd);
+		ISP_LOG_ERR("ISP%d fd state incorrect\n", fd);
 		return -EBADF;
 	}
 

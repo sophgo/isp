@@ -15,6 +15,7 @@
 #include "cvi_common.h"
 #else
 #include <cvi_common.h>
+#include <cvi_comm_video.h>
 #endif //
 
 #ifdef __cplusplus

@@ -57,15 +57,15 @@ clean:
 	@if [ "$(ISP_3A_CUSTOMIZE_AE)" = "1" ]; then \
 		cd $(AE_LIB) && make clean; \
 	else \
-		rm $(MW_PATH)/lib/libae*; \
+		rm -f $(MW_PATH)/lib/libae*; \
 	fi
 	@if [ "$(ISP_3A_CUSTOMIZE_AWB)" = "1" ]; then \
 		cd $(AWB_LIB) && make; \
 	else \
-		rm $(MW_PATH)/lib/libawb*; \
+		rm -f $(MW_PATH)/lib/libawb*; \
 	fi
 	@if [ "$(ISP_3A_CUSTOMIZE_AF)" = "1" ]; then \
 		cd $(AF_LIB) && make; \
 	else \
-		rm $(MW_PATH)/lib/libaf*; \
+		rm -f $(MW_PATH)/lib/libaf*; \
 	fi

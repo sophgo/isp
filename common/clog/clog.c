@@ -28,14 +28,12 @@ static pthread_mutex_t log_buf_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static int clog_lock(void)
 {
-	pthread_mutex_lock(&log_buf_lock);
-	return 0;
+	return pthread_mutex_lock(&log_buf_lock);
 }
 
 static int clog_unlock(void)
 {
-	pthread_mutex_unlock(&log_buf_lock);
-	return 0;
+	return pthread_mutex_unlock(&log_buf_lock);
 }
 
 static int clog_get_time(char *time_str, size_t size)
@@ -46,8 +44,7 @@ static int clog_get_time(char *time_str, size_t size)
 	gettimeofday(&tv, NULL);
 	localtime_r(&tv.tv_sec, &cur_tm);
 
-	snprintf(time_str, size, "%04d%02d%02d %02d:%02d:%02d.%03d ",
-		cur_tm.tm_year + 1900,
+	snprintf(time_str, size, "%02d%02d %02d:%02d:%02d.%03d ",
 		cur_tm.tm_mon + 1,
 		cur_tm.tm_mday,
 		cur_tm.tm_hour,
@@ -206,7 +203,7 @@ int clog_file_enable(void)
 {
 	clog_lock();
 
-	if (log_buf == log_line_buf) {
+	if (log_buf == NULL || log_buf == log_line_buf) {
 
 		log_buffer_AB[0] = (char *) malloc(CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
 		log_buffer_AB[1] = (char *) malloc(CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
@@ -253,24 +250,12 @@ static const char * const level_output_info[] = {
 	[CLOG_LVL_VERBOSE] = "V ",
 };
 
-static uint8_t log_level;
-
-int clog_set_level(uint8_t level)
-{
-	CLOG_ASSERT(level <= CLOG_LVL_VERBOSE);
-
-	log_level = level;
-
-	return 0;
-}
-
 static void clog_init_log_buf(void)
 {
 	clog_lock();
 
 	if (log_buf == NULL) {
 		log_buf = log_line_buf;
-		log_level = CLOG_LVL_ERROR;
 	}
 
 	clog_unlock();
@@ -308,10 +293,6 @@ void clog_output(uint8_t level, const char *tag, const char *func,
 		clog_init_log_buf();
 	}
 
-	if (level > log_level) {
-		return;
-	}
-
 	clog_lock();
 
 	va_start(args, format);
@@ -339,16 +320,18 @@ void clog_output(uint8_t level, const char *tag, const char *func,
 
 	log_len += fmt_result;
 
-	if (level <= CLOG_LVL_ERROR) {
-
+	if (log_buf == log_line_buf) {
 		printf("%s", log_buf);
-
-		if (level == CLOG_LVL_ASSERT) {
-			assert(0);
+	} else {
+		if (level <= CLOG_LVL_ERROR) {
+			printf("%s", log_buf);
 		}
+		clog_file_output(log_buf, log_len);
 	}
 
-	clog_file_output(log_buf, log_len);
+	if (level == CLOG_LVL_ASSERT) {
+		assert(0);
+	}
 
 	clog_unlock();
 }
@@ -359,11 +342,7 @@ void clog_output_raw(const char *format, ...)
 	int fmt_result;
 
 	if (log_buf == NULL) {
-		return;
-	}
-
-	if (log_buffer_AB[0] == NULL || log_buffer_AB[1] == NULL) {
-		return;
+		clog_init_log_buf();
 	}
 
 	clog_lock();
@@ -374,8 +353,11 @@ void clog_output_raw(const char *format, ...)
 
 	va_end(args);
 
-	clog_file_output(log_buf, fmt_result);
+	if (log_buf == log_line_buf) {
+		printf("%s", log_buf);
+	} else {
+		clog_file_output(log_buf, fmt_result);
+	}
 
 	clog_unlock();
 }
-

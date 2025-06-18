@@ -28,6 +28,7 @@ static void reg_helper_instance(void)
 	instance.teaisp_bnr_set_driver_start = teaisp_bnr_set_driver_start_wrap;
 	instance.teaisp_bnr_set_driver_stop = teaisp_bnr_set_driver_stop_wrap;
 	instance.teaisp_bnr_set_api_info = teaisp_bnr_set_api_info_wrap;
+	instance.teaisp_bnr_get_model_type = teaisp_bnr_get_model_type_wrap;
 
 	teaisp_reg_helper_instance(&instance);
 }

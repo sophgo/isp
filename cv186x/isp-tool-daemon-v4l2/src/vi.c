@@ -19,6 +19,7 @@
 #include "isp_debug.h"
 
 #include "vi.h"
+#include "vi_ioctl.h"
 #include "cvi_isp_v4l2.h"
 
 #include "bmcv_api_ext_c.h"
@@ -388,6 +389,30 @@ static int init_teaisp_bnr(int pipe, char *path)
 	return 0;
 }
 
+static int set_dev_num(int fd, int dev_num)
+{
+	struct v4l2_ext_controls val;
+	struct v4l2_ext_control control;
+
+	memset(&val, 0, sizeof(struct v4l2_ext_controls));
+
+	if (fd > 0) {
+		// test set ext ctrl
+		control.id = VI_IOCTL_SET_DEV_NUM;
+		control.value = dev_num;
+		val.count = 1;
+		val.controls = &control;
+		if (ioctl(fd, VIDIOC_S_EXT_CTRLS, &val) < 0) {
+			printf("set dev_num fail !\n");
+			return -1;
+		} else {
+			printf("set dev_num:%d success\n", dev_num);
+		}
+	}
+
+	return 0;
+}
+
 int start_vi(RTSP_CFG *p_rtsp_cfg)
 {
 	int pipe_num = p_rtsp_cfg->dev_num;
@@ -424,8 +449,10 @@ int start_vi(RTSP_CFG *p_rtsp_cfg)
 				CVI_TEAISP_SetMode(pipe, TEAISP_BEFORE_FE_RAW_MODE);
 			init_teaisp_bnr(pipe, p_rtsp_cfg->pa_video_src_cfg[pipe].bnr_model_list);
 		}
+		vi_put_pipe_dump(ViCtx[pipe].vi_fd, pipe);
 	}
 	CVI_ISP_SetDISInfoCallback(get_dis_info);
+	set_dev_num(ViCtx[0].vi_fd, pipe_num);
 
 	// request buffer and stream on
 	for (int pipe = 0; pipe < pipe_num; ++pipe) {

@@ -24,6 +24,7 @@ struct teaisp_helper_instance {
 	CVI_S32 (*teaisp_bnr_set_driver_start)(VI_PIPE ViPipe);
 	CVI_S32 (*teaisp_bnr_set_driver_stop)(VI_PIPE ViPipe);
 	CVI_S32 (*teaisp_bnr_set_api_info)(VI_PIPE ViPipe, void *model, void *param, int is_new);
+	CVI_S32 (*teaisp_bnr_get_model_type)(VI_PIPE ViPipe, void *model_type);
 };
 
 void teaisp_reg_helper_instance(struct teaisp_helper_instance *instance);
@@ -36,6 +37,7 @@ CVI_S32 teaisp_bnr_set_driver_deinit(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_driver_start(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_driver_stop(VI_PIPE ViPipe);
 CVI_S32 teaisp_bnr_set_api_info(VI_PIPE ViPipe, void *model, void *param, int is_new);
+CVI_S32 teaisp_bnr_get_model_type(VI_PIPE ViPipe, void *model_type);
 
 #ifdef __cplusplus
 #if __cplusplus
