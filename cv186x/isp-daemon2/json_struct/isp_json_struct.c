@@ -4146,6 +4146,125 @@ static void ISP_FOCUS_STATISTICS_CFG_S_JSON(int r_w_flag, JSON *j, char *key, IS
 }
 
 // -----------------------------------------------------------------------------
+static void AF_MANUAL_TYPE_JSON(int r_w_flag, JSON *j, char *key, AF_MANUAL_TYPE *value)
+{
+	JSON *obj = 0;
+
+	if (r_w_flag == R_FLAG) {
+		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
+			int temp;
+
+			temp = cvi_json_object_get_int(obj);
+			JSON_CHECK_RANGE(key, &temp, OP_TYPE_ZOOM, OP_TYPE_AF_BUTT);
+			*value = temp;
+		} else {
+			JSON_PRINT_ERR_NOT_EXIST(key);
+		}
+	} else {
+		obj = cvi_json_object_new_int(*value);
+		if (cvi_json_object_is_type(j, cvi_json_type_array)) {
+			cvi_json_object_array_add(j, obj);
+		} else {
+			cvi_json_object_object_add(j, key, obj);
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+static void AF_DIRECTION_JSON(int r_w_flag, JSON *j, char *key, AF_DIRECTION *value)
+{
+	JSON *obj = 0;
+
+	if (r_w_flag == R_FLAG) {
+		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
+			int temp;
+
+			temp = cvi_json_object_get_int(obj);
+			JSON_CHECK_RANGE(key, &temp, AF_DIR_NEAR, AF_DIR_FAR);
+			*value = temp;
+		} else {
+			JSON_PRINT_ERR_NOT_EXIST(key);
+		}
+	} else {
+		obj = cvi_json_object_new_int(*value);
+		if (cvi_json_object_is_type(j, cvi_json_type_array)) {
+			cvi_json_object_array_add(j, obj);
+		} else {
+			cvi_json_object_object_add(j, key, obj);
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+static void AF_CHASINGFOCUS_MODE_JSON(int r_w_flag, JSON *j, char *key, AF_CHASINGFOCUS_MODE *value)
+{
+	JSON *obj = 0;
+
+	if (r_w_flag == R_FLAG) {
+		if (cvi_json_object_object_get_ex2(j, key, &obj)) {
+			int temp;
+
+			temp = cvi_json_object_get_int(obj);
+			JSON_CHECK_RANGE(key, &temp, AF_CHASINGFOCUS_FAST_MODE, AF_CHASINGFOCUS_NORMAL_MODE);
+			*value = temp;
+		} else {
+			JSON_PRINT_ERR_NOT_EXIST(key);
+		}
+	} else {
+		obj = cvi_json_object_new_int(*value);
+		if (cvi_json_object_is_type(j, cvi_json_type_array)) {
+			cvi_json_object_array_add(j, obj);
+		} else {
+			cvi_json_object_object_add(j, key, obj);
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
+static void ISP_FOCUS_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_FOCUS_MANUAL_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, AF_MANUAL_TYPE, enOpType);
+	JSON(r_w_flag, AF_DIRECTION, enManualDir);
+	JSON(r_w_flag, CVI_U16, u16ManualStep);
+	JSON(r_w_flag, CVI_U16, u16ManualPos);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
+void ISP_FOCUS_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_FOCUS_ATTR_S *data)
+{
+	JSON_START(r_w_flag);
+
+	JSON(r_w_flag, CVI_BOOL, bEnable);
+	JSON(r_w_flag, CVI_U8, u8DebugMode);
+	JSON(r_w_flag, ISP_OP_TYPE_E, enOpType);
+	JSON(r_w_flag, CVI_U8, u8RunInterval);
+	JSON(r_w_flag, CVI_BOOL, bRealTimeFocus);
+	JSON(r_w_flag, CVI_BOOL, bChasingFocus);
+	JSON(r_w_flag, CVI_BOOL, bReFocus);
+	JSON(r_w_flag, CVI_BOOL, bMixHlc);
+	JSON(r_w_flag, CVI_U8, u8RtFocusStableFrm);
+	JSON(r_w_flag, CVI_U16, u16RtMaxDiffFvRatio);
+	JSON(r_w_flag, CVI_U16, u16MaxDiffFvRatio);
+	JSON(r_w_flag, CVI_U16, u16MaxDiffLumaRatio);
+	JSON(r_w_flag, CVI_U16, u16DetectDiffRatio);
+	JSON(r_w_flag, CVI_U16, u16SearchDiffRatio);
+	JSON(r_w_flag, CVI_U16, u16LocalDiffRatio);
+	JSON(r_w_flag, CVI_U8, u8InitStep);
+	JSON(r_w_flag, CVI_U8, u8FindStep);
+	JSON(r_w_flag, CVI_U8, u8LocateStep);
+	JSON(r_w_flag, CVI_U16, u16MaxRotateCnt);
+	JSON(r_w_flag, AF_DIRECTION, enInitDir);
+	JSON(r_w_flag, AF_CHASINGFOCUS_MODE, enChasingFocusMode);
+	JSON(r_w_flag, ISP_FOCUS_MANUAL_ATTR_S, stManual);
+
+	JSON_END(r_w_flag);
+}
+
+// -----------------------------------------------------------------------------
 // 3A structure
 // -----------------------------------------------------------------------------
 static void ISP_STATISTICS_CTRL_U_JSON(int r_w_flag, JSON *j, char *key, ISP_STATISTICS_CTRL_U *data)
@@ -4286,6 +4405,8 @@ void ISP_PARAMETER_BUFFER_JSON(int r_w_flag, JSON *j, char *key_word, ISP_Parame
 		JSON(r_w_flag, ISP_AWB_Calibration_Gain_S, WBCalib);
 		JSON(r_w_flag, ISP_AWB_Calibration_Gain_S_EX, WBCalibEx);
 		JSON(r_w_flag, ISP_STATISTICS_CFG_S, StatCfg);
+		// AF
+		JSON(r_w_flag, ISP_FOCUS_ATTR_S, FocusAttr);
 		break;
 	default:
 			break;

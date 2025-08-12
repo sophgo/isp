@@ -1,3 +1,5 @@
+echo "prerm libisp-dev: $1"
+
 unset V4L2_ISP_DEV_INSTALL
 unset V4L2_ISP_DEV_LIB
 unset V4L2_ISP_DEV_BIN
@@ -9,4 +11,4 @@ unset V4L2_ISP_DEV_SAMPLE
 rm -f /etc/ld.so.conf.d/sophon-isp-dev.conf
 ldconfig
 rm -f /etc/profile.d/sophon-isp-dev-autoconf.sh
-. /etc/profile
+eval "$SHELL /etc/profile"

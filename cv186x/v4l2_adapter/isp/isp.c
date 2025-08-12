@@ -24,6 +24,7 @@
 #include "cvi_isp_v4l2.h"
 #include "cvi_vi.h"
 #include "cvi_sys.h"
+#include "sensor_cfg.h"
 
 static pthread_t g_IspPid[VI_MAX_DEV_NUM];
 static pthread_mutex_t vi_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -124,6 +125,11 @@ void *get_sensor_obj(int pipe)
 #if defined(SENSOR_GCORE_GC4653_SLAVE)
 	case V4L2_GCORE_GC4653_SLAVE_MIPI_4M_30FPS_10BIT:
 		pstSnsObj = &stSnsGc4653_Slave_Obj;
+		break;
+#endif
+#if defined(SENSOR_GCORE_GC8613)
+	case V4L2_GCORE_GC8613_MIPI_8M_60FPS_10BIT:
+		pstSnsObj = &stSnsGc8613_Obj;
 		break;
 #endif
 #if defined(SENSOR_NEXTCHIP_N5)
@@ -336,6 +342,12 @@ void *get_sensor_obj(int pipe)
 		pstSnsObj = &stSnsSC850SL_Obj;
 		break;
 #endif
+#if defined(SENSOR_SMS_SC831HAI)
+	case V4L2_SMS_SC831HAI_MASTER_MIPI_8M_30FPS_10BIT:
+	case V4L2_SMS_SC831HAI_SLAVE_MIPI_8M_30FPS_10BIT:
+		pstSnsObj = &stSnsSC831HAI_Obj;
+		break;
+#endif
 #if defined(SENSOR_SMS_SC3332)
 	case V4L2_SMS_SC3332_MIPI_3M_30FPS_10BIT:
 		pstSnsObj = &stSnsSC3332_Obj;
@@ -375,11 +387,6 @@ void *get_sensor_obj(int pipe)
 #if defined(SENSOR_SMS_SC4336P)
 	case V4L2_SMS_SC4336P_MIPI_4M_30FPS_10BIT:
 		pstSnsObj = &stSnsSC4336P_Obj;
-		break;
-#endif
-#if defined(SENSOR_SMS_SC4336P_SLAVE)
-	case V4L2_SMS_SC4336P_SLAVE_MIPI_4M_30FPS_10BIT:
-		pstSnsObj = &stSnsSC4336P_SLAVE_Obj;
 		break;
 #endif
 #if defined(SENSOR_SMS_SC8238)
@@ -654,6 +661,7 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_SONY_IMX900_MONO_MIPI_3M_70FPS_12BIT:
 		pstPubAttr->f32FrameRate = 70;
 		break;
+	case V4L2_GCORE_GC8613_MIPI_8M_60FPS_10BIT:
 	case V4L2_SMS_SC500AI_MIPI_5M_60FPS_10BIT:
 	case V4L2_SONY_IMX307_MIPI_2M_60FPS_12BIT:
 	case V4L2_SONY_IMX307_SUBLVDS_2M_60FPS_12BIT:
@@ -673,6 +681,8 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_TECHPOINT_TP2850_MIPI_2M_30FPS_8BIT:
 	case V4L2_TECHPOINT_TP2850_MIPI_4M_30FPS_8BIT:
 	case V4L2_SMS_SC500AI_2L_MIPI_5M_30FPS_10BIT:
+	case V4L2_SMS_SC831HAI_MASTER_MIPI_8M_30FPS_10BIT:
+	case V4L2_SMS_SC831HAI_SLAVE_MIPI_8M_30FPS_10BIT:
 	case V4L2_SONY_IMX307_2L_MIPI_2M_30FPS_12BIT:
 	case V4L2_SONY_IMX335_MIPI_2M_30FPS_10BIT_WDR2TO1:
 	case V4L2_SONY_IMX347_MIPI_4M_30FPS_12BIT_WDR2TO1:
@@ -809,12 +819,14 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_OV_OS04A10_SLAVE_MIPI_4M_1440P_2L_10BIT_WDR2TO1:
 	case V4L2_OV_OS04E10_SALVE_MIPI_4M_30FPS_2L_10BIT:
 	case V4L2_OV_OS04E10_SLAVE_MIPI_4M_30FPS_2L_10BIT_WDR2TO1:
+	case V4L2_SMS_SC831HAI_SLAVE_MIPI_8M_30FPS_10BIT:
 		pstPubAttr->u8EnableMaster = 0;
 		break;
 	case V4L2_OV_OS04A10_MASTER_MIPI_4M_1440P_2L_10BIT:
 	case V4L2_OV_OS04A10_MASTER_MIPI_4M_1440P_2L_10BIT_WDR2TO1:
 	case V4L2_OV_OS04E10_MIPI_4M_30FPS_2L_10BIT:
 	case V4L2_OV_OS04E10_MIPI_4M_30FPS_2L_10BIT_WDR2TO1:
+	case V4L2_SMS_SC831HAI_MASTER_MIPI_8M_30FPS_10BIT:
 		pstPubAttr->u8EnableMaster = 1;
 		break;
 	default:
@@ -891,18 +903,18 @@ static CVI_S32 reg_sensor(int pipe)
 
 	pstSnsObj->pfnExpSensorCb(&stSnsrSensorFunc);
 
-	if (stSnsrSensorFunc.pfn_cmos_set_wdr_mode) {
-		s32Ret = stSnsrSensorFunc.pfn_cmos_set_wdr_mode(pipe, wdrMode);
-		if (s32Ret != CVI_SUCCESS) {
-			CVI_TRACE_LOG(CVI_DBG_ERR, "sensor set wdr mode failed!\n");
-			return s32Ret;
-		}
-	}
-
 	if (stSnsrSensorFunc.pfn_cmos_set_image_mode) {
 		s32Ret = stSnsrSensorFunc.pfn_cmos_set_image_mode(pipe, &stSnsrMode);
 		if (s32Ret != CVI_SUCCESS) {
 			CVI_TRACE_LOG(CVI_DBG_ERR, "sensor set image mode failed!\n");
+			return s32Ret;
+		}
+	}
+
+	if (stSnsrSensorFunc.pfn_cmos_set_wdr_mode) {
+		s32Ret = stSnsrSensorFunc.pfn_cmos_set_wdr_mode(pipe, wdrMode);
+		if (s32Ret != CVI_SUCCESS) {
+			CVI_TRACE_LOG(CVI_DBG_ERR, "sensor set wdr mode failed!\n");
 			return s32Ret;
 		}
 	}

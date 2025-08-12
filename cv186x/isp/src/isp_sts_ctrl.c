@@ -845,7 +845,8 @@ static CVI_S32 isp_sts_ctrl_unpack_af_sts(VI_PIPE ViPipe, CVI_VOID *sts_in, CVI_
 				(*(pAfData + 4) << 16)
 				+ *(pAfData + 3);
 			af_sts->stFEAFStat.stZoneMetrics[row][col].u64h0 =
-				(*(pAfData + 6) << 12)
+				((*(pAfData + 7) & 0x000F) << 28)
+				+ (*(pAfData + 6) << 12)
 				+ ((*(pAfData + 5) & 0xFFF0) >> 4);
 			pAfData += (AF_DATA_UNIT_SIZE / sizeof(CVI_U16));
 		}
@@ -1674,6 +1675,7 @@ static void isp_sts_ctrl_set_3aCfg_default(VI_PIPE ViPipe)
 	stsCfg.stFocusCfg.stConfig.u8GainHigh = 20;
 	stsCfg.stFocusCfg.stConfig.u8SlopLow = 8;
 	stsCfg.stFocusCfg.stConfig.u8SlopHigh = 15;
+	stsCfg.stFocusCfg.stConfig.u16HighLumaTh = 230;
 
 	memcpy(&pstIspCtx->stsCfgInfo, &stsCfg, sizeof(ISP_STATISTICS_CFG_S));
 	memcpy(&pst3a->stAeStatCfg, &stsCfg.stAECfg, sizeof(ISP_AE_STATISTICS_CFG_S));

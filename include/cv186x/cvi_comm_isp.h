@@ -56,6 +56,7 @@ extern "C" {
 #define AF_YOFFSET_MIN (2)
 #define MAX_AWB_LIB_NUM (VI_MAX_PIPE_NUM)
 #define MAX_AE_LIB_NUM (VI_MAX_PIPE_NUM)
+#define MAX_AF_LIB_NUM (VI_MAX_PIPE_NUM)
 #define LTM_DARK_CURVE_NODE_NUM (257)
 #define LTM_BRIGHT_CURVE_NODE_NUM (513)
 #define LTM_GLOBAL_CURVE_NODE_NUM (769)
@@ -727,11 +728,14 @@ typedef struct _ISP_AF_V_PARAM_S {
 	CVI_S8 s8VFltHpCoeff[FIR_V_GAIN_NUM]; /*RW; Range:[0x0, 0x1F]*/
 } ISP_AF_V_PARAM_S;
 
+#define AF_WEIGHT_ZONE_ROW	15
+#define AF_WEIGHT_ZONE_COLUMN	17
 typedef struct _ISP_FOCUS_STATISTICS_CFG_S {
 	ISP_AF_CFG_S stConfig;
 	ISP_AF_H_PARAM_S stHParam_FIR0;
 	ISP_AF_H_PARAM_S stHParam_FIR1;
 	ISP_AF_V_PARAM_S stVParam_FIR;
+	CVI_U8 au8Weight[AF_WEIGHT_ZONE_ROW][AF_WEIGHT_ZONE_COLUMN]; /*RW; Range:[0x0, 0xF]*/
 } ISP_FOCUS_STATISTICS_CFG_S;
 
 typedef struct _ISP_STATISTICS_CFG_S {
@@ -1043,6 +1047,105 @@ typedef struct _ISP_WB_INFO_S {
 	ISP_AWB_INDOOR_OUTDOOR_STATUS_E enInOutStatus; /*R;*/
 	CVI_S16 s16Bv; /*R;*/
 } ISP_WB_INFO_S;
+
+//-----------------------------------------------------------------------------
+//  FOCUS Attr
+//-----------------------------------------------------------------------------
+typedef enum _AF_DIRECTION {
+	AF_DIR_NEAR,
+	AF_DIR_FAR,
+} AF_DIRECTION;
+
+typedef enum _AF_CHASINGFOCUS_MODE {
+	AF_CHASINGFOCUS_FAST_MODE,
+	AF_CHASINGFOCUS_NORMAL_MODE,
+} AF_CHASINGFOCUS_MODE;
+
+typedef enum _AF_STATUS {
+	AF_NOT_INIT,
+	AF_INIT_POSITION,
+	AF_INIT,
+	AF_TRIGGER_FOCUS,
+	AF_DETECT_DIRECTION,
+	AF_SERACH_BEST_POS,
+	AF_LOCATE_BEST_POS,
+	AF_FOCUSED,
+	AF_REVERSE_DIRECTION, //for hw limit
+	AF_CHASING_FOCUS
+} AF_STATUS;
+
+typedef enum _AF_MANUAL_TYPE {
+	OP_TYPE_ZOOM,
+	OP_TYPE_FOCUS,
+	OP_TYPE_AUTO_FOCUS,
+	OP_TYPE_ZOOM_POS,
+	OP_TYPE_FOCUS_POS,
+	OP_TYPE_AF_BUTT
+} AF_MANUAL_TYPE;
+
+typedef struct _ISP_FOCUS_MANUAL_ATTR_S {
+	AF_MANUAL_TYPE enOpType;
+	AF_DIRECTION enManualDir;
+	CVI_U16 u16ManualStep; /*RW; Range:[0x0, 0x400]*/
+	CVI_U16 u16ManualPos; /*RW; Range:[0x0, 0x8000]*/
+} ISP_FOCUS_MANUAL_ATTR_S;
+
+typedef struct _ISP_FOCUS_ATTR_S {
+	CVI_BOOL bEnable;
+	CVI_U8 u8DebugMode;
+	ISP_OP_TYPE_E enOpType;
+	CVI_U8 u8RunInterval; /*RW; Range:[0x1, 0x10]*/
+	CVI_BOOL bRealTimeFocus;
+	CVI_BOOL bChasingFocus;
+	CVI_BOOL bReFocus;
+	CVI_BOOL bMixHlc;
+	CVI_U8 u8RtFocusStableFrm; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U16 u16RtMaxDiffFvRatio; /*RW; Range:[0x400, 0x1000]*/
+	CVI_U16 u16MaxDiffFvRatio; /*RW; Range:[0x400, 0x4000]*/
+	CVI_U16 u16MaxDiffLumaRatio; /*RW; Range:[0x400, 0x1000]*/
+	CVI_U16 u16DetectDiffRatio; /*RW; Range:[0x400, 0x1000]*/
+	CVI_U16 u16SearchDiffRatio; /*RW; Range:[0x400, 0x1000]*/
+	CVI_U16 u16LocalDiffRatio; /*RW; Range:[0x400, 0x1000]*/
+	CVI_U8 u8InitStep; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U8 u8FindStep; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U8 u8LocateStep; /*RW; Range:[0x1, 0xFF]*/
+	AF_DIRECTION enInitDir;
+	CVI_U16 u16MaxRotateCnt; /*RW; Range:[0x400, 0x4000]*/
+	AF_CHASINGFOCUS_MODE enChasingFocusMode;
+	ISP_FOCUS_MANUAL_ATTR_S stManual;
+} ISP_FOCUS_ATTR_S;
+
+//-----------------------------------------------------------------------------
+//  FOCUS Info
+//-----------------------------------------------------------------------------
+typedef enum _ISP_AF_MOTOR_SPEED_E {
+	AF_MOTOR_SPEED_4X,
+	AF_MOTOR_SPEED_2X,
+	AF_MOTOR_SPEED_1X,
+	AF_MOTOR_SPEED_HALF,
+} ISP_AF_MOTOR_SPEED_E;
+
+typedef struct _ISP_AF_Q_INFO_S {
+	AF_STATUS eStatus;      /*R;*/
+	CVI_U32 u32PreFv;       /*R;*/
+	CVI_U32 u32CurFv;       /*R;*/
+	CVI_U32 u32MaxFv;       /*R;*/
+	CVI_U8 u8PreLuma;       /*R;*/
+	CVI_U8 u8CurLuma;       /*R;*/
+	AF_DIRECTION eZoomDir;  /*R;*/
+	CVI_U16 u16ZoomStep;    /*R;*/
+	CVI_U16 u16ZoomPos;     /*R;*/
+	AF_DIRECTION eFocusDir; /*R;*/
+	CVI_U16 u16FocusStep;   /*R;*/
+	CVI_U16 u16FocusPos;    /*R;*/
+	CVI_U16 u16MaxFvPos;    /*R;*/
+	CVI_U16 u16ZoomMinPos;    /*R;*/
+	CVI_U16 u16ZoomMaxPos;    /*R;*/
+	CVI_U16 u16FocusMinPos;    /*R;*/
+	CVI_U16 u16FocusMaxPos;    /*R;*/
+	ISP_AF_MOTOR_SPEED_E eZoomSpeed;  /*R;*/
+	ISP_AF_MOTOR_SPEED_E eFocusSpeed; /*R;*/
+} ISP_FOCUS_Q_INFO_S;
 
 typedef struct _ISP_DCF_CONST_INFO_S {
 	CVI_U8 au8ImageDescription[DCF_DRSCRIPTION_LENGTH]; /*Describes image*/

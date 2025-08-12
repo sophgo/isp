@@ -481,7 +481,9 @@ static CVI_S32 teaisp_bnr_ctrl_preprocess(VI_PIPE ViPipe, ISP_ALGO_RESULT_S *alg
 		#undef AUTO
 	}
 
-	teaisp_bnr_ctrl_get_np_attr(ViPipe, &runtime->bnr_param_in.np);
+	const TEAISP_BNR_NP_S * p = CVI_NULL;
+	teaisp_bnr_ctrl_get_np_attr(ViPipe, &p);
+	runtime->bnr_param_in.np = (ISP_VOID_PTR)(uintptr_t) p;
 	runtime->bnr_param_in.iso = algoResult->u32PreBlcIso;
 	runtime->bnr_param_in.NoiseLevel = runtime->bnr_attr.NoiseLevel;
 	runtime->bnr_param_in.NoiseHiLevel = runtime->bnr_attr.NoiseHiLevel;
@@ -769,7 +771,7 @@ CVI_S32 teaisp_bnr_ctrl_get_np_attr(VI_PIPE ViPipe, const TEAISP_BNR_NP_S **np)
 
 	isp_mgr_buf_get_addr(ViPipe, ISP_IQ_BLOCK_TEAISP_BNR, (CVI_VOID *) &shared_buffer);
 
-	*np = &shared_buffer->stNPAttr;
+	*np = (TEAISP_BNR_NP_S *) &shared_buffer->stNPAttr;
 
 	return ret;
 }

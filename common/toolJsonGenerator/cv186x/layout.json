@@ -12,6 +12,7 @@
 					"AE Route",
 					"IRIS",
 					"Exposure Info",
+					"Focus Attr",
 					"BLC",
 					"LBLC",
 					"RGBIR",
@@ -2259,6 +2260,55 @@
 								"ISP_EXP_INFO_S.u8LEFrameAvgLuma",
 								"ISP_EXP_INFO_S.u8SEFrameAvgLuma",
 								"ISP_EXP_INFO_S.fLightValue"
+							]
+						}
+					]
+				}
+			},
+			{
+				"ID": "Focus Attr",
+				"READY": true,
+				"TYPE": "REG_API_MPI",
+				"CONTENTS": {
+					"CONTENT": [
+						"ISP_FOCUS_ATTR_S"
+					]
+				},
+				"LAYOUTS": {
+					"LAYOUT": [
+						{
+							"TITLE": "Focus Attr",
+							"MEMBER": [
+								"ISP_FOCUS_ATTR_S.bEnable",
+								"ISP_FOCUS_ATTR_S.enOpType",
+								"ISP_FOCUS_ATTR_S.u8RunInterval",
+								"ISP_FOCUS_ATTR_S.bRealTimeFocus",
+								"ISP_FOCUS_ATTR_S.bChasingFocus",
+								"ISP_FOCUS_ATTR_S.bReFocus",
+								"ISP_FOCUS_ATTR_S.bMixHlc",
+								"ISP_FOCUS_ATTR_S.u8DebugMode",
+								"ISP_FOCUS_ATTR_S.u8RtFocusStableFrm",
+								"ISP_FOCUS_ATTR_S.u16RtMaxDiffFvRatio",
+								"ISP_FOCUS_ATTR_S.u16MaxDiffFvRatio",
+								"ISP_FOCUS_ATTR_S.u16MaxDiffLumaRatio",
+								"ISP_FOCUS_ATTR_S.u16DetectDiffRatio",
+								"ISP_FOCUS_ATTR_S.u16SearchDiffRatio",
+								"ISP_FOCUS_ATTR_S.u16LocalDiffRatio",
+								"ISP_FOCUS_ATTR_S.u8InitStep",
+								"ISP_FOCUS_ATTR_S.u8FindStep",
+								"ISP_FOCUS_ATTR_S.u8LocateStep",
+								"ISP_FOCUS_ATTR_S.enInitDir",
+								"ISP_FOCUS_ATTR_S.u16MaxRotateCnt",
+								"ISP_FOCUS_ATTR_S.enChasingFocusMode"
+							]
+						},
+						{
+							"TITLE": "Manual Attr",
+							"MEMBER": [
+								"ISP_FOCUS_ATTR_S.stManual.enOpType",
+								"ISP_FOCUS_ATTR_S.stManual.enManualDir",
+								"ISP_FOCUS_ATTR_S.stManual.u16ManualStep",
+								"ISP_FOCUS_ATTR_S.stManual.u16ManualPos"
 							]
 						}
 					]
