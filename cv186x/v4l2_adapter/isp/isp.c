@@ -780,6 +780,7 @@ static int get_isp_attr_by_sensor(int pipe, ISP_PUB_ATTR_S *pstPubAttr)
 	case V4L2_GCORE_GC2093_SLAVE_MIPI_2M_30FPS_10BIT:
 	case V4L2_GCORE_GC2093_SLAVE_MIPI_2M_30FPS_10BIT_WDR2TO1:
 	case V4L2_GCORE_GC4023_MIPI_4M_30FPS_10BIT:
+	case V4L2_GCORE_GC8613_MIPI_8M_60FPS_10BIT:
 		pstPubAttr->enBayer = BAYER_RGGB;
 		break;
 	case V4L2_GCORE_GC4653_MIPI_4M_30FPS_10BIT:
@@ -1291,8 +1292,13 @@ static int set_dev_attr(int pipe)
 	int ret;
 	VI_DEV_ATTR_S stViDevAttr;
 	ISP_PUB_ATTR_S stPubAttr;
-	int sns_fd = open_v4l2_sensor(pipe);
 	int enSnsType;
+	int sns_fd = open_v4l2_sensor(pipe);
+
+	if (sns_fd < 0) {
+		printf("open pipe %d sensor fail!\n", pipe);
+		return -1;
+	}
 
 	if (ioctl(sns_fd, SNS_V4L2_GET_TYPE, &enSnsType) < 0) {
 		printf("pipe: %d, get sensor type fail !\n", pipe);
@@ -1543,6 +1549,8 @@ static int set_dev_attr(int pipe)
 
 int CVI_ISP_V4L2_Init(int pipe, int fd)
 {
+	int ret = 0;
+
 	if (pipe >= VI_MAX_DEV_NUM || fd <= 0) {
 		return -1;
 	}
@@ -1550,13 +1558,43 @@ int CVI_ISP_V4L2_Init(int pipe, int fd)
 	pthread_mutex_lock(&vi_mutex);
 	CVI_SYS_Init();
 	pthread_mutex_unlock(&vi_mutex);
-	CVI_ISP_V4L2_SetFd(pipe, fd);
-	set_dev_attr(pipe);
-	reg_sensor(pipe);
-	isp_init(pipe);
-	sns_default_init(pipe);
+	ret = CVI_ISP_V4L2_SetFd(pipe, fd);
+	if (ret < 0) {
+		printf("CVI_ISP_V4L2_SetFd fail!\n");
+		return -1;
+	}
+
+	ret = set_dev_attr(pipe);
+	if (ret < 0) {
+		printf("set_dev_attr fail!\n");
+		return -1;
+	}
+
+	ret = reg_sensor(pipe);
+	if (ret < 0) {
+		printf("reg_sensor fail!\n");
+		return -1;
+	}
+
+	ret = isp_init(pipe);
+	if (ret < 0) {
+		printf("isp_init fail!\n");
+		return -1;
+	}
+
+	ret = sns_default_init(pipe);
+	if (ret < 0) {
+		printf("sns_default init fail!\n");
+		return -1;
+	}
+
 	load_pqbin(pipe);
-	isp_run(pipe);
+
+	ret = isp_run(pipe);
+	if (ret < 0) {
+		printf("isp_run fail!\n");
+		return -1;
+	}
 
 	return 0;
 }

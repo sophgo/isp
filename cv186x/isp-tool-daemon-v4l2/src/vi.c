@@ -440,7 +440,10 @@ int start_vi(RTSP_CFG *p_rtsp_cfg)
 
 		pthread_mutex_init(&ViCtx[pipe].lock, NULL);
 		set_wdr_mode(pipe, p_rtsp_cfg->pa_video_src_cfg[pipe].is_wdr_mode);
-		CVI_ISP_V4L2_Init(pipe, ViCtx[pipe].vi_fd);
+		if (CVI_ISP_V4L2_Init(pipe, ViCtx[pipe].vi_fd) < 0) {
+			ISP_LOG_ERR("pipe %d, CVI_ISP_V4L2_Init fail!\n");
+			return -1;
+		}
 
 		if (p_rtsp_cfg->pa_video_src_cfg[pipe].enable_teaisp_bnr) {
 			if (pipe_num > 1)
