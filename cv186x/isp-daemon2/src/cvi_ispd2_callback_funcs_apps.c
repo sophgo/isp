@@ -394,6 +394,7 @@ static CVI_S32 CVI_ISPD2_GetRAWFrameInfo(const TGetFrameInfo *pstFrameInfo, TFra
 	VI_DUMP_ATTR_S stDumpAttr;
 	VIDEO_FRAME_INFO_S astVideoFrame[MAX_WDR_FUSION_FRAMES];
 
+	memset(astVideoFrame, 0, sizeof(astVideoFrame));
 	stDumpAttr.bEnable = 1;
 	stDumpAttr.u32Depth = 0;
 	stDumpAttr.enDumpType = VI_DUMP_TYPE_RAW;
