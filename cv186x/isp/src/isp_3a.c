@@ -233,6 +233,8 @@ CVI_S32 isp_3aLib_init(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 	awbInitParam.SensorId = ViPipe;
 	memcpy(&awbInitParam.stStitchAttr, &pstIspCtx->stStitchAttr, sizeof(ISP_STITCH_ATTR_S));
 	afInitParam.SensorId = ViPipe;
+	afInitParam.u8AWBZoneRow = pstIspCtx->stsCfgInfo.stWBCfg.u16ZoneRow;
+	afInitParam.u8AWBZoneCol = pstIspCtx->stsCfgInfo.stWBCfg.u16ZoneCol;
 
 	activeIdx = pstIspCtx->activeLibIdx[type];
 	pAlgo = pAlgoLibReg[type];
@@ -397,14 +399,47 @@ static CVI_S32 isp_3aLib_updateAFAlgoInfo(VI_PIPE ViPipe)
 {
 	CVI_S32 ret = CVI_SUCCESS;
 	ISP_AF_INFO_S *pstAFAlgoInfo = NULL;
+	ISP_CTX_S *pstIspCtx = NULL;
 
+	ISP_GET_CTX(ViPipe, pstIspCtx);
 	pstAFAlgoInfo = &(afAlgoInfo[ViPipe]);
 
+	pstAFAlgoInfo->u32ExpTime = pstIspCtx->stAeResult.u32IntTime[0];//AE_LE
+	pstAFAlgoInfo->u32ISO = pstIspCtx->stAeResult.u32Iso;
+	pstAFAlgoInfo->u32IspDgain = pstIspCtx->stAeResult.u32IspDgain;
+	pstAFAlgoInfo->u32Again = pstIspCtx->stAeResult.u32Again;
+	pstAFAlgoInfo->u32Dgain = pstIspCtx->stAeResult.u32Dgain;
+	pstAFAlgoInfo->u8AvgLum = pstIspCtx->stAeResult.u32AvgLuma;
+	pstAFAlgoInfo->s16CurrentLV = pstIspCtx->stAeResult.s16CurrentLV;
+	pstAFAlgoInfo->bAEStable = pstIspCtx->stAeResult.bStable;
+	pstAFAlgoInfo->u32WDRExpRatio = pstIspCtx->stAeResult.u32ExpRatio;
 	ret = isp_sts_ctrl_get_af_sts(ViPipe, &(pstAFAlgoInfo->pstAfStat));
+	if (ret != CVI_SUCCESS) {
+		ISP_LOG_ERR("af le sts not ready\n");
+		ret = CVI_FAILURE;
+	}
+
+	ISP_WB_STATISTICS_S *awb_sts;
+
+	ret = isp_sts_ctrl_get_awb_sts(ViPipe, ISP_CHANNEL_LE, &awb_sts);
 	if (ret != CVI_SUCCESS) {
 		ISP_LOG_ERR("awb le sts not ready\n");
 		ret = CVI_FAILURE;
 	}
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_LE].pau16ZoneAvgR = awb_sts->au16ZoneAvgR;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_LE].pau16ZoneAvgG = awb_sts->au16ZoneAvgG;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_LE].pau16ZoneAvgB = awb_sts->au16ZoneAvgB;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_LE].pau16ZoneCount = awb_sts->au16ZoneCountAll;
+
+	ret = isp_sts_ctrl_get_awb_sts(ViPipe, ISP_CHANNEL_SE, &awb_sts);
+	if (ret != CVI_SUCCESS) {
+		ISP_LOG_ERR("awb se sts not ready\n");
+		ret = CVI_FAILURE;
+	}
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_SE].pau16ZoneAvgR = awb_sts->au16ZoneAvgR;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_SE].pau16ZoneAvgG = awb_sts->au16ZoneAvgG;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_SE].pau16ZoneAvgB = awb_sts->au16ZoneAvgB;
+	pstAFAlgoInfo->stAfLumaSts[ISP_CHANNEL_SE].pau16ZoneCount = awb_sts->au16ZoneCountAll;
 
 	return ret;
 }
@@ -845,7 +880,15 @@ CVI_S32 isp_3aLib_exit(VI_PIPE ViPipe, AAA_LIB_TYPE_E type)
 			ISP_LOG_ERR("type %d registered awb lib can't init\n", type);
 			return -EPERM;
 		}
+	} else if (type == AAA_TYPE_AF) {
+		if (pAlgo[ViPipe * MAX_REGISTER_ALG_LIB_NUM + activeIdx].algoFunc.afFunc.pfn_af_exit != NULL)
+			pAlgo[ViPipe * MAX_REGISTER_ALG_LIB_NUM + activeIdx].algoFunc.afFunc.pfn_af_exit(ViPipe);
+		else {
+			ISP_LOG_ERR("type %d registered awb lib can't init\n", type);
+			return -EPERM;
+		}
 	}
+
 	return CVI_SUCCESS;
 }
 

@@ -190,6 +190,12 @@ struct isp_3a_shared_buffer {
 	ISP_AWB_ATTR_EX_S stAWBAttrEx;
 	ISP_AWB_Calibration_Gain_S stWBCalib;
 	CVI_U32 u32AWBParamUpdateFlag;
+
+	ISP_FOCUS_Q_INFO_S stFocusQInfo;
+	ISP_FOCUS_ATTR_S stFocusAttr;
+	CVI_U32 u32AFParamUpdateFlag;
+	ISP_FOCUS_STATISTICS_CFG_S stAfStatCfg;
+	ISP_AF_VCM_ATTR_S stAfVcmAttr;
 };
 
 struct isp_csc_shared_buffer {

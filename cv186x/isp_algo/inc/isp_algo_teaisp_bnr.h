@@ -11,6 +11,7 @@
 
 #include "cvi_comm_isp.h"
 #include "cvi_comm_sns.h"
+#include "isp_defines.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -19,10 +20,8 @@ extern "C" {
 #endif /* End of #ifdef __cplusplus */
 
 struct teaisp_bnr_param_in {
-	const TEAISP_BNR_NP_S *np;
-
+	ISP_VOID_PTR np;
 	CVI_U32 iso;
-
 	CVI_U16 NoiseLevel;
 	CVI_U16 NoiseHiLevel;
 };

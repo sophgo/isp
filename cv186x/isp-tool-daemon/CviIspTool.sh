@@ -86,12 +86,6 @@ while getopts "hgmiru" OPTION; do
     esac
 done
 
-# disable vcodec debug message to minize latency
-echo 0x20001 > /sys/module/cv186x_vcodec/parameters/vcodec_mask
-# enable remap
-echo 1 > /sys/module/cvi_vc_driver/parameters/addrRemapEn
-echo 256 > /sys/module/cvi_vc_driver/parameters/ARExtraLine
-
 if [ "$HOST" ]; then
     if [ "$GIGABIT" == "true" ]; then
         # enable gigabit ethernet (=eth1)

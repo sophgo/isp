@@ -14,6 +14,7 @@ ISP_3A_DIR = $(BASE_DIR)/../../algo
 # 3rdparty lib
 TRD_LIB_INCLUDE_PATH = $(PWD)/prebuilt/include
 TRD_LIB_PATH = $(PWD)/prebuilt/$(SDK_VER)
+JSON_C_LIB_PATH = $(TRD_LIB_PATH)/libcvi_json-c.a
 
 INC_DIRS = $(KERNEL_INC) $(MW_INC) $(ISP_INC) $(VI_INC) $(ISP_DIR)/isp/inc
 INC_DIRS += $(BASE_DIR)/inc $(BASE_DIR)/src $(BASE_DIR)/json_struct
@@ -42,24 +43,12 @@ LOCAL_CFLAGS = $(CINCS) $(USRDEFS) -rdynamic -fPIC
 LOCAL_LDFLAGS = $(LINCS) $(LIBS) -shared
 
 # SOC Architecture
-ifeq ($(CHIP_ARCH), CV183X)
-	LOCAL_CFLAGS += -DCHIP_ARCH_CV183X
-else ifeq ($(CHIP_ARCH), CV182X)
-	LOCAL_CFLAGS += -DCHIP_ARCH_CV182X
-else ifeq ($(CHIP_ARCH), CV181X)
-	LOCAL_CFLAGS += -DCHIP_ARCH_CV181X
-else ifeq ($(CHIP_ARCH), CV180X)
-	LOCAL_CFLAGS += -DCHIP_ARCH_CV180X
-else ifeq ($(CHIP_ARCH), CV186X)
-	LOCAL_CFLAGS += -DCHIP_ARCH_CV186X
-else
-	$(error Un-support SOC Architecture)
-endif
+LOCAL_CFLAGS += -DCHIP_ARCH_CV186X
 
 CFLAGS += -Wno-format-truncation
 
-.PHONY: all clean cleanall install uninstall upload prepare_3rdparty_module
-.SILENT: clean cleanall install uninstall upload prepare_3rdparty_module
+.PHONY: all clean cleanall install uninstall upload extract_cvi_json
+.SILENT: clean cleanall install uninstall upload extract_cvi_json
 
 OBJS =	$(patsubst src/%.c, $(TMP_FOLDER)/%.o, $(filter-out $(EXCLUDES), $(wildcard src/*.c))) \
 		$(patsubst json_struct/%.c, $(TMP_FOLDER)/%.o, $(wildcard json_struct/*.c)) \
@@ -86,14 +75,15 @@ $(TMP_FOLDER)/%.o: $(BASE_DIR)/json_struct/%.c $(TMP_FOLDER)
 	@$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -c $< -o $@
 	@echo [$(notdir $(CC))] $(notdir $@)
 
-$(TARGET_A): $(OBJS) $(OUT_FOLDER)
-	@$(AR) $(ARFLAGS) $(OUT_FOLDER)/$(TARGET_A) $(OBJS)
+$(TARGET_A): $(OBJS) $(OUT_FOLDER) | extract_cvi_json
+	@$(AR) $(ARFLAGS) $(OUT_FOLDER)/$(TARGET_A) $(OBJS) $(wildcard $(TRD_LIB_PATH)/*.o)
 	@echo -e $(YELLOW)[LINK]$(END)[$(notdir $(AR))] $(notdir $(TARGET_A))
 	@cp $(BASE_DIR)/inc/cvi_ispd2.h $(OUT_FOLDER)
 	@cp -a $(TRD_LIB_PATH)/libcvi_json-c.a $(OUT_FOLDER)
+	@rm -f $(TRD_LIB_PATH)/*.o
 
-$(TARGET_SO): $(OBJS) | prepare_3rdparty_module $(OUT_FOLDER)
-	@$(LD) $(LDFLAGS) $(LOCAL_LDFLAGS) -o $(OUT_FOLDER)/$(TARGET_SO) --start-group $(OBJS) --end-group
+$(TARGET_SO): $(OBJS) | $(OUT_FOLDER)
+	@$(LD) $(LDFLAGS) $(LOCAL_LDFLAGS) -o $(OUT_FOLDER)/$(TARGET_SO) --start-group $(JSON_C_LIB_PATH) $(OBJS) --end-group
 	@echo -e $(GREEN)[LINK]$(END)[$(notdir $(LD))] $(notdir $(TARGET_SO))
 	@cp $(BASE_DIR)/inc/cvi_ispd2.h $(OUT_FOLDER)
 	@cp -a $(TRD_LIB_PATH)/libcvi_json-c.a $(OUT_FOLDER)
@@ -109,6 +99,9 @@ $(OUT_FOLDER):
 upload:
 	@sshpass -p "cvitek" scp $(OUT_FOLDER)/$(TARGET_SO) root@192.168.1.3:/mnt/data/install/lib
 	@echo "Done"
+
+extract_cvi_json:
+	@cd $(TRD_LIB_PATH); rm -rf *.o;$(AR) -x libcvi_json-c.a
 
 install:
 	@cp $(OUT_FOLDER)/$(TARGET_A) $(MW_LIB)

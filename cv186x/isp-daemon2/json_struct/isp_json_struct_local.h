@@ -122,6 +122,7 @@ void ISP_AWB_Calibration_Gain_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_C
 // -----------------------------------------------------------------------------
 // AF
 // -----------------------------------------------------------------------------
+void ISP_FOCUS_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_FOCUS_ATTR_S *data);
 // void ISP_AF_CFG_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AF_CFG_S *data);
 
 // -----------------------------------------------------------------------------

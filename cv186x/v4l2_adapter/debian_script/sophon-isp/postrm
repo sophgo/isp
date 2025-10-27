@@ -1,9 +1,9 @@
 case "$1" in
 	remove|purge)
-		echo "postrm: $1"
+		echo "postrm libisp: $1"
 		rm -rf /opt/sophon/sophon-soc-libisp_1.0.0
 		;;
 	*)
-		echo "postrm: $1"
+		echo "postrm libisp: $1"
 		;;
 esac

@@ -1,4 +1,4 @@
-echo "libisp-dev post installation ..."
+echo "postinst libisp-dev: $1"
 if [ -d /sophon-soc-libisp_1.0.0 ]; then
     rm -rf /sophon-soc-libisp_1.0.0
 fi

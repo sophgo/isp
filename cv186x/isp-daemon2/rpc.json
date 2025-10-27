@@ -377,6 +377,11 @@
 				"SET": ""
 			},
 			{
+				"STRUCT": "ISP_FOCUS_ATTR_S",
+				"GET": "CVI_ISP_GetAFAttr",
+				"SET": "CVI_ISP_SetAFAttr"
+			},
+			{
 				"STRUCT": "VI_LDC_ATTR_S",
 				"GET": "CVI_VI_GetChnLDCAttr",
 				"SET": "CVI_VI_SetChnLDCAttr"

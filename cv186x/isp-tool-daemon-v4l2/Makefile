@@ -47,7 +47,6 @@ ISP_LIBS := -lisp -lawb -lae -laf -lisp_algo -lcvi_ispd2 -lvenc -lcvi_rtsp
 ISP_HELPER_LIBS := -lispv4l2_helper
 TPU_LIBS := -lbmcv -lbmlib -lbmjpeg
 LIBS += $(MW_LIBS) $(ISP_LIBS) $(ISP_HELPER_LIBS) $(TPU_LIBS) -L./prebuilt/libarm64
-LIBS += -L$(ISP_D2_PATH)/prebuilt/64bit -lcvi_json-c
 ELFFLAGS += $(LIBS) -lpthread -lm -latomic -ldl
 
 .PHONY : clean all self_test

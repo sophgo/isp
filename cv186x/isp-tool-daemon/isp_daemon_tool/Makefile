@@ -38,6 +38,7 @@ DEPS = $(patsubst $(SDIR)/%.cpp, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.cpp))
 CDEPS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.c))
 AI_SDK_PATH = $(OUTPUT_DIR)/tpu_$(SDK_VER)/cvitek_ai_sdk
 TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
+TDL_SDK_PATH = $(TOP_DIR)/tdl_sdk/install/
 
 # mw sample common
 SAMPLE_SRCS = $(wildcard $(MW_SAMPLE_COMMON_PATH)/*.c)
@@ -62,6 +63,7 @@ CTRL_DEPS = $(patsubst $(CTRL_SRC_DIR)/%.cpp, $(TMP_FOLDER)/%.d, $(wildcard $(CT
 
 AI_SDK_PATH_EXIST = $(shell if [ -d $(AI_SDK_PATH) ]; then echo "exist"; else echo "noexist"; fi)
 TPU_SDK_PATH_EXIST = $(shell if [ -d $(TPU_SDK_PATH) ]; then echo "exist"; else echo "noexist"; fi)
+TDL_SDK_PATH_EXIST = $(shell if [ -d $(TDL_SDK_PATH) ]; then echo "exist"; else echo "noexist"; fi)
 
 TARGET = isp_tool_daemon
 CTRL_TARGET = isp_tool_daemon_ctrl
@@ -77,7 +79,6 @@ LIBS += -lcvi_ispd2
 LIBS += -lraw_dump
 LIBS += -lraw_replay_offline
 LIBS += -lteaisp -lbmlib -lbmrt
-LIBS += -lcvi_json-c
 
 LOCAL_CFLAGS = $(DEFS) $(INCS) -DSDK_VER=$(SDK_VER)
 LOCAL_CFLAGS += -MMD -MP
@@ -108,6 +109,7 @@ all: package
 endif
 
 prepare: | $(TMP_FOLDER)
+	@cp $(MW_SNS_INC)/sensor_cfg/*.h $(MW_INC)
 ifeq ($(STREAM_TYPE), 2)
 ifneq "$(wildcard $(CVI_RTSP_TARBALL_PATH))" ""
 	@tar -zxf $(CVI_RTSP_TARBALL_PATH) -C $(TMP_FOLDER)
@@ -168,6 +170,15 @@ ifeq "$(AI_SDK_PATH_EXIST)" "noexist"
 	$(info cvitek_ai_sdk not exist, please export TPU_REL=1 run build_all !!)
 else
 	@cp $(AI_SDK_PATH)/lib/*.so* install/lib/ai -rf
+endif
+
+ifeq "$(TDL_SDK_PATH_EXIST)" "noexist"
+	$(info cvitek_ai_sdk not exist, please export TPU_REL=1 run build_all !!)
+else
+	@cp $(TDL_SDK_PATH)/SOPHON/lib/libtdl_core.so* install/lib/ai -rf
+	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_core.so* install/lib -rf
+	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_imgcodecs.so* install/lib -rf
+	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_imgproc.so* install/lib -rf
 endif
 
 ifeq ($(OPENCV_SDK_LIB_PATH), )

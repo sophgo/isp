@@ -105,6 +105,7 @@ static void initSignal(void)
 
 int main(int argc, char *argv[])
 {
+	int ret;
 	UNUSED(argc);
 	UNUSED(argv);
 
@@ -119,10 +120,27 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	start_vi(&rtsp_cfg);
-	start_venc(&rtsp_cfg);
-	start_rtsp(&rtsp_cfg);
-	start_vo(&rtsp_cfg);
+	ret = start_vi(&rtsp_cfg);
+	if (ret < 0) {
+		printf("start_vi fail!\n");
+		return -1;
+	}
+
+	ret = start_venc(&rtsp_cfg);
+	if (ret < 0) {
+		printf("start_venc fail!\n");
+		return -1;
+	}
+
+	ret = start_rtsp(&rtsp_cfg);
+	if (ret < 0) {
+		printf("start_rtsp fail!\n");
+	}
+
+	ret = start_vo(&rtsp_cfg);
+	if (ret < 0) {
+		printf("start_vo fail!\n");
+	}
 
 	isp_daemon2_init(JSONRPC_PORT);
 

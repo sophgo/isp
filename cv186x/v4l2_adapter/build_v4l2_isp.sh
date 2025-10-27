@@ -47,6 +47,11 @@ fi
 
 mkdir -p $DEB_EDGE_LIB_PATH
 
+# build prepare
+MW_SNS_CFG_PATH=${TOP_DIR}/middleware/${MW_VER}/component/SensorSupportList/sensor_cfg
+MW_PATH=${TOP_DIR}/middleware/${MW_VER}
+cp ${MW_SNS_CFG_PATH}/*.h ${TOP_DIR}/middleware/${MW_VER}/include
+
 echo "build 3rd party ..."
 build_3rd_party || return $?
 cd ${TOP_DIR}/middleware/${MW_VER}/3rdparty || return $?
@@ -54,9 +59,9 @@ make clean &> /dev/null
 make all || return $?
 
 echo "build sensor ..."
-cd ${TOP_DIR}/middleware/${MW_VER}/component/isp
-make clean &> /dev/null
-make all || return $?
+cd ${TOP_DIR}/middleware/${MW_VER}/component/SensorSupportList || return $?
+MW_PATH=$MW_PATH make clean &> /dev/null
+MW_PATH=$MW_PATH make all || return $?
 cp ${ISP_V4L2_LIB_PATH}/libsns_full.so ${DEB_EDGE_LIB_PATH}/
 
 
@@ -88,8 +93,8 @@ make clean &> /dev/null
 make all || return $?
 
 # clean the shared so
-cd ${TOP_DIR}/middleware/${MW_VER}/component/isp
-make clean &> /dev/null
+cd ${TOP_DIR}/middleware/${MW_VER}/component/SensorSupportList || return $?
+MW_PATH=$MW_PATH make clean &> /dev/null
 
 cd ${TOP_DIR}/middleware/${MW_VER}/modules/bin || return $?
 make clean &> /dev/null
@@ -125,7 +130,7 @@ for lib in ${ISP_LIBS[@]}
 do
     lib_path=${ISP_V4L2_LIB_PATH}/${lib}
     if [ ! -f $lib_path ]; then
-        echo "$lib_path not existed! Exit ..."
+        echo "$lib_path not exists! Exit..."
         return 1
     else
         cp $lib_path $DEB_DIR_LIB
@@ -171,6 +176,68 @@ fi
 
 cp $ISP_V4L2_RT_PATH $DEB_DIR_LIB
 
+# combine *.a to so
+ISP_STATIC_PART_LIBS=(
+    libisp
+    libae
+    libawb
+    libaf
+    libisp_algo
+    libispv4l2_adapter
+    libispv4l2_helper
+)
+cd $DEB_DIR_LIB && mkdir tmp_obj && cd tmp_obj
+for ar_lib in ${ISP_STATIC_PART_LIBS[@]}
+do
+	ar_lib_path="${ISP_V4L2_LIB_PATH}/${ar_lib}.a"
+	if [ ! -f $ar_lib_path ]; then
+		echo "$ar_lib_path not exits! Exit..."
+		return 1
+	else
+		cp $ar_lib_path $DEB_DIR_LIB/tmp_obj
+		# ar -x *.a
+		${CROSS_COMPILE}ar -x "${ar_lib}.a"
+
+		if [ ! $? -eq 0 ]; then
+			echo "${CROSS_COMPILE}ar -x ${ar_lib}.a fail! Exit..."
+			return 1
+		else
+			rm -f "${ar_lib}.a"
+		fi
+		# make the dummpy so
+		echo -e "void __dummy_cvi_${ar_lib}__() {}" | ${CROSS_COMPILE}gcc -x c -shared -o "${ar_lib}.so" -fPIC -
+		if [ ! $? -eq 0 ];then
+			echo "fail to generate the dummpy ${ar_lib}.so"
+			return 1
+		fi
+	fi
+done
+
+for ex_ar_lib in *.a
+do
+	${CROSS_COMPILE}ar -x "${ex_ar_lib}"
+	if [ ! $? -eq 0 ]; then
+		echo "${CROSS_COMPILE}ar -x ${ex_ar_lib} fail! Exit..."
+		return 1
+	else
+		rm -f $ex_ar_lib
+	fi
+done
+
+echo "combine below obj to libisp.so:"
+echo *.o
+
+rm -f libisp.so
+${CROSS_COMPILE}gcc -shared -fPIC -o libisp.so *.o
+#${CROSS_COMPILE}ld -shared -fPIC --gc-sections -export-dynamic -o libisp.so --start-group *.a --end-group
+if [ ! $? -eq 0 ];then
+	echo "fail to combine obj to libisp.so. Exit..."
+	return 1
+fi
+
+cp -f *.so ../ && cd ../
+rm -rf tmp_obj/
+
 # pack bin
 echo "pack bin ..."
 if [ ! -f $ISP_V4L2_UT_PATH ]; then
@@ -197,8 +264,8 @@ cp ${ISP_V4L2_SRC_PATH}/isp-tool-daemon-v4l2/README.md $DEB_DIR_DOC
 
 # pack src
 cp -r ${DEB_PREFIX_DIR}/isp $DEB_DIR_SRC
-cp -rL ${TOP_DIR}/middleware/v2/component/isp/sensor/cv186x $DEB_DIR_SRC/sensor
-cp -rL ${TOP_DIR}/middleware/v2/component/isp/sensor.mk $DEB_DIR_SRC
+cp -rL ${TOP_DIR}/middleware/v2/component/SensorSupportList/ $DEB_DIR_SRC/sensor
+cp -rL ${TOP_DIR}/middleware/v2/component/SensorSupportList/sensor.mk $DEB_DIR_SRC
 cp -r ${BUILD_PATH}/.config $DEB_DIR_SRC
 cp -r ${DEB_PREFIX_DIR}/Kbuild $DEB_DIR_SRC
 cp -r ${DEB_PREFIX_DIR}/Makefile.release ${DEB_DIR_SRC}/Makefile

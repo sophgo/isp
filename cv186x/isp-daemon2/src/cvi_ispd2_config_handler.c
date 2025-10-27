@@ -175,7 +175,8 @@ void CVI_ISPD2_ConfigMessageHandler(TISPD2HandlerInfo *ptHandlerInfo)
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_ISP_GetWBCalibration, "CVI_ISP_GetWBCalibration");
 
 	// AF
-
+	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_ISP_GetAFAttr, "CVI_ISP_GetAFAttr");
+	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_ISP_SetAFAttr, "CVI_ISP_SetAFAttr");
 	// 3A
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_ISP_SetStatisticsConfig, "CVI_ISP_SetStatisticsConfig");
 	CVI_ISPD2_REGISTER_CB(CVI_ISPD2_CBFunc_ISP_GetStatisticsConfig, "CVI_ISP_GetStatisticsConfig");
