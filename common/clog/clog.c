@@ -1,363 +1,131 @@
 
 #include "clog.h"
-#include <assert.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include "clog_ringbuf.h"
+#include "clog_producer.h"
+#if CLOG_ENABLE_CONSUMER
+#include "clog_consumer.h"
+#endif
 #include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <sys/syscall.h>
+#include <stdarg.h>
 
-#ifndef UNUSED
-#define UNUSED(x) ((void)(x))
+/* Global log context */
+static struct {
+	clog_ringbuf_t ringbuf;
+	clog_producer_ctx_t *producer;
+#if CLOG_ENABLE_CONSUMER
+	clog_consumer_ctx_t *consumer;
+#endif
+	int initialized;
+} g_clog_ctx = {
+	.producer = NULL,
+#if CLOG_ENABLE_CONSUMER
+	.consumer = NULL,
+#endif
+	.initialized = 0
+};
+
+/*******************************************************************************/
+/* Public APIs */
+/*******************************************************************************/
+
+int clog_init(const clog_config_t *config)
+{
+#if CLOG_ENABLE_CONSUMER
+	clog_consumer_config_t consumer_cfg;
 #endif
 
-static char *log_buf;
-static char log_line_buf[CLOG_LINE_BUF_SIZE];
+	if (g_clog_ctx.initialized) {
+		return -1; /* Already initialized */
+	}
 
-static FILE *fp;
-static size_t file_size;
-static char *log_buffer_AB[2];
-static uint8_t log_buffer_index;
-static size_t log_buffer_write_count[2];
-static pthread_t write_thread_tid;
-static char path_buf[CLOG_FILE_MAX_PATH_LEN];
+	/* Initialize ring buffer */
+	if (clog_ringbuf_init(&g_clog_ctx.ringbuf, config->ringbuf_size) != 0) {
+		printf("ERROR: clog ring buffer init failed\n");
+		return -1;
+	}
 
-static pthread_mutex_t log_buf_lock = PTHREAD_MUTEX_INITIALIZER;
+	/* Create producer */
+	g_clog_ctx.producer = clog_producer_create(&g_clog_ctx.ringbuf);
+	if (!g_clog_ctx.producer) {
+		clog_ringbuf_deinit(&g_clog_ctx.ringbuf);
+		printf("ERROR: clog producer create failed\n");
+		return -1;
+	}
 
-static int clog_lock(void)
-{
-	return pthread_mutex_lock(&log_buf_lock);
-}
+#if CLOG_ENABLE_CONSUMER
+	/* Create and start consumer */
+	consumer_cfg.mode = config->mode;
+	consumer_cfg.file_path = config->file_path;
+	consumer_cfg.file_split_size = config->file_split_size;
+	consumer_cfg.tcp_port = config->tcp_port;
 
-static int clog_unlock(void)
-{
-	return pthread_mutex_unlock(&log_buf_lock);
-}
+	g_clog_ctx.consumer = clog_consumer_create(&g_clog_ctx.ringbuf, &consumer_cfg);
+	if (!g_clog_ctx.consumer) {
+		clog_producer_destroy(g_clog_ctx.producer);
+		clog_ringbuf_deinit(&g_clog_ctx.ringbuf);
+		printf("ERROR: clog consumer create failed\n");
+		return -1;
+	}
 
-static int clog_get_time(char *time_str, size_t size)
-{
-	struct timeval tv;
-	struct tm cur_tm;
+	if (clog_consumer_start(g_clog_ctx.consumer) != 0) {
+		clog_consumer_destroy(g_clog_ctx.consumer);
+		clog_producer_destroy(g_clog_ctx.producer);
+		clog_ringbuf_deinit(&g_clog_ctx.ringbuf);
+		printf("ERROR: clog consumer start failed\n");
+		return -1;
+	}
+#endif
 
-	gettimeofday(&tv, NULL);
-	localtime_r(&tv.tv_sec, &cur_tm);
-
-	snprintf(time_str, size, "%02d%02d %02d:%02d:%02d.%03d ",
-		cur_tm.tm_mon + 1,
-		cur_tm.tm_mday,
-		cur_tm.tm_hour,
-		cur_tm.tm_min,
-		cur_tm.tm_sec,
-		(int)(tv.tv_usec / 1000));
-
+	g_clog_ctx.initialized = 1;
 	return 0;
 }
 
-static const char *clog_get_tid(char *tid_str, size_t size)
+int clog_deinit(void)
 {
-	snprintf(tid_str, size, "%04d ", (int) syscall(SYS_gettid));
-	return 0;
-}
-
-static int clog_file_open(void)
-{
-
-	static uint32_t file_count;
-
-	if (fp) {
-		fclose(fp);
-		fp = NULL;
+	if (!g_clog_ctx.initialized) {
+		return -1;
 	}
 
-	snprintf(path_buf, CLOG_FILE_MAX_PATH_LEN,
-		CLOG_FILE_PATH"isplog-%d-%02d.txt", getpid(), file_count);
+#if CLOG_ENABLE_CONSUMER
+	/* Stop and cleanup consumer */
+	if (g_clog_ctx.consumer) {
+		clog_consumer_destroy(g_clog_ctx.consumer);
+		g_clog_ctx.consumer = NULL;
+	}
+#endif
 
-	fp = fopen(path_buf, "w");
-
-	if (fp == NULL) {
-		printf("ERROR, clog cannot open: %s\n", path_buf);
-	} else {
-		file_count++;
+	/* Cleanup producer */
+	if (g_clog_ctx.producer) {
+		clog_producer_destroy(g_clog_ctx.producer);
+		g_clog_ctx.producer = NULL;
 	}
 
-	return 0;
-}
+	/* Cleanup ring buffer */
+	clog_ringbuf_deinit(&g_clog_ctx.ringbuf);
 
-static void write_file_thread_cleanup(void *param)
-{
-	UNUSED(param);
-
-	if (fp) {
-		fclose(fp);
-		fp = NULL;
-	}
-
-	free(log_buffer_AB[0]);
-	log_buffer_AB[0] = NULL;
-
-	free(log_buffer_AB[1]);
-	log_buffer_AB[1] = NULL;
-
-	log_buffer_index = 0;
-	log_buffer_write_count[0] = 0;
-	log_buffer_write_count[1] = 0;
-}
-
-static void write_log_buffer_to_file(uint8_t index)
-{
-	if (fp == NULL) {
-		clog_file_open();
-	}
-
-	if (fp) {
-		fwrite(log_buffer_AB[index],
-			log_buffer_write_count[index], 1, fp);
-
-		fflush(fp);
-
-		file_size += log_buffer_write_count[index];
-
-		if (file_size >= CLOG_FILE_SPLIT_SIZE) {
-			clog_file_open();
-			file_size = 0x00;
-		}
-
-		log_buffer_write_count[index] = 0;
-	}
-}
-
-static void *write_file_thread(void *param)
-{
-	uint8_t log_buffer_index_backup;
-	size_t last_write_count;
-
-	UNUSED(param);
-
-	pthread_cleanup_push(write_file_thread_cleanup, NULL);
-
-	log_buffer_index_backup = log_buffer_index;
-	last_write_count = log_buffer_write_count[log_buffer_index];
-
-	while (1) {
-
-		if (log_buffer_index_backup != log_buffer_index) {
-
-			write_log_buffer_to_file(log_buffer_index_backup);
-
-			log_buffer_index_backup = log_buffer_index;
-		} else if (last_write_count == log_buffer_write_count[log_buffer_index] &&
-			last_write_count > 0) {
-
-			clog_lock();
-			log_buffer_index_backup = log_buffer_index;
-			log_buffer_index = log_buffer_index == 0 ? 1 : 0;
-			log_buffer_write_count[log_buffer_index] = 0;
-			log_buf = log_buffer_AB[log_buffer_index];
-			clog_unlock();
-
-			write_log_buffer_to_file(log_buffer_index_backup);
-		}
-
-		last_write_count = log_buffer_write_count[log_buffer_index];
-
-		usleep(100 * 1000);
-	}
-
-	pthread_cleanup_pop(0);
-
-	return NULL;
-}
-
-static void clog_file_output(const char *log, size_t size)
-{
-	UNUSED(log);
-
-	if (log_buffer_AB[0] == NULL || log_buffer_AB[1] == NULL) {
-		return;
-	}
-
-	log_buffer_write_count[log_buffer_index] += size;
-
-	if (log_buffer_write_count[log_buffer_index] >=
-		(CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE - CLOG_LINE_BUF_SIZE)) {
-
-		log_buffer_index = log_buffer_index == 0 ? 1 : 0;
-
-		if (log_buffer_write_count[log_buffer_index] != 0) {
-			printf("[ERROR], isp log over write!!!\n");
-		}
-
-		log_buffer_write_count[log_buffer_index] = 0;
-
-		log_buf = log_buffer_AB[log_buffer_index];
-
-	} else {
-		log_buf = log_buffer_AB[log_buffer_index] +
-			log_buffer_write_count[log_buffer_index];
-	}
-}
-
-int clog_file_enable(void)
-{
-	clog_lock();
-
-	if (log_buf == NULL || log_buf == log_line_buf) {
-
-		log_buffer_AB[0] = (char *) malloc(CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
-		log_buffer_AB[1] = (char *) malloc(CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
-
-		memset(log_buffer_AB[0], 0, CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
-		memset(log_buffer_AB[1], 0, CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE);
-
-		log_buf = log_buffer_AB[0];
-
-		log_buffer_index = 0;
-		log_buffer_write_count[0] = 0;
-		log_buffer_write_count[1] = 0;
-
-		pthread_create(&write_thread_tid, NULL, write_file_thread, NULL);
-	}
-
-	clog_unlock();
-
-	return 0;
-}
-
-int clog_file_disable(void)
-{
-	clog_lock();
-
-	if (write_thread_tid) {
-		pthread_cancel(write_thread_tid);
-		pthread_join(write_thread_tid, NULL);
-		log_buf = log_line_buf;
-	}
-
-	clog_unlock();
-
+	g_clog_ctx.initialized = 0;
 	return 0;
 }
 
 /*******************************************************************************/
-static const char * const level_output_info[] = {
-	[CLOG_LVL_ASSERT]  = "A ",
-	[CLOG_LVL_ERROR]   = "E ",
-	[CLOG_LVL_WARN]    = "W ",
-	[CLOG_LVL_INFO]    = "I ",
-	[CLOG_LVL_DEBUG]   = "D ",
-	[CLOG_LVL_VERBOSE] = "V ",
-};
-
-static void clog_init_log_buf(void)
-{
-	clog_lock();
-
-	if (log_buf == NULL) {
-		log_buf = log_line_buf;
-	}
-
-	clog_unlock();
-}
-
-static size_t clog_strcpy(size_t cur_len, char *dst, const char *src)
-{
-	const char *src_old = src;
-
-	while (*src != 0) {
-		if (cur_len++ < CLOG_LINE_BUF_SIZE) {
-			*dst++ = *src++;
-		} else {
-			break;
-		}
-	}
-
-	return src - src_old;
-}
+/* Log output APIs (delegates to producer) */
+/*******************************************************************************/
 
 void clog_output(uint8_t level, const char *tag, const char *func,
-	const long line, const char *format, ...)
+				 const long line, const char *format, ...)
 {
-#define CLOG_TEMP_BUF_SIZE  128
-
-	static char temp_buf[CLOG_TEMP_BUF_SIZE] = { 0 };
-
-	size_t log_len = 0;
 	va_list args;
-	int fmt_result;
-
-	assert(level <= CLOG_LVL_VERBOSE);
-
-	if (log_buf == NULL) {
-		clog_init_log_buf();
-	}
-
-	clog_lock();
 
 	va_start(args, format);
-
-	clog_get_time(temp_buf, CLOG_TEMP_BUF_SIZE);
-	log_len += clog_strcpy(log_len, log_buf + log_len, temp_buf);
-
-	clog_get_tid(temp_buf, CLOG_TEMP_BUF_SIZE);
-	log_len += clog_strcpy(log_len, log_buf + log_len, temp_buf);
-
-	log_len += clog_strcpy(log_len, log_buf + log_len, level_output_info[level]);
-	log_len += clog_strcpy(log_len, log_buf + log_len, tag);
-
-	log_len += clog_strcpy(log_len, log_buf + log_len, " ");
-
-	log_len += clog_strcpy(log_len, log_buf + log_len, func);
-	log_len += clog_strcpy(log_len, log_buf + log_len, ":");
-
-	snprintf(temp_buf, CLOG_TEMP_BUF_SIZE, "%ld ", line);
-	log_len += clog_strcpy(log_len, log_buf + log_len, temp_buf);
-
-	fmt_result = vsnprintf(log_buf + log_len, CLOG_LINE_BUF_SIZE - log_len, format, args);
-
+	clog_producer_output_va(g_clog_ctx.producer, level, tag, func, line, format, args);
 	va_end(args);
-
-	log_len += fmt_result;
-
-	if (log_buf == log_line_buf) {
-		printf("%s", log_buf);
-	} else {
-		if (level <= CLOG_LVL_ERROR) {
-			printf("%s", log_buf);
-		}
-		clog_file_output(log_buf, log_len);
-	}
-
-	if (level == CLOG_LVL_ASSERT) {
-		assert(0);
-	}
-
-	clog_unlock();
 }
 
 void clog_output_raw(const char *format, ...)
 {
 	va_list args;
-	int fmt_result;
-
-	if (log_buf == NULL) {
-		clog_init_log_buf();
-	}
-
-	clog_lock();
 
 	va_start(args, format);
-
-	fmt_result = vsnprintf(log_buf, CLOG_LINE_BUF_SIZE, format, args);
-
+	clog_producer_output_raw(g_clog_ctx.producer, format, args);
 	va_end(args);
-
-	if (log_buf == log_line_buf) {
-		printf("%s", log_buf);
-	} else {
-		clog_file_output(log_buf, fmt_result);
-	}
-
-	clog_unlock();
 }

@@ -660,9 +660,12 @@ CVI_S32 isp_dis_ctrl_get_gms_attr(VI_PIPE ViPipe, struct cvi_vip_isp_gms_config 
 		return CVI_FAILURE;
 	}
 
-
 	imgW = runtime->pstPubAttr.stSnsSize.u32Width;
 	imgH = runtime->pstPubAttr.stSnsSize.u32Height;
+
+	if (isTileMode(ViPipe)) {
+		imgW = imgW / 2;
+	}
 
 	limitW = imgW - 4;//4 cycle by RTL limit
 	limitH = imgH - 0;

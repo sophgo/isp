@@ -65,9 +65,7 @@ static CVI_S32 _isp_sts_ctrl_mmap_get_paddr(VI_PIPE ViPipe);
 static CVI_S32 _isp_sts_ctrl_mmap_get_vaddr(VI_PIPE ViPipe);
 static CVI_S32 _isp_sts_ctrl_munmap(VI_PIPE ViPipe);
 static CVI_S32 isp_sts_ctrl_ready(VI_PIPE ViPipe);
-static CVI_BOOL isTileMode(VI_PIPE ViPipe);
 static void isp_sts_ctrl_set_3aCfg_default(VI_PIPE ViPipe);
-
 
 static struct isp_sts_ctrl_runtime **_get_sts_ctrl_runtime(VI_PIPE ViPipe);
 
@@ -853,14 +851,6 @@ static CVI_S32 isp_sts_ctrl_unpack_af_sts(VI_PIPE ViPipe, CVI_VOID *sts_in, CVI_
 	}
 
 	return CVI_SUCCESS;
-}
-
-static CVI_BOOL isTileMode(VI_PIPE ViPipe)
-{
-	ISP_CTX_S *pstIspCtx = NULL;
-
-	ISP_GET_CTX(ViPipe, pstIspCtx);
-	return pstIspCtx->stSysRect.u32Width > 4608 ? CVI_TRUE : CVI_FALSE;
 }
 
 static CVI_S32 isp_sts_ctrl_set_dci_sts(VI_PIPE ViPipe)

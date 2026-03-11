@@ -65,14 +65,6 @@ typedef enum _AF_CHASING_FOCUS_FLAG {
 	AF_CHASING_FOCUS_FIND_PEAK,
 } AF_CHASING_FOCUS_FLAG;
 
-typedef enum _AF_DBG_MODE {
-	AF_DBG_DISABLE,
-	AF_DBG_CODE_FLOW,
-	AF_DBG_HLC,
-	AF_DBG_TIME_COST,
-	AF_CALIB_CLOW,
-} AF_DBG_MODE;
-
 typedef struct _AF_CTX_S {
 	//common param
 	ISP_EXPOSURE_ATTR_S stExpAttr;

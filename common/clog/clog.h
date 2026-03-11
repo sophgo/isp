@@ -6,19 +6,28 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "clog_types.h"
+
+/* Enable consumer by default, define CLOG_DISABLE_CONSUMER to disable */
+#ifndef CLOG_DISABLE_CONSUMER
+#define CLOG_ENABLE_CONSUMER 1
+#else
+#define CLOG_ENABLE_CONSUMER 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*******************************************************************************/
-#define CLOG_LINE_BUF_SIZE  (2 * 1024)
-
-/* clog file cfg */
-#define CLOG_FILE_PATH  "/mnt/sd/"
-#define CLOG_FILE_MAX_PATH_LEN  64
-#define CLOG_FILE_ENABLE_SINGLE_FILE 1
-#define CLOG_FILE_SPLIT_SIZE (5 * 1024 * 1024)
-#define CLOG_FILE_ASYNC_PINGPONG_BUF_SIZE (15 * 1024)
+/* clog config */
+typedef struct {
+	uint32_t ringbuf_size;         /* ring buffer size */
+	clog_output_mode_t mode;       /* output mode */
+	const char *file_path;         /* file path (for FILE mode) */
+	uint32_t file_split_size;      /* file split size in bytes */
+	uint16_t tcp_port;             /* TCP port for server to listen on (default: 5568) */
+} clog_config_t;
 
 /*******************************************************************************/
 #define CLOG_LVL_ASSERT                      0
@@ -64,7 +73,7 @@ extern "C" {
 	#define clog_debug(tag, ...) \
 			clog_output(CLOG_LVL_DEBUG, tag, __func__, __LINE__, __VA_ARGS__)
 #else
-	#define elog_debug(tag, ...)
+	#define clog_debug(tag, ...)
 #endif
 
 #if CLOG_OUTPUT_LVL >= CLOG_LVL_VERBOSE
@@ -87,11 +96,11 @@ extern "C" {
 
 #define CLOG_ASSERT(EXPR)                        \
 	{if (!(EXPR)) {                              \
-		clog_a("assert", "%s\n", __func__);       \
+		clog_a("assert", "%s\n", __func__);      \
 	}}
 
-int clog_file_enable(void);
-int clog_file_disable(void);
+int clog_init(const clog_config_t *config);
+int clog_deinit(void);
 void clog_output(uint8_t level, const char *tag, const char *func,
 	const long line, const char *format, ...);
 void clog_output_raw(const char *format, ...);

@@ -3975,7 +3975,8 @@ void ISP_AWB_ATTR_EX_S_JSON(int r_w_flag, JSON *j, char *key, ISP_AWB_ATTR_EX_S 
 	JSON(r_w_flag, CVI_BOOL, bFineTunEn);
 	JSON(r_w_flag, CVI_U8, u8FineTunStrength);
 	JSON_A(r_w_flag, CVI_U16, u16TargetCT, AWB_TARGET_RATIO_NUM);
-	JSON_A(r_w_flag, CVI_U8, u8TargetStrength, AWB_TARGET_RATIO_NUM);
+	JSON_A(r_w_flag, CVI_U8, u8TargetStrengthR, AWB_TARGET_RATIO_NUM);
+	JSON_A(r_w_flag, CVI_U8, u8TargetStrengthB, AWB_TARGET_RATIO_NUM);
 	JSON(r_w_flag, ST_ISP_AWB_INTERFERENCE_S, stInterference);
 	JSON(r_w_flag, ST_ISP_AWB_SKIN_S, stSkin);
 	JSON(r_w_flag, ST_ISP_AWB_SKY_S, stSky);
@@ -4225,7 +4226,7 @@ static void ISP_FOCUS_MANUAL_ATTR_S_JSON(int r_w_flag, JSON *j, char *key, ISP_F
 {
 	JSON_START(r_w_flag);
 
-	JSON(r_w_flag, AF_MANUAL_TYPE, enOpType);
+	JSON(r_w_flag, AF_MANUAL_TYPE, enManualOpType);
 	JSON(r_w_flag, AF_DIRECTION, enManualDir);
 	JSON(r_w_flag, CVI_U16, u16ManualStep);
 	JSON(r_w_flag, CVI_U16, u16ManualPos);

@@ -568,7 +568,8 @@
 								"ISP_WB_ATTR_S.stAuto.bNaturalCastEn",
 								"ISP_AWB_ATTR_EX_S.adjBgainMode",
 								"ISP_AWB_ATTR_EX_S.u16TargetCT",
-								"ISP_AWB_ATTR_EX_S.u8TargetStrength",
+								"ISP_AWB_ATTR_EX_S.u8TargetStrengthR",
+								"ISP_AWB_ATTR_EX_S.u8TargetStrengthB",
 								"HEADER:Curve",
 								"ISP_WB_ATTR_S.stAuto.u16HighColorTemp",
 								"ISP_WB_ATTR_S.stAuto.u16LowColorTemp",
@@ -2305,7 +2306,7 @@
 						{
 							"TITLE": "Manual Attr",
 							"MEMBER": [
-								"ISP_FOCUS_ATTR_S.stManual.enOpType",
+								"ISP_FOCUS_ATTR_S.stManual.enManualOpType",
 								"ISP_FOCUS_ATTR_S.stManual.enManualDir",
 								"ISP_FOCUS_ATTR_S.stManual.u16ManualStep",
 								"ISP_FOCUS_ATTR_S.stManual.u16ManualPos"
