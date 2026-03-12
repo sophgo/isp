@@ -1,5 +1,5 @@
 .PHONY: clean all
-.SILENT: clean all
+.SILENT: clean all cppcheck
 
 ISP_BASE_PATH = $(PWD)/..
 ISP_COMMON_DIR = $(ISP_BASE_PATH)/common
@@ -9,7 +9,7 @@ CV182X_BASE_PATH = $(ISP_BASE_PATH)/cv182x
 CV183X_BASE_PATH = $(ISP_BASE_PATH)/cv183x
 #CV183X_COMMON_BASE_PATH = $(CV183X_BASE_PATH)/common
 
-# v4l2 use files: vi_v4l2_uapi.h, sns_v4l2_uapi.h
+# v4l2 replace files: vi_v4l2_uapi.h, sns_v4l2_uapi.h
 ifeq ($(PARAM_FILE),)
 	PARAM_FILE := $(TOP_DIR)/middleware/$(MW_VER)/Makefile.param
 	include $(PARAM_FILE)
@@ -50,6 +50,10 @@ ifeq ($(ISP_SRC_RELEASE),1)
 	-@mv Makefile.sdk_release Makefile
 endif
 
+cppcheck:
+	@cppcheck --enable=all --quiet --template='{file},{line},{severity},{id}:{message}' -I../include/cv182x -I./isp/inc -I./isp_algo/inc isp/src/ isp_algo/src/ 2>cppcheck_output.txt
+	@python3 $(MW_PATH)/tool/cppcheckparser/cppcheckparser.py --input cppcheck_output.txt --output cppcheck_output.xlsx
+
 clean:
 	@cd isp-daemon2; $(MAKE) clean;
 	@cd isp; $(MAKE) clean;
@@ -59,6 +63,7 @@ clean:
 	@cd $(ISP_COMMON_DIR)/raw_replay; $(MAKE) clean;
 	@cd $(ISP_COMMON_DIR)/raw_replay_offline; $(MAKE) clean;
 	@cd $(ISP_COMMON_DIR)/raw_dump; $(MAKE) clean;
+	-@rm -f ./isp-daemon2/json_struct/cvi_pqtool_json.h
 ifeq ($(V4L2_ISP_ENABLE),1)
 	@cd v4l2_adapter; $(MAKE) clean;
 endif

@@ -4,14 +4,14 @@ CHIP_ID=$1
 
 DATE=$(date +%Y%m%d)
 #toolJsonGenerator repo
-GENERATOR_CHANGE_ID="NULL"
-GENERATOR_COMMIT_ID="NULL"
+GENERATOR_CHANGE_ID=$(git log -n1 -- $PWD | grep Change-Id: | sed 's/^.*Change-Id: //g' | cut -c1-7)
+GENERATOR_COMMIT_ID=$(git log -n1 --pretty=format:'%h' -- $PWD)
 GENERATOR_V="(${GENERATOR_CHANGE_ID},${GENERATOR_COMMIT_ID})"
 ISP_BRANCH="master"
 #isp repo
 cd $PWD/../../
-ISP_CHANGE_ID="NULL"
-ISP_COMMIT_ID="NULL"
+ISP_CHANGE_ID=$(git log -n1 -- $PWD | grep Change-Id: | sed 's/^.*Change-Id: //g' | cut -c1-7)
+ISP_COMMIT_ID=$(git log -n1 --pretty=format:'%h' -- $PWD)
 ISP_V="(${ISP_CHANGE_ID},${ISP_COMMIT_ID})"
 cd -
 CUR_PATH=$(cd "$(dirname "$0")"; pwd)
@@ -57,6 +57,7 @@ LAYOUTJSON=$CHIP_ID/layout.json
 RPCJSON=$RPCJSON_PATH/rpc.json
 
 #reset&update device.json
+git checkout ${DEVICE_FILE}
 sed -i 's/"FULL_NAME": ""/"FULL_NAME": "'"${CHIP_ID}"'"/g' ${DEVICE_FILE}
 sed -i 's/"CODE_NAME": ""/"CODE_NAME": "'"${CHIP_ID}"'"/g' ${DEVICE_FILE}
 sed -i 's/"SDK_VERSION": ""/"SDK_VERSION": "'"${DATE}"'"/g' ${DEVICE_FILE}
@@ -70,7 +71,7 @@ sed -i 's/"ISP_BRANCH": ""/"ISP_BRANCH": "'"${ISP_BRANCH}"'"/g' ${DEVICE_FILE}
 cd ${CUR_PATH}
 OUTPUTFILE=./output.txt
 start=$(date +%s)
-python preProcess.py $HEADERLIST $ADDHEADERLIST
+python3 preProcess.py $HEADERLIST $ADDHEADERLIST
 end=$(date +%s)
 runtime=$((end-start))
 echo "preProcess.py take $runtime seconds"
@@ -86,14 +87,15 @@ else
   exit -1
 fi
 start=$(date +%s)
-python hFile2json.py  $LEVELJSON $LAYOUTJSON $RPCJSON $HEADERLIST
+python3 hFile2json.py  $LEVELJSON $LAYOUTJSON $RPCJSON $HEADERLIST
 rm -rf ${OUTPUTFILE}
 end=$(date +%s)
 runtime=$((end-start))
 echo "run h2Filejson.py take $runtime seconds"
+git checkout ${DEVICE_FILE}
 
 #check json file validity
-cat ${OUTPUT} | python -m json.tool 1>/dev/null 2>json_error
+cat ${OUTPUT} | python3 -m json.tool 1>/dev/null 2>json_error
 error=$(cat json_error)
 if [ ${#error} -eq 0 ]
 then

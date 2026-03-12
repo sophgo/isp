@@ -59,6 +59,8 @@ else
 endif
 
 #LOCAL_CFLAGS += -DFREEZE_FRAME_CO_RELEASE_MODE
+LOCAL_CFLAGS += -DISP_COMMIT=\"$(shell git rev-parse --short HEAD)\"
+LOCAL_CFLAGS += -DISP_GERRIT=\"$(shell git log -n1 | grep Reviewed-on | tail -n1 | sed "s/.*+\///g")\"
 
 .PHONY: clean all cleanall sdk_release
 .SILENT: check_kernel_dependence update_isp_version cppcheck
@@ -93,8 +95,27 @@ clean:
 cleanall: clean
 	@rm -rf $(TMP_FOLDER)
 
+check_kernel_dependence:
+	# get kernel commit id in last 6 month
+	git -C ../../../linux-linaro-stable log --since=6.month | grep -E '^commit .{40}' | sed -e 's/^commit //g' | sed -e 's/\s*//g' >kernel-commit-id.list
+	# get dependent kernel id in middleware in last 1 month
+	git log --since=1.month | grep -E "kernel-commit-id:" | sed -e 's/^\s*kernel-commit-id:\s*//g' | sed -e 's/\s*//g' >dependent-commit-id.list
+	#cat t | grep -E "kernel-commit-id:" | sed -e 's/^\s*kernel-commit-id:\s*//g' | sed -e 's/\s*//g' >dependent-commit-id.list
+	# check all dependent kernel id
+	cat dependent-commit-id.list | while read -r line; do \
+		if grep -Fxq $$line kernel-commit-id.list; \
+			then echo "kernel commit id $$line exist"; \
+			else echo "can't find kernel commit id $$line" && exit 1 ; \
+		fi; \
+	done
+	rm kernel-commit-id.list
+	rm dependent-commit-id.list
+
 update_isp_version:
-	echo "#define ISP_VERSION \"T(sophon), V(sophon)\"" > $(PWD)/inc/isp_version.h
+	$(eval date := $(shell git log -n1 --date=format:'%Y-%m-%d' --pretty=format:'%cd'))
+	$(eval chid := $(shell git log -n1 -- $(PWD) | grep Change-Id: | sed 's/^.*Change-Id: //g' | cut -c1-7))
+	$(eval cmid := $(shell git log -n1 --pretty=format:'%h' -- $(PWD)))
+	echo "#define ISP_VERSION \"T(${date}), V(${chid}, ${cmid})\"" > $(PWD)/inc/isp_version.h
 
 sdk_release: update_isp_version
 	-@rm -rf $(TMP_FOLDER)

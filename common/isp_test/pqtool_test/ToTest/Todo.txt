@@ -1,0 +1,6 @@
+connect
+Readall
+Writeall
+preview
+Capture
+VLC

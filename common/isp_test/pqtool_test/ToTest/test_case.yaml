@@ -1,0 +1,45 @@
+pqtool:
+    connect:
+        input_0: ip_address, {board_ip}
+        sleep_0: 1
+        click_0: get_template
+        sleep_1: 10
+        click_1: connect
+        sleep_2: 30
+        click_2: readall
+        sleep_3: 2
+        check_3: connect_error
+        sleep_4: 3
+
+    readall:
+        click_0: readall
+        sleep_1: 10
+
+    writeall:
+        click_0: writeall
+        sleep_0: 10
+
+    preview:
+        click_0: preview
+        sleep_0: 2
+        click_1: get_single_image
+        sleep_1: 5
+
+    capture:
+        click_0: capture
+        sleep_0: 10
+        click_1: dump_all_capture
+        sleep_1: 10
+
+vlc:
+    play:
+        sleep_0: 5
+        click_0: media
+        sleep_1: 3
+        click_1: web_stream_media
+        sleep_2: 5
+        input_0: vlc_url, {vlc_url}
+        sleep_3: 10
+        click_2: play
+        sleep_4: 20
+        check_0: vlc_error

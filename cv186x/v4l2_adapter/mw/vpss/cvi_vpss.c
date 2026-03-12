@@ -97,3 +97,95 @@ CVI_S32 CVI_VPSS_SetGrpParamfromBin(VPSS_GRP VpssGrp, CVI_U8 scene)
 	return 0;
 }
 
+VPSS_GRP CVI_VPSS_GetAvailableGrp(void)
+{
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_CreateGrp(VPSS_GRP VpssGrp, const VPSS_GRP_ATTR_S *pstGrpAttr)
+{
+	UNUSED(VpssGrp);
+	UNUSED(pstGrpAttr);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_SetChnAttr(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, const VPSS_CHN_ATTR_S *pstChnAttr)
+{
+	UNUSED(VpssGrp);
+	UNUSED(VpssChn);
+	UNUSED(pstChnAttr);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_EnableChn(VPSS_GRP VpssGrp, VPSS_CHN VpssChn)
+{
+	UNUSED(VpssGrp);
+	UNUSED(VpssChn);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_StartGrp(VPSS_GRP VpssGrp)
+{
+	UNUSED(VpssGrp);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_DisableChn(VPSS_GRP VpssGrp, VPSS_CHN VpssChn)
+{
+	UNUSED(VpssGrp);
+	UNUSED(VpssChn);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_StopGrp(VPSS_GRP VpssGrp)
+{
+	UNUSED(VpssGrp);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_DestroyGrp(VPSS_GRP VpssGrp)
+{
+	UNUSED(VpssGrp);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_SendFrame(VPSS_GRP VpssGrp, const VIDEO_FRAME_INFO_S *pstVideoFrame, CVI_S32 s32MilliSec)
+{
+	UNUSED(VpssGrp);
+	UNUSED(pstVideoFrame);
+	UNUSED(s32MilliSec);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_GetChnAttr(VPSS_GRP VpssGrp, VPSS_CHN VpssChn, VPSS_CHN_ATTR_S *pstChnAttr)
+{
+	UNUSED(VpssGrp);
+	UNUSED(VpssChn);
+	UNUSED(pstChnAttr);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_GetGrpAttr(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstGrpAttr)
+{
+	UNUSED(VpssGrp);
+	UNUSED(pstGrpAttr);
+
+	return 0;
+}
+
+CVI_S32 CVI_VPSS_SetGrpAttr(VPSS_GRP VpssGrp, const VPSS_GRP_ATTR_S *pstGrpAttr)
+{
+	UNUSED(VpssGrp);
+	UNUSED(pstGrpAttr);
+
+	return 0;
+}
