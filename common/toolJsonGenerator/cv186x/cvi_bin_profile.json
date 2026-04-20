@@ -6095,6 +6095,14 @@
             {
                 "ID": 26,
                 "type":["unsigned", "char"], "name":"u8TargetStrength", "dims":["3"], "children": []
+            },
+            {
+                "ID": 27,
+                "type":["unsigned", "char"], "name":"u8TargetStrengthR", "dims":["3"], "children": []
+            },
+            {
+                "ID": 28,
+                "type":["unsigned", "char"], "name":"u8TargetStrengthB", "dims":["3"], "children": []
             }
         ]
     },
@@ -6614,6 +6622,10 @@
                     {
                         "ID": 7,
                         "type":["unsigned", "short"], "name":"u16ManualPos", "dims":[], "children": []
+                    },
+                    {
+                        "ID": 8,
+                        "type":["AF_MANUAL_TYPE"], "name":"enManualOpType", "dims":[], "children": []
                     }
                 ]
             }

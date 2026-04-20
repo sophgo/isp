@@ -983,7 +983,8 @@ typedef struct _ISP_AWB_ATTR_EX_S {
 	CVI_BOOL bFineTunEn;
 	CVI_U8 u8FineTunStrength;
 	CVI_U16 u16TargetCT[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x1, 0x4000]*/
-	CVI_U8 u8TargetStrength[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x1, 0xFF]*/
+	CVI_U8 u8TargetStrengthR[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x40, 0xFF]*/
+	CVI_U8 u8TargetStrengthB[AWB_TARGET_RATIO_NUM]; /*RW; Range:[0x40, 0xFF]*/
 	//AWB Algo 6
 	struct ST_ISP_AWB_INTERFERENCE_S stInterference;
 	struct ST_ISP_AWB_SKIN_S stSkin;
@@ -1084,7 +1085,7 @@ typedef enum _AF_MANUAL_TYPE {
 } AF_MANUAL_TYPE;
 
 typedef struct _ISP_FOCUS_MANUAL_ATTR_S {
-	AF_MANUAL_TYPE enOpType;
+	AF_MANUAL_TYPE enManualOpType;
 	AF_DIRECTION enManualDir;
 	CVI_U16 u16ManualStep; /*RW; Range:[0x0, 0x400]*/
 	CVI_U16 u16ManualPos; /*RW; Range:[0x0, 0x8000]*/

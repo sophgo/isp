@@ -37,7 +37,8 @@ COBJS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.o, $(wildcard $(SDIR)/*.c))
 DEPS = $(patsubst $(SDIR)/%.cpp, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.cpp))
 CDEPS = $(patsubst $(SDIR)/%.c, $(TMP_FOLDER)/%.d, $(wildcard $(SDIR)/*.c))
 AI_SDK_PATH = $(OUTPUT_DIR)/tpu_$(SDK_VER)/cvitek_ai_sdk
-TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
+#TPU_SDK_PATH = $(OUTPUT_DIR)/rootfs/mnt/system/usr/lib/libsophon-0.4.9/lib
+TPU_SDK_PATH = $(TOP_DIR)/libsophon/install/libsophon-0.4.9/lib
 TDL_SDK_PATH = $(TOP_DIR)/tdl_sdk/install/
 
 # mw sample common

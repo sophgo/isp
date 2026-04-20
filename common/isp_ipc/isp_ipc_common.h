@@ -20,10 +20,8 @@ extern "C" {
 #ifdef ENABLE_ISP_IPC
 
 typedef struct {
-	CVI_S32 pid; // auto set
-	CVI_U8 type; // auto set
-	CVI_U8 id; // client to server auto set, server to client set by user
-	CVI_U32 cmd; // set by user
+	CVI_U16 magic; // magic number, set by auto
+	CVI_U16 cmd; // set by user
 	CVI_U32 arg_len; // set by user
 	CVI_U32 res_len; // set by user
 } ISP_IPC_MSG_S;
@@ -31,14 +29,12 @@ typedef struct {
 typedef CVI_S32 (*ISP_IPC_FUN)(CVI_U8 *arg, CVI_U32 arg_len, CVI_U8 *res, CVI_U32 res_len);
 
 typedef struct {
-	CVI_U32 cmd;
+	CVI_U16 cmd;
 	ISP_IPC_FUN fun;
 } ISP_IPC_CMD_ITEM_S;
 
 // server call
 CVI_S32 isp_ipc_reg_server_cmd(ISP_IPC_CMD_ITEM_S *cmd_list, CVI_U32 cmd_len);
-// client call
-CVI_S32 isp_ipc_reg_client_cmd(ISP_IPC_CMD_ITEM_S *cmd_list, CVI_U32 cmd_len);
 
 CVI_S32 isp_ipc_server_init(void);
 CVI_S32 isp_ipc_server_deinit(void);
@@ -46,12 +42,8 @@ CVI_S32 isp_ipc_server_deinit(void);
 CVI_S32 isp_ipc_client_init(void);
 CVI_S32 isp_ipc_client_deinit(void);
 
-// exec reg client cmd fun
-CVI_S32 server_send_cmd_to_client(ISP_IPC_MSG_S *msg, CVI_U8 *arg, CVI_U8 *res);
-
 // exec reg server cmd fun
 CVI_S32 client_send_cmd_to_server(ISP_IPC_MSG_S *msg, CVI_U8 *arg, CVI_U8 *res);
-CVI_S32 client_reg_server_exit_callback(ISP_IPC_FUN fun);
 
 #endif
 

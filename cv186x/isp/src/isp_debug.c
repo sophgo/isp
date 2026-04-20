@@ -26,16 +26,56 @@ int g_isp_debug_level = CLOG_LVL_ERROR;
 
 void isp_dbg_init(void)
 {
-	if (access("/mnt/sd/enable_isplog.txt", F_OK) == 0) {
-		clog_file_enable();
+	char *env = getenv("ENABLE_ISP_LOG_TO_FILE");
+
+	if (env && atoi(env)) {
+		clog_config_t config = {
+			.mode = CLOG_OUTPUT_FILE,
+			.file_path = "/mnt/sd",
+			.file_split_size = 1 * 1024 * 1024, /* 1MB */
+			.ringbuf_size = 512 * 1024, /* 512KB */
+			.tcp_port = 0,
+		};
+
+		if (clog_init(&config) != 0) {
+			printf("ERROR: isp_dbg_init failed to init clog\n");
+		}
 		g_isp_debug_level = CLOG_LVL_DEBUG;
+		return;
+	}
+
+	env = getenv("ENABLE_ISP_LOG_TO_TCP");
+
+	if (env && atoi(env)) {
+		clog_config_t config = {
+			.mode = CLOG_OUTPUT_TCP,
+			.file_path = NULL,
+			.file_split_size = 0,
+			.ringbuf_size = 512 * 1024, /* 512KB */
+			.tcp_port = 5568,
+		};
+
+		if (clog_init(&config) != 0) {
+			printf("ERROR: isp_dbg_init failed to init clog\n");
+		}
+		g_isp_debug_level = CLOG_LVL_DEBUG;
+		return;
 	}
 }
 
 void isp_dbg_deinit(void)
 {
-	if (access("/mnt/sd/enable_isplog.txt", F_OK) == 0) {
-		clog_file_disable();
+	char *env = getenv("ENABLE_ISP_LOG_TO_FILE");
+
+	if (env && atoi(env)) {
+		clog_deinit();
+		return;
+	}
+
+	env = getenv("ENABLE_ISP_LOG_TO_TCP");
+	if (env && atoi(env)) {
+		clog_deinit();
+		return;
 	}
 }
 

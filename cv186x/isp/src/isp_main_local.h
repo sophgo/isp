@@ -174,6 +174,14 @@ extern CVI_U8 g_ispCtxBufCnt;
 
 #define IS_MULTI_CAM() (g_ispCtxBufCnt > 1 ? 1 : 0)
 
+static inline CVI_BOOL isTileMode(VI_PIPE ViPipe)
+{
+	ISP_CTX_S *pstIspCtx = NULL;
+
+	ISP_GET_CTX(ViPipe, pstIspCtx);
+	return pstIspCtx->stSysRect.u32Width > 4608 ? CVI_TRUE : CVI_FALSE;
+}
+
 /*isp_3a.c*/
 CVI_S32 isp_3aLib_find(VI_PIPE ViPipe, const ALG_LIB_S *pstAeLib, AAA_LIB_TYPE_E type);
 CVI_S32 isp_3aLib_reg(VI_PIPE ViPipe, ALG_LIB_S *pstAeLib, void *pstRegister, AAA_LIB_TYPE_E type);
