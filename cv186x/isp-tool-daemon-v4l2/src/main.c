@@ -13,6 +13,7 @@
 #include "rtsp.h"
 #include "utils.h"
 #include "vo.h"
+#include "auto_test.h"
 
 #ifndef UNUSED
 #define UNUSED(x) ((void)(x))
@@ -146,6 +147,16 @@ int main(int argc, char *argv[])
 
 	gLoopRun = 1;
 
+	const char *auto_test_case = getenv("CVI_ISP_AUTO_TEST_CASE");
+	int ret_auto_test = 0;
+
+	if (auto_test_case != NULL && auto_test_case[0] != '\0') {
+		int case_num = atoi(auto_test_case);
+
+		ret_auto_test = run_isp_auto_test_case(case_num, rtsp_cfg.dev_num);
+		gLoopRun = 0; // exit after auto test
+	}
+
 	while (gLoopRun) {
 		sleep(1);
 	}
@@ -159,6 +170,6 @@ int main(int argc, char *argv[])
 
 	deinit_rtsp_from_json(&rtsp_cfg);
 
-	return 0;
+	return (0 | ret_auto_test);
 }
 

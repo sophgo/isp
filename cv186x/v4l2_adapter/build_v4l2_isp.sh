@@ -125,6 +125,8 @@ ISP_EDGE_LIBS=(
 	libcvi_bin.so
 )
 
+ISP_AUTO_TEST_LIB_PATH=${ISP_V4L2_SRC_PATH}/isp-tool-daemon-v4l2/isp_test/libisp_test.so
+
 echo "pack isp lib ..."
 for lib in ${ISP_LIBS[@]}
 do
@@ -147,6 +149,11 @@ do
         cp $lib_path $DEB_DIR_LIB
     fi
 done
+
+# libisp_auto_test.so, optional, not necessary
+if [ -f ${ISP_AUTO_TEST_LIB_PATH} ]; then
+        cp ${ISP_AUTO_TEST_LIB_PATH} $DEB_DIR_LIB
+fi
 
 rm -rf ${DEB_EDGE_LIB_PATH} &> /dev/null
 

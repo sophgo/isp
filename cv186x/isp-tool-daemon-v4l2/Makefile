@@ -49,9 +49,9 @@ TPU_LIBS := -lbmcv -lbmlib -lbmjpeg
 LIBS += $(MW_LIBS) $(ISP_LIBS) $(ISP_HELPER_LIBS) $(TPU_LIBS) -L./prebuilt/libarm64
 ELFFLAGS += $(LIBS) -lpthread -lm -latomic -ldl
 
-.PHONY : clean all self_test
+.PHONY : clean all self_test isp_auto_test
 
-all: $(TARGET)
+all: $(TARGET) isp_auto_test
 
 $(TMP_FOLDER)/%.o: $(SDIR)/%.c | $(TMP_FOLDER)
 	@$(CC) $(DEPFLAGS) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ -c $<
@@ -61,6 +61,9 @@ $(TARGET): $(OBJS)
 	$(CXX) -o $@ -Wl,--start-group $(OBJS) -Wl,--end-group $(ELFFLAGS) $(EXTRA_LDFLAGS)
 	@echo -e $(BLUE)[LINK]$(END)[$(notdir $(CXX))] $(notdir $@)
 
+isp_auto_test:
+	cd isp_test; $(MAKE) all
+
 $(TMP_FOLDER):
 	@echo "Create $(TMP_FOLDER) for object file"
 	-@mkdir -p $(TMP_FOLDER)
@@ -68,6 +71,7 @@ $(TMP_FOLDER):
 clean:
 	-@rm -f $(OBJS) $(DEPS) $(TARGET)
 	-@rm -rf $(TMP_FOLDER)
+	-@cd isp_test; $(MAKE) clean
 
 self_test:
 	@$(CC) $(INCS) $(SDIR)/self_test.c $(SDIR)/utils.c -o self_test $(ELFFLAGS)

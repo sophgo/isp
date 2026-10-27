@@ -176,10 +176,10 @@ endif
 ifeq "$(TDL_SDK_PATH_EXIST)" "noexist"
 	$(info cvitek_ai_sdk not exist, please export TPU_REL=1 run build_all !!)
 else
-	@cp $(TDL_SDK_PATH)/SOPHON/lib/libtdl_core.so* install/lib/ai -rf
-	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_core.so* install/lib -rf
-	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_imgcodecs.so* install/lib -rf
-	@cp $(TDL_SDK_PATH)/SOPHON/sample/3rd/opencv/lib/libopencv_imgproc.so* install/lib -rf
+	@cp $(TDL_SDK_PATH)/88a2/lib/libtdl_core.so* install/lib/ai -rf
+	@cp $(TDL_SDK_PATH)/88a2/sample/3rd/opencv/lib/libopencv_core.so* install/lib -rf
+	@cp $(TDL_SDK_PATH)/88a2/sample/3rd/opencv/lib/libopencv_imgcodecs.so* install/lib -rf
+	@cp $(TDL_SDK_PATH)/88a2/sample/3rd/opencv/lib/libopencv_imgproc.so* install/lib -rf
 endif
 
 ifeq ($(OPENCV_SDK_LIB_PATH), )
